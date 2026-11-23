@@ -1,6 +1,6 @@
 // Arranque de la app: navegación, sesión, barra de guardado y vista Ajustes.
-import { DEMO } from './nucleo.js';
-import { repoGithub } from './github.js';
+import { DEMO, modal, resumenCambios } from './nucleo.js';
+import { repoGithub, urlSubida, ficheroPublicacion } from './github.js';
 import { estado, esc, $, $$, cargar, alRegenerar, cambiosSinGuardar, guardarEnServidor, descartarCambios, entrar, salirSesion,
   avisar, confirmar, ponerTema, ponerMenuCorto, APARIENCIAS, deshacer, rehacer, puedeDeshacer, puedeRehacer, descargar, completar, cambiado, clonar, fmtFecha, ponerSede, api } from './nucleo.js';
 import { CONFIG_BASE } from './datos-base.js';
@@ -21,22 +21,23 @@ import { pintarPlantilla, eventosPlantilla } from './vista-plantilla.js';
 const raiz = $('#principal');
 const VISTAS = ['cuadrante', 'mi', 'nuevo', 'parametros', 'vacaciones', 'informes', 'equidad', 'comparativa', 'escenarios', 'normativa', 'plantilla', 'encuestas', 'resultados', 'ajustes'];
 
-// Administración en la versión de GitHub: se entra con un token de GitHub que solo puede escribir en este repositorio.
-function ajustesGithub() {
+// Publicar en la versión de GitHub (sin claves): se descarga config.json y se sube al repositorio desde github.com.
+function pasosPublicar() {
   const repo = esc(repoGithub());
-  if (estado.admin) return `<p>Sesión de administración en este ordenador (la clave de GitHub se guarda solo en este navegador).</p>
-    <div class="fila-acciones"><button type="button" class="btn primario" data-accion="guardar" ${cambiosSinGuardar() ? '' : 'disabled'}>Guardar para todos</button><button type="button" class="btn" data-accion="salir">Cerrar sesión y olvidar la clave</button></div>
-    <p class="banda">El repositorio es público: no escribas nombres ni datos de salud en notas, ausencias ni escenarios. La plantilla con nombres no se guarda aquí.</p>`;
-  return `<p class="tenue">Sin sesión puedes ver el cuadrante y probar cambios en tu navegador. Para guardar la configuración para todos, entra con una clave de GitHub que pueda escribir en ${repo}.</p>
-    <form class="fila-acciones" id="form-entrar"><label class="oculto" for="clave">Clave de GitHub</label>
-      <input type="password" id="clave" autocomplete="off" spellcheck="false" placeholder="Clave de GitHub (github_pat_…)" required style="width:min(420px,100%)">
-      <button type="submit" class="btn primario">Entrar</button></form>
-    <details style="margin-top:10px"><summary>Cómo crear la clave (3 minutos, una vez)</summary><ol class="tenue">
-      <li>En github.com, con tu cuenta: foto → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b> (o abre github.com/settings/personal-access-tokens/new).</li>
-      <li>Nombre: «horarios». Caducidad: 30 o 90 días.</li>
-      <li><b>Repository access</b>: «Only select repositories» → <b>${repo}</b>.</li>
-      <li><b>Permissions</b> → Repository permissions → <b>Contents: Read and write</b>. Nada más.</li>
-      <li><b>Generate token</b>, cópialo y pégalo aquí arriba. No lo mandes por correo ni lo pegues en ningún chat.</li></ol></details>`;
+  return `<ol class="pasos-publicar">
+      <li><button type="button" class="btn primario" data-accion="descargar-publicacion">1. Descargar config.json</button></li>
+      <li><a class="btn" href="${esc(urlSubida())}" target="_blank" rel="noopener">2. Abrir la subida en GitHub</a> <span class="tenue">(entra con tu cuenta si te lo pide)</span></li>
+      <li>3. Arrastra el fichero <b>config.json</b> a la página de GitHub. Si dice que ya existe, se sustituye.</li>
+      <li>4. Abajo, en «Commit changes», escribe qué has cambiado (por ejemplo «Solape los miércoles») y pulsa <b>Commit changes</b>.</li>
+      <li>5. En 1-2 minutos, todo el que abra o recargue la web verá esta versión. Al recargar tú, el aviso de «sin publicar» desaparece solo.</li></ol>
+    <p class="tenue">El repositorio ${repo} es público: no escribas nombres ni datos de salud en notas, ausencias ni escenarios. El cuadrante va por códigos.</p>`;
+}
+function ajustesGithub() {
+  return `<p>${cambiosSinGuardar() ? 'Tienes cambios <b>sin publicar</b>, guardados solo en este ordenador.' : 'Lo que ves es la versión publicada: no hay cambios pendientes.'}
+    Para que todos vean una única versión, publícala así (sin claves, con tu cuenta de github.com):</p>${pasosPublicar()}`;
+}
+async function publicarGithub() {
+  await modal({ titulo: 'Publicar para todos', html: pasosPublicar(), botones: [{ texto: 'Cerrar', valor: null }] });
 }
 
 function pintarAjustes() {
@@ -44,9 +45,7 @@ function pintarAjustes() {
   const servidor = estado.servidor === 'ok'
     ? `Conectado al servidor.${estado.guardado ? ` Última versión guardada: ${fmtFecha(estado.guardado.slice(0, 10))}.` : ' Todavía no se ha guardado ninguna configuración: se usan los valores de partida.'}`
     : estado.servidor === 'demo'
-      ? (estado.admin
-        ? `Versión de GitHub con sesión de administración. «Guardar para todos» publica la configuración en el repositorio ${repoGithub()}; quien abra la web la ve en 1-2 minutos.${estado.guardado ? ` Última vez guardada: ${fmtFecha(estado.guardado.slice(0, 10))}.` : ''}`
-        : `Versión de GitHub. Se ve la configuración publicada${estado.guardado ? ` (guardada el ${fmtFecha(estado.guardado.slice(0, 10))})` : ' (de partida: todavía no se ha guardado ninguna)'}. Lo que cambies se queda en este navegador hasta que la administración lo guarde para todos.`)
+      ? `Versión de GitHub. Todo el mundo ve la configuración publicada${estado.guardado ? ` (publicada el ${fmtFecha(estado.guardado.slice(0, 10))})` : ' (la de partida: todavía no se ha publicado ninguna)'}. Lo que cambies se guarda en este ordenador hasta que lo publiques.`
       : 'Sin conexión con el servidor. La página funciona, pero los cambios solo se guardan en este navegador y las encuestas no se pueden enviar.';
   raiz.innerHTML = `<div class="cabecera"><div><h1>Ajustes</h1><p>${esc(servidor)}</p></div></div>
     <section class="panel"><h2>Apariencia</h2><p class="tenue">Las de Gestlogix. Se guarda en este navegador.${estado.admin ? ' Con «Usar para todos», también en el servidor como apariencia por defecto.' : ''}</p>
@@ -150,6 +149,8 @@ function pintarBarraGuardar() {
   caja.innerHTML = estado.admin
     ? `<div class="guardar-barra" role="region" aria-label="Cambios sin guardar">${historia}<span>Hay cambios que todavía no están en el servidor.</span>
         <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-accion="guardar">${DEMO ? 'Guardar para todos' : 'Guardar en el servidor'}</button></span></div>`
+    : DEMO ? `<div class="guardar-barra" role="region" aria-label="Cambios sin publicar">${historia}<span>Cambios <b>sin publicar</b>, guardados en este ordenador. Los demás ven la versión publicada.</span>
+        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-accion="publicar-github">Publicar para todos…</button></span></div>`
     : `<div class="guardar-barra" role="region" aria-label="Cambios de prueba">${historia}<span>Cambios de prueba: no se guardan y al recargar vuelve la versión publicada, la única que ve todo el mundo. Para cambiarla, entra como administración en Ajustes.</span>
         <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Volver a la versión publicada</button></span></div>`;
 }
@@ -240,6 +241,8 @@ document.addEventListener('click', async (e) => {
     if (!(await confirmar('¿Descartar los cambios?', 'Vuelves a la configuración publicada en el servidor. Si te arrepientes, «Deshacer» la recupera mientras no recargues la página.', 'Descartar cambios'))) return;
     descartarCambios(); return pintar();
   }
+  if (a === 'descargar-publicacion') { descargar('config.json', ficheroPublicacion(estado.todo, resumenCambios())); return avisar('config.json descargado. Ahora ábrelo en GitHub y súbelo (paso 2).', 'bien'); }
+  if (a === 'publicar-github') return publicarGithub();
   if (estado.vista !== 'ajustes') return;
   if (a === 'salir') { salirSesion(); avisar('Sesión cerrada.'); return pintar(); }
   if (a === 'tema-todos') { estado.todo.tema = document.documentElement.dataset.apariencia || 'day'; cambiado(); avisar('Tema por defecto cambiado. Guarda en el servidor para aplicarlo a todos.'); return pintar(); }
@@ -324,5 +327,5 @@ ponerMenuCorto(document.documentElement.dataset.menu === 'corto', false);
 pintar();
 window.horariosListo = true; // js/arranque.js: la app ha arrancado
 if (borrador) avisar('Se ha recuperado lo que estabas cambiando en este navegador. Si no lo quieres, pulsa «Descartar» abajo.', '', 9000);
-if (estado.servidor === 'demo' && !estado.admin) avisar('Versión de GitHub: ves la configuración publicada. Lo que cambies se queda en este navegador; la administración lo guarda para todos desde Ajustes.', '', 7000);
+if (estado.servidor === 'demo' && !borrador) avisar('Versión de GitHub: ves la versión publicada, la misma para todos. Lo que cambies se guarda en este ordenador hasta que lo publiques (Ajustes → Publicar).', '', 7000);
 else if (estado.servidor !== 'ok') avisar('No hay conexión con el servidor: la página funciona con los valores de partida o con tus cambios de este navegador.', 'mal', 9000);

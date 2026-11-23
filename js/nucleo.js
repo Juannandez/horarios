@@ -2,7 +2,7 @@
 import { CONFIG_BASE, SEDES_BASE } from './datos-base.js';
 import { generar } from './motor.js';
 import { calcularFestivos, claveFuente } from './festivos.js';
-import { EN_GITHUB, leerPublicada, tokenGithub, comprobarToken, olvidarToken, guardarGithub, versionesGithub, versionGithub } from './github.js';
+import { EN_GITHUB, leerPublicada, versionesGithub, versionGithub } from './github.js';
 
 const API = 'api/api.php';
 const CLAVE_BORRADOR = 'horarios.borrador';
@@ -168,7 +168,6 @@ export async function cargar() {
     estado.servidor = 'demo';
     const pub = await leerPublicada();
     if (pub) { delServidor = pub.config; estado.guardado = pub.guardado || ''; }
-    estado.token = tokenGithub(); estado.admin = !!estado.token;
   } else try {
     const d = await api('estado', null, {}, 8000); // al arrancar: si en 8 s no contesta, se sigue sin conexión
     estado.servidor = 'ok';
@@ -186,7 +185,8 @@ export async function cargar() {
   try { borrador = JSON.parse(localStorage.getItem(CLAVE_BORRADOR) || 'null'); } catch (e) {}
   // Una sola versión para todos: solo la administración recupera lo que dejó a medias. Sin sesión, al abrir se ve
   // siempre la versión publicada (los cambios de prueba no sobreviven a recargar la página).
-  if (borrador && !estado.admin) { borrador = null; borrarBorrador(); }
+  // En GitHub (sin sesiones) lo de este ordenador se guarda hasta que se publica o se descarta.
+  if (borrador && !estado.admin && !DEMO) { borrador = null; borrarBorrador(); }
   estado.todo = borrador ? completar(borrador) : base;
   if (borrador && JSON.stringify(estado.todo) === estado.publicada) borrarBorrador();
   let sede = '';
@@ -327,11 +327,10 @@ export function cambiado({ inmediato = false } = {}) {
 }
 
 export async function entrar(clave) {
-  if (DEMO) { await comprobarToken(clave.trim()); estado.token = clave.trim(); estado.admin = true; return; }
   const d = await api('entrar', { clave });
   estado.token = d.token; estado.admin = true; guardarSesion();
 }
-export function salirSesion() { if (DEMO) olvidarToken(); estado.token = ''; estado.admin = false; guardarSesion(); if (estado.plantilla) { estado.plantilla = null; regenerar(); } }
+export function salirSesion() { estado.token = ''; estado.admin = false; guardarSesion(); if (estado.plantilla) { estado.plantilla = null; regenerar(); } }
 
 // Baja los festivos de la fuente de una sede para su año, una vez por sesión (el servidor guarda copia
 // 7 días). Al llegar, se rehace el cuadrante. Si falla, se siguen usando los últimos guardados.
@@ -384,7 +383,7 @@ export async function guardarEnServidor() {
     const d = estado.descargas[`${claveFuente(sede.festivos.fuente)}|${Number(sede.anio)}`];
     if (d && Array.isArray(d.lista)) sede.festivos.cache = d;
   }
-  const d = DEMO ? { guardado: await guardarGithub(estado.todo, resumenCambios()) } : await api('guardar', { config: estado.todo, nota: resumenCambios() });
+  const d = await api('guardar', { config: estado.todo, nota: resumenCambios() });
   estado.publicada = JSON.stringify(estado.todo);
   estado.guardado = d.guardado;
   borrarBorrador();
