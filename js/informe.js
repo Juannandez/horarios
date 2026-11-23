@@ -237,8 +237,18 @@ export function analizarPersona(res, pi, cfg) {
     const pct = sm + st ? Math.round(sm * 100 / (sm + st)) : 0;
     // Dato, no aviso: el 3+1 es la norma del rotatorio actual, que convive con turnos fijos. En un turno común
     // el reparto de mañanas y tardes sigue a lo que hay que cubrir.
-    add({ id: 'rotacion3M1T', titulo: 'Semanas de mañana y de tarde', ok: null,
-      resumen: `${sm} semanas de mañana y ${st} de tarde (${pct} % de mañana). En el rotatorio actual la norma es 3+1 (75 %).`, fechas: [], norma: 'Modelo de rotatorio vigente (como referencia)', normas: ['rotacion3M1T', 'rotacionIrregular'] });
+    const n = reg('tardeCada');
+    if (n != null && Number(n) > 0) {
+      // Una semana de tarde cada N semanas de día: como mucho ceil(total / N) de tarde, con 2 de margen (el ajuste pone
+      // alguna tarde suelta para cubrir mínimos y las vacaciones descuadran el ciclo).
+      const maxT = Math.ceil((sm + st) / Number(n)) + 2;
+      add({ id: 'tardeCada', titulo: `Una semana de tarde cada ${n}`, ok: st <= maxT,
+        resumen: `${sm} semanas de mañana y ${st} de tarde (${pct} % de mañana); con una de cada ${n} serían unas ${Math.round((sm + st) / Number(n))} de tarde.`,
+        fechas: [], norma: 'Regla «Semanas de tarde: una de cada N»', normas: ['rotacion3M1T', 'rotacionIrregular'] });
+    } else {
+      add({ id: 'rotacion3M1T', titulo: 'Semanas de mañana y de tarde', ok: null,
+        resumen: `${sm} semanas de mañana y ${st} de tarde (${pct} % de mañana).`, fechas: [], norma: 'Modelo de rotatorio (como referencia)', normas: ['rotacion3M1T', 'rotacionIrregular'] });
+    }
     const semestres = [[0, 5], [6, 11]].map(([a, b]) => {
       let rot = 0, tot = 0;
       for (let d = 0; d < D; d++) { if (dias[d].mes < a || dias[d].mes > b || !trabaja(d)) continue; tot++; if (codigosPatron.has(celda(d).codigo)) rot++; }

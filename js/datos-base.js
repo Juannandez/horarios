@@ -9,21 +9,20 @@ import { CONTRATOS } from './contratos.js';
 const S = (txt) => txt.trim().split(/\s+/);
 
 // ── Turno rotatorio común para toda la plantilla (teleasistencia y supervisión) ──────────────────
-// Ciclo de 26 semanas; cada fila es una semana de lunes a domingo. Cumple, comprobado con un script:
-// - noches en bloques 2-2-3 (lunes-martes, miércoles-jueves, viernes-domingo): 7 por ciclo, 14 al año;
-// - tras las noches, 5, 3 y 7 días sin turno (práctica actual: 3 o 5);
-// - nunca más de 5 días seguidos ni un cambio de turno sin 12 h de descanso;
-// - 8 fines de semana por ciclo (16 al año), siempre en el turno de su semana;
-// - unos 4,3 días de trabajo por semana: 1.600 h al año antes de vacaciones y ajustes.
+// Ciclo de 27 semanas en 9 bloques de 3 («una semana de tarde cada 3; las demás, mañanas», 24-11-2026).
+// Cumple, comprobado con un script y con el motor (sin reglas que bloquean incumplidas):
+// - 8 semanas de tarde y 15 de mañana (más 3 de noches y 1 de descanso): una de tarde cada 3 semanas de día;
+// - fines de semana trabajados en las semanas 3, 6, 9… 27: exactamente 1 de cada 3, con 2 libres entre medias
+//   (patrón 2 + 1), siempre en el turno de su semana; 5 de mañana, 3 de tarde y 1 de noches por ciclo;
+// - noches en bloques 2-2-3 (lunes-martes, miércoles-jueves, viernes-domingo) con 5, 3 y 7 días libres después;
+// - nunca más de 5 días seguidos y de tarde a mañana siempre con días libres de por medio (12 h o más).
 const SEMANA = {
-  M5: 'RM1 RM1 RM1 RM1 RM1 L L',  T5: 'RT1 RT1 RT1 RT1 RT1 L L',  T4: 'L RT1 RT1 RT1 RT1 L L',
+  M4: 'L RM1 RM1 RM1 RM1 L L',  M5: 'RM1 RM1 RM1 RM1 RM1 L L',  T5: 'RT1 RT1 RT1 RT1 RT1 L L',  T4: 'L RT1 RT1 RT1 RT1 L L',
   Mw: 'L L RM1 RM1 RM1 RM1 RM1',  Tw: 'L L RT1 RT1 RT1 RT1 RT1',
   NA: 'N N L L L L L',            NB: 'L L N N L L L',            NC: 'L L L L N N N',  OFF: 'L L L L L L L',
 };
-// Reordenado el 24-11-2026 para el patrón de fines de semana «2 de descanso y 1 de trabajo»: entre dos fines
-// trabajados siempre hay al menos 2 libres (antes, en un punto del ciclo, solo 1). Mismas semanas y mismas horas.
-const ROTATORIO_COMUN = 'T4 M5 NA M5 Mw T4 T5 Tw T4 M5 Mw NB M5 Mw T4 T5 Tw T4 M5 NC OFF T5 Tw T4 M5 Mw'
-  .split(' ').flatMap(w => S(SEMANA[w]));
+const ROTATORIO_COMUN = 'M4 M5 Tw  T4 M5 Mw  M4 NA Tw  T4 M5 Mw  M4 M5 NC  OFF T5 Mw  M4 M5 Tw  T4 NB Mw  T4 M5 Mw'
+  .split(/\s+/).flatMap(w => S(SEMANA[w]));
 
 const VAC = () => ({ activo: true, dias: 30, desde: '06-01', hasta: '09-30' });
 
@@ -80,6 +79,7 @@ export const REGLAS_CATALOGO = [
   { k: 'maxFines',          texto: 'Máximo de fines de semana trabajados al año (1 de cada 3 ≈ 17)', unidad: 'fines de semana', defecto: 17, normas: ['finesUnoDeTres', 'finesTopeReal'] },
   { k: 'finesCoherentes',   texto: 'Fin de semana en el mismo turno que su semana (sin tardes de fin de semana en semana de mañana, ni al revés)', unidad: '', defecto: true, sinValor: true, normas: ['finesCoherentesSemana'] },
   { k: 'maxFinesSeguidos',  texto: 'Máximo de fines de semana seguidos trabajados', unidad: 'fines de semana', defecto: 2, normas: ['finesSeguidosMax'], decision: 'Horario actual de 2027: en el 97 % del personal de lunes a domingo (Sevilla y Málaga) nunca hay más de 2 fines de semana seguidos trabajados.' },
+  { k: 'tardeCada', texto: 'Semanas de tarde: una de cada N semanas de día (las demás, de mañana)', unidad: 'semanas', defecto: 3, normas: ['rotacion3M1T', 'rotacionIrregular'], decision: 'Decisión de la sección (24-11-2026): «se trabaja una semana de tarde cada 3, las demás son mañanas» (2 + 1, como el R2 de Málaga). El rotatorio de partida tiene 8 de tarde y 15 de mañana en 27 semanas.' },
   { k: 'minFinesLibresEntre', texto: 'Fines de semana libres entre dos trabajados (patrón 2 de descanso y 1 de trabajo)', unidad: 'fines de semana', defecto: 2, normas: ['finesUnoDeTres'], decision: 'Decisión de la sección (24-11-2026): patrón de 2 fines de semana de descanso y 1 de trabajo. Sustituye a «un fin de semana libre al mes» y a «máximo 2 fines seguidos», que con este patrón se cumplen solas. Como mucho 1 de cada 3: unos 16-17 al año.' },
   { k: 'minFinesLibresMes', texto: 'Fines de semana libres completos (sábado y domingo sin turno) como mínimo cada mes', unidad: 'fines de semana', defecto: 1, normas: ['finLibreCadaMes'], decision: 'Decisión de la sección (20-11-2026): «un fin de semana al mes como el horario que tenemos ahora». En el horario de 2027 lo cumple el 99 % en Sevilla y el 100 % en Málaga.' },
   { k: 'descanso',          texto: 'Descanso mínimo entre el fin de un turno y el inicio del siguiente', unidad: 'horas', defecto: 12, normas: ['descansoEntreJornadas'] },
@@ -105,6 +105,7 @@ export const REGLAS = () => ({
   descansoTrasNoche: { activo: true, valor: 3 },
   finesCoherentes: { activo: true, valor: true },
   maxFines:    { activo: true, valor: 17 },
+  tardeCada: { activo: true, valor: 3, nivel: 'informe' },   // una semana de tarde cada 3 (sección, 24-11-2026)
   minFinesLibresEntre: { activo: true, valor: 2 },   // patrón 2 de descanso y 1 de trabajo (sección, 24-11-2026)
   maxFinesSeguidos: { activo: false, valor: 2 },     // se cumple sola con el patrón 2 + 1
   minFinesLibresMes: { activo: false, valor: 1 },    // se cumple sola con el patrón 2 + 1

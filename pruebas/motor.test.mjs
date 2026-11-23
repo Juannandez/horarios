@@ -383,3 +383,21 @@ import { minimosConsultora } from '../js/escenarios-plantilla.js';
   }
   console.log('OK escenario de mínimos de la consultora');
 }
+
+// ── Rotatorio de partida: una semana de tarde cada 3 y 1 fin de semana de cada 3 ─
+{
+  const pat = CONFIG_BASE.sedes[0].grupos[0].patron, sem = pat.length / 7;
+  const tipo = (w) => { const d = pat.slice(w * 7, w * 7 + 7); return d.some(c => c === 'N') ? 'N' : d.some(c => c === 'RT1') ? 'T' : d.some(c => c === 'RM1') ? 'M' : '-'; };
+  const tipos = Array.from({ length: sem }, (_, w) => tipo(w));
+  assert.equal(sem, 27);
+  assert.equal(tipos.filter(t => t === 'T').length, 8, '8 semanas de tarde');
+  assert.equal(tipos.filter(t => t === 'M').length, 15, '15 semanas de mañana');
+  const fines = Array.from({ length: sem }, (_, w) => pat[w * 7 + 5] !== 'L' || pat[w * 7 + 6] !== 'L').map((x, w) => x ? w : -1).filter(w => w >= 0);
+  assert.deepEqual(fines, [2, 5, 8, 11, 14, 17, 20, 23, 26], 'un fin de semana de cada 3');
+  const s = structuredClone(CONFIG_BASE.sedes[0]), r = generar(s);
+  const ta = r.personas.filter(p => p.grupo === 'ta');
+  const cs = ta.map(p => analizarPersona(r, p.pi, s).comprobaciones.find(x => x.id === 'tardeCada'));
+  const bien = cs.filter(c => c && c.ok).length;
+  assert.ok(bien > ta.length / 2, `la mayoría cumple una de cada 3 (${bien} de ${ta.length})`);
+  console.log(`OK rotatorio 2 + 1: ${tipos.join('')} · ${bien} de ${ta.length} personas dentro de «una de cada 3» (±2 semanas)`);
+}
