@@ -24,6 +24,7 @@ const TITULOS = {
   maxFines: (v) => `Más de ${v} fines de semana al año`,
   maxFinesSeguidos: (v) => `Más de ${v} fines de semana seguidos`,
   minFinesLibresMes: (v) => `Mes con menos de ${v} fin${Number(v) === 1 ? '' : 'es'} de semana libre${Number(v) === 1 ? '' : 's'}`,
+  minFinesLibresEntre: (v) => `Menos de ${v} fines de semana libres entre dos trabajados`,
   finesCoherentes: () => 'Fin de semana en otro turno que su semana',
   tope: (v) => `Más de ${v} h por encima de la jornada`,
 };
@@ -85,19 +86,19 @@ export function infracciones(res, cfg) {
     }
     // Fines de semana: por sábado (con su domingo)
     const finde = sabados.map(s => ({ s, dias: [s.i, s.i + 1].filter(x => x < D), trab: trab(s.i) || trab(s.i + 1) }));
-    if (salida.maxFines) {
+    if (salida.maxFines && !p.exentoFines) {
       const max = val('maxFines'); let n = 0; const sobran = [];
       for (const f of finde) if (f.trab && ++n > max) sobran.push(...f.dias.filter(trab));
       if (sobran.length) caso('maxFines', sobran, `${n} fines de semana`);
     }
-    if (salida.maxFinesSeguidos) {
+    if (salida.maxFinesSeguidos && !p.exentoFines) {
       const max = val('maxFinesSeguidos'); let racha = 0;
       for (const f of finde) {
         racha = f.trab ? racha + 1 : 0;
         if (racha > max) caso('maxFinesSeguidos', f.dias.filter(trab), `${racha} fines de semana seguidos`);
       }
     }
-    if (salida.minFinesLibresMes) {
+    if (salida.minFinesLibresMes && !p.exentoFines) {
       const min = val('minFinesLibresMes');
       for (let m = 0; m < 12; m++) {
         const delMes = finde.filter(f => f.s.mes === m);
@@ -105,6 +106,14 @@ export function infracciones(res, cfg) {
         const libres = delMes.filter(f => !f.trab).length;
         if (libres < min) caso('minFinesLibresMes', delMes.flatMap(f => f.dias.filter(trab)), `${libres} libres en el mes`);
       }
+    }
+    if (salida.minFinesLibresEntre && !p.exentoFines) {
+      const min = val('minFinesLibresEntre'); let ultimo = -1;
+      finde.forEach((f, k) => {
+        if (!f.trab) return;
+        if (ultimo >= 0 && k - ultimo - 1 < min) caso('minFinesLibresEntre', f.dias.filter(trab), `${k - ultimo - 1} libre${k - ultimo - 1 === 1 ? '' : 's'} desde el anterior trabajado`);
+        ultimo = k;
+      });
     }
     if (salida.finesCoherentes) {
       for (const f of finde) {

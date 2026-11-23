@@ -20,7 +20,9 @@ const SEMANA = {
   Mw: 'L L RM1 RM1 RM1 RM1 RM1',  Tw: 'L L RT1 RT1 RT1 RT1 RT1',
   NA: 'N N L L L L L',            NB: 'L L N N L L L',            NC: 'L L L L N N N',  OFF: 'L L L L L L L',
 };
-const ROTATORIO_COMUN = 'M5 T5 Mw T4 M5 NA T5 Tw T4 M5 Mw NB M5 Tw T4 M5 Mw T4 NC OFF T5 Tw T4 M5 Mw T4'
+// Reordenado el 24-11-2026 para el patrón de fines de semana «2 de descanso y 1 de trabajo»: entre dos fines
+// trabajados siempre hay al menos 2 libres (antes, en un punto del ciclo, solo 1). Mismas semanas y mismas horas.
+const ROTATORIO_COMUN = 'T4 M5 NA M5 Mw T4 T5 Tw T4 M5 Mw NB M5 Mw T4 T5 Tw T4 M5 NC OFF T5 Tw T4 M5 Mw'
   .split(' ').flatMap(w => S(SEMANA[w]));
 
 const VAC = () => ({ activo: true, dias: 30, desde: '06-01', hasta: '09-30' });
@@ -56,7 +58,7 @@ const LIBRES = () => [
 export const NIVEL_DEFECTO = {
   descanso: 'bloquea', maxSeguidos: 'bloquea', maxNoches: 'bloquea', maxNochesSeguidas: 'bloquea', descansoTrasNoche: 'bloquea',
   bloquesNoche: 'bloquea', tope: 'bloquea', ratio: 'bloquea',
-  maxFines: 'avisa', maxFinesSeguidos: 'avisa', minFinesLibresMes: 'avisa', finesCoherentes: 'avisa',
+  maxFines: 'avisa', maxFinesSeguidos: 'avisa', minFinesLibresMes: 'avisa', minFinesLibresEntre: 'avisa', finesCoherentes: 'avisa',
 };
 export const nivelRegla = (k, r) => (r && r.nivel) || NIVEL_DEFECTO[k] || 'avisa';
 
@@ -78,6 +80,7 @@ export const REGLAS_CATALOGO = [
   { k: 'maxFines',          texto: 'Máximo de fines de semana trabajados al año (1 de cada 3 ≈ 17)', unidad: 'fines de semana', defecto: 17, normas: ['finesUnoDeTres', 'finesTopeReal'] },
   { k: 'finesCoherentes',   texto: 'Fin de semana en el mismo turno que su semana (sin tardes de fin de semana en semana de mañana, ni al revés)', unidad: '', defecto: true, sinValor: true, normas: ['finesCoherentesSemana'] },
   { k: 'maxFinesSeguidos',  texto: 'Máximo de fines de semana seguidos trabajados', unidad: 'fines de semana', defecto: 2, normas: ['finesSeguidosMax'], decision: 'Horario actual de 2027: en el 97 % del personal de lunes a domingo (Sevilla y Málaga) nunca hay más de 2 fines de semana seguidos trabajados.' },
+  { k: 'minFinesLibresEntre', texto: 'Fines de semana libres entre dos trabajados (patrón 2 de descanso y 1 de trabajo)', unidad: 'fines de semana', defecto: 2, normas: ['finesUnoDeTres'], decision: 'Decisión de la sección (24-11-2026): patrón de 2 fines de semana de descanso y 1 de trabajo. Sustituye a «un fin de semana libre al mes» y a «máximo 2 fines seguidos», que con este patrón se cumplen solas. Como mucho 1 de cada 3: unos 16-17 al año.' },
   { k: 'minFinesLibresMes', texto: 'Fines de semana libres completos (sábado y domingo sin turno) como mínimo cada mes', unidad: 'fines de semana', defecto: 1, normas: ['finLibreCadaMes'], decision: 'Decisión de la sección (20-11-2026): «un fin de semana al mes como el horario que tenemos ahora». En el horario de 2027 lo cumple el 99 % en Sevilla y el 100 % en Málaga.' },
   { k: 'descanso',          texto: 'Descanso mínimo entre el fin de un turno y el inicio del siguiente', unidad: 'horas', defecto: 12, normas: ['descansoEntreJornadas'] },
   { k: 'maxSeguidos',       texto: 'Máximo de días de trabajo seguidos', unidad: 'días', defecto: 5, decision: 'Decisión de la sección (20-11-2026): 5 días. Coincide con el máximo del patrón de la consultora y con la petición de CGT de «sin semanas de 6 días».', normas: ['maxDiasSeguidos'] },
@@ -102,8 +105,9 @@ export const REGLAS = () => ({
   descansoTrasNoche: { activo: true, valor: 3 },
   finesCoherentes: { activo: true, valor: true },
   maxFines:    { activo: true, valor: 17 },
-  maxFinesSeguidos: { activo: true, valor: 2 },
-  minFinesLibresMes: { activo: true, valor: 1 },
+  minFinesLibresEntre: { activo: true, valor: 2 },   // patrón 2 de descanso y 1 de trabajo (sección, 24-11-2026)
+  maxFinesSeguidos: { activo: false, valor: 2 },     // se cumple sola con el patrón 2 + 1
+  minFinesLibresMes: { activo: false, valor: 1 },    // se cumple sola con el patrón 2 + 1
   descanso:    { activo: true, valor: 12 },
   maxSeguidos: { activo: true, valor: 5 },
   tope:        { activo: true, valor: 0 },   // horas por encima del objetivo que se admiten sin aviso (bolsa): decisión de la sección
@@ -174,6 +178,10 @@ const SEVILLA = {
   grupos: [
     grupo('ta', 'TA', 'Turno rotatorio común', 'TA', 256, ROTATORIO_COMUN),
     grupo('sup', 'SUP', 'Turno rotatorio común (supervisión)', 'SUP', 29, [], { patronDe: 'ta' }),
+    // Refuerzo de verano: con el patrón de fines de semana 2 + 1 no llega la plantilla para los fines de semana de
+    // julio a septiembre (vacaciones). 35 personas del 21-jun al 30-sep dejan casi cubiertos los mínimos.
+    // Condiciones propias, más flexibles: sin el patrón de fines de semana ni sus topes, y sin vacaciones.
+    grupo('rv', 'TA', 'Refuerzo de verano', 'RV', 35, [], { patronDe: 'ta', desde: '2027-06-21', hasta: '2027-09-30', condiciones: { libreFines: true, sinVacaciones: true }, vacaciones: { activo: false, dias: 0, desde: '06-01', hasta: '09-30' } }),
   ],
   // Mínimos por franja y tipo de día. "domingo" vale también para festivos.
   // Solapes y horas de entrada que rotan (Parámetros › Turnos). De ejemplo, desactivada: los miércoles de una de
@@ -226,6 +234,10 @@ const MALAGA = {
   grupos: [
     grupo('ta', 'TA', 'Turno rotatorio común', 'TA', 242, ROTATORIO_COMUN, { horasObjetivo: 1494.5 }),
     grupo('sup', 'SUP', 'Turno rotatorio común (supervisión)', 'SUP', 24, [], { patronDe: 'ta', horasObjetivo: 1494.5 }),
+    // Refuerzo de verano: con el patrón de fines de semana 2 + 1 no llega la plantilla para los fines de semana de
+    // julio a septiembre (vacaciones). 35 personas del 21-jun al 30-sep dejan casi cubiertos los mínimos.
+    // Condiciones propias, más flexibles: sin el patrón de fines de semana ni sus topes, y sin vacaciones.
+    grupo('rv', 'TA', 'Refuerzo de verano', 'RV', 35, [], { patronDe: 'ta', desde: '2027-06-21', hasta: '2027-09-30', condiciones: { libreFines: true, sinVacaciones: true }, vacaciones: { activo: false, dias: 0, desde: '06-01', hasta: '09-30' }, horasObjetivo: 1494.5 }),
   ],
   // Mínimos de Málaga desde el 15-10-2026: punta 09:45-14:30, tarde 16:45-19:45 y noche.
   // Solapes y horas de entrada que rotan (Parámetros › Turnos). De ejemplo, desactivada: los miércoles de una de

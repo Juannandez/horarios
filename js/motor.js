@@ -132,6 +132,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const maxSeguidos = reg('maxSeguidos', 6), tope = reg('tope', 0), ratio = reg('ratio', 16);
   const maxNochesSeguidas = reg('maxNochesSeguidas', 3), maxFinesSeguidos = reg('maxFinesSeguidos', 2);
   const minFinesLibresMes = reg('minFinesLibresMes', 1);
+  const minFinesLibresEntre = reg('minFinesLibresEntre', 2);   // patrón «2 de descanso y 1 de trabajo»
   const bloques = usa('bloquesNoche') ? parseBloques(R.bloquesNoche.valor) : null;
   const finesCoherentes = !!usa('finesCoherentes');
   const descansoTrasNoche = reg('descansoTrasNoche', 3) || 0;
@@ -227,6 +228,8 @@ export function generar(cfgEntrada, opciones = {}) {
         nombre: real ? real.nombre : '', turnoActual: real ? real.turnoActual || '' : '', exentoNoches, horasSemana,
         contrato: contrato ? contrato.id : '', contratoNombre: contrato ? contrato.nombre : '', franjas, turnoContrato,
         sinFindes: esp.sinFindes, diasLibres: esp.diasLibres, desde, hasta,
+        // Condiciones propias del grupo (refuerzos flexibles): sin reglas de fines de semana o sin vacaciones.
+        exentoFines: !!(g.condiciones && g.condiciones.libreFines), sinVacaciones: !!(g.condiciones && g.condiciones.sinVacaciones),
         // Noches que puede hacer por encima de las de oficio (cesión): «todos», o «voluntaria» si lo ha aceptado.
         extraNoches: maxNoches == null || exentoNoches ? 0 : (cesion.modo === 'todos' || (cesion.modo === 'voluntaria' && esp.cedeNoches))
           ? Math.max(0, Number(cesion.tope) - maxNoches) : 0,
@@ -278,7 +281,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const vacSede = cfg.vacaciones && cfg.vacaciones.modo === 'periodos' ? cfg.vacaciones : null;
   let vacaciones = null;
   if (vacSede) {
-    vacaciones = asignarVacaciones(vacSede, personas, listaFestivos);
+    vacaciones = asignarVacaciones(vacSede, personas.filter(p => !p.sinVacaciones), listaFestivos);
     const posDiaV = new Map(dias.map(d => [d.fecha, d.i]));
     personas.forEach((p, pi) => {
       const a = vacaciones.porPersona.get(p.id);
@@ -422,9 +425,10 @@ export function generar(cfgEntrada, opciones = {}) {
       if (n > maxSeguidos) return false;
     }
     if (maxNoches != null && nuevo.franja === 'noche' && viejo.franja !== 'noche' && noches[pi] + 1 > topeNoches(pi)) return false;
-    if (maxFines != null && dias[d].finde && !viejo.trabaja && finSem[pi * W + dias[d].semana] === 0 && fines[pi] + 1 > maxFines) return false;
-    if (maxFinesSeguidos != null && dias[d].finde && !viejo.trabaja && finSem[pi * W + dias[d].semana] === 0 && rachaFines(pi, dias[d].semana) > maxFinesSeguidos) return false;
-    if (minFinesLibresMes != null && dias[d].finde && !viejo.trabaja && finSem[pi * W + dias[d].semana] === 0 && mesFinde[dias[d].semana] >= 0 && libresMes(pi, mesFinde[dias[d].semana]) - 1 < minFinesLibresMes) return false;
+    if (maxFines != null && !personas[pi].exentoFines && dias[d].finde && !viejo.trabaja && finSem[pi * W + dias[d].semana] === 0 && fines[pi] + 1 > maxFines) return false;
+    if (maxFinesSeguidos != null && !personas[pi].exentoFines && dias[d].finde && !viejo.trabaja && finSem[pi * W + dias[d].semana] === 0 && rachaFines(pi, dias[d].semana) > maxFinesSeguidos) return false;
+    if (minFinesLibresMes != null && !personas[pi].exentoFines && dias[d].finde && !viejo.trabaja && finSem[pi * W + dias[d].semana] === 0 && mesFinde[dias[d].semana] >= 0 && libresMes(pi, mesFinde[dias[d].semana]) - 1 < minFinesLibresMes) return false;
+    if (minFinesLibresEntre != null && !personas[pi].exentoFines && dias[d].finde && !viejo.trabaja && finSem[pi * W + dias[d].semana] === 0 && pegados(pi, dias[d].semana)) return false;
     // Tras un bloque de noches, sus días de descanso no se tocan.
     if (descansoTrasNoche && nuevo.franja !== 'noche') {
       for (let j = 1; j <= descansoTrasNoche; j++) if (esNoche(pi, d - j)) return false;
@@ -464,6 +468,14 @@ export function generar(cfgEntrada, opciones = {}) {
     for (let x = w + 1; x < W && finSem[pi * W + x] > 0; x++) n++;
     return n;
   };
+  // ¿Hay otro fin de semana trabajado a menos de «minFinesLibresEntre» semanas de la semana w? (patrón 2 + 1)
+  const pegados = (pi, w) => {
+    for (let j = 1; j <= minFinesLibresEntre; j++) {
+      if (w - j >= 0 && finSem[pi * W + w - j] > 0) return true;
+      if (w + j < W && finSem[pi * W + w + j] > 0) return true;
+    }
+    return false;
+  };
   // Fines de semana sin ningún turno de una persona en un mes.
   const libresMes = (pi, m) => { let n = 0; for (const w of findesMes[m]) if (finSem[pi * W + w] === 0) n++; return n; };
   // Comprueba las reglas en los días a..b de una persona después de cambiarlos (para los bloques de noche).
@@ -484,16 +496,17 @@ export function generar(cfgEntrada, opciones = {}) {
       if (descansoTrasNoche && esNoche(pi, x) && !esNoche(pi, x - 1)) {
         for (let y = x - 2; y >= Math.max(0, x - 1 - descansoTrasNoche); y--) if (esNoche(pi, y)) return false;
       }
-      if (maxFinesSeguidos != null && dias[x].finde && trabajaEn(pi, x)) {
+      if (maxFinesSeguidos != null && !personas[pi].exentoFines && dias[x].finde && trabajaEn(pi, x)) {
         const w = dias[x].semana; let n = 1;
         for (let y = w - 1; y >= 0 && finSem[pi * W + y] > 0; y--) n++;
         for (let y = w + 1; y < W && finSem[pi * W + y] > 0; y++) n++;
         if (n > maxFinesSeguidos) return false;
       }
-      if (minFinesLibresMes != null && dias[x].finde && trabajaEn(pi, x) && mesFinde[dias[x].semana] >= 0 && libresMes(pi, mesFinde[dias[x].semana]) < minFinesLibresMes) return false;
+      if (minFinesLibresMes != null && !personas[pi].exentoFines && dias[x].finde && trabajaEn(pi, x) && mesFinde[dias[x].semana] >= 0 && libresMes(pi, mesFinde[dias[x].semana]) < minFinesLibresMes) return false;
+      if (minFinesLibresEntre != null && !personas[pi].exentoFines && dias[x].finde && trabajaEn(pi, x) && pegados(pi, dias[x].semana)) return false;
     }
     if (maxNoches != null && noches[pi] > topeNoches(pi)) return false;
-    if (maxFines != null && fines[pi] > maxFines) return false;
+    if (maxFines != null && !personas[pi].exentoFines && fines[pi] > maxFines) return false;
     return true;
   };
   const libre = (pi, d) => {
@@ -793,7 +806,8 @@ export function generar(cfgEntrada, opciones = {}) {
         for (let x = Math.max(0, lunes); x < Math.min(D, lunes + 5); x++) { const f = t(x).franja; if (t(x).trabaja && f === 'manana') m++; else if (t(x).trabaja && f === 'tarde') ta++; }
         if ((m > ta && t(d).franja === 'tarde') || (ta > m && t(d).franja === 'manana')) return false;
       }
-      if (minFinesLibresMes != null && mesFinde[dias[d].semana] >= 0 && libresMes(pi, mesFinde[dias[d].semana]) < minFinesLibresMes) return false;
+      if (minFinesLibresMes != null && !personas[pi].exentoFines && mesFinde[dias[d].semana] >= 0 && libresMes(pi, mesFinde[dias[d].semana]) < minFinesLibresMes) return false;
+      if (minFinesLibresEntre != null && !personas[pi].exentoFines && pegados(pi, dias[d].semana)) return false;
     }
     return true;
   };

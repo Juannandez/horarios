@@ -66,7 +66,8 @@ export function leerRuta(obj, ruta) { return ruta.split('.').reduce((o, k) => (o
 export function ponerRuta(obj, ruta, valor) {
   const partes = ruta.split('.');
   const ultimo = partes.pop();
-  const destino = partes.reduce((o, k) => o[k], obj);
+  // Crea los objetos intermedios que falten (p. ej. grupos.3.condiciones.libreFines en un refuerzo sin condiciones).
+  const destino = partes.reduce((o, k) => (o[k] == null ? (o[k] = {}) : o[k]), obj);
   destino[ultimo] = valor;
 }
 

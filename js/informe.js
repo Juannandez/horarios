@@ -84,18 +84,18 @@ export function analizarPersona(res, pi, cfg) {
     add({ id: 'maxNochesSeguidas', titulo: 'Noches seguidas', ok: !malos.length, resumen: malos.length ? `${malos.length} tramos con más de ${max} noches seguidas.` : `Nunca más de ${max} noches seguidas.`, fechas: malos, norma: 'Regla «Máximo de noches seguidas»', normas: ['maxNochesSeguidasOficio'] });
   }
   // Fines de semana
-  if (reg('maxFines') != null) {
+  if (reg('maxFines') != null && !p.exentoFines) {
     const max = Number(reg('maxFines'));
     add({ id: 'maxFines', titulo: 'Fines de semana trabajados', ok: c.fines <= max, resumen: `${c.fines} fines de semana con algún turno; tope ${max}.`, fechas: [], norma: 'Regla «Máximo de fines de semana al año»', normas: ['finesUnoDeTres', 'finesTopeReal'] });
   }
-  if (reg('maxFinesSeguidos') != null) {
+  if (reg('maxFinesSeguidos') != null && !p.exentoFines) {
     const max = Number(reg('maxFinesSeguidos')), malos = []; let racha = 0, inicio = null;
     for (const s of semanas.values()) {
       if (s.finde) { if (!racha) inicio = s.primerDia; racha++; if (racha === max + 1) malos.push(`desde la semana del ${fechaTxt(dias[inicio].fecha)}`); } else racha = 0;
     }
     add({ id: 'maxFinesSeguidos', titulo: 'Fines de semana seguidos', ok: !malos.length, resumen: malos.length ? `${malos.length} veces con más de ${max} fines de semana seguidos.` : `Nunca más de ${max} seguidos.`, fechas: malos, norma: 'Regla «Máximo de fines de semana seguidos» (práctica del horario de 2027)', normas: ['finesSeguidosMax'] });
   }
-  if (reg('minFinesLibresMes') != null) {
+  if (reg('minFinesLibresMes') != null && !p.exentoFines) {
     // Fines de semana sin turno de cada mes (cuenta el mes del sábado).
     const min = Number(reg('minFinesLibresMes')), porMes = new Map();
     for (const s of semanas.values()) {
@@ -108,6 +108,17 @@ export function analizarPersona(res, pi, cfg) {
     }
     const malos = [...porMes.values()].filter(m => m.libres < min).map(m => `${MESES_LARGOS[Number(m.fecha.slice(5, 7)) - 1]}: ${m.libres}`);
     add({ id: 'minFinesLibresMes', titulo: 'Fin de semana libre cada mes', ok: !malos.length, resumen: malos.length ? `${malos.length} meses con menos de ${min} fin${min === 1 ? '' : 'es'} de semana libre${min === 1 ? '' : 's'}.` : `Todos los meses tienen al menos ${min} fin${min === 1 ? '' : 'es'} de semana libre${min === 1 ? '' : 's'} (sábado y domingo sin turno).`, fechas: malos, norma: 'Regla «Fines de semana libres cada mes» (decisión de la sección; práctica del horario de 2027)', normas: ['finLibreCadaMes'] });
+  }
+  if (reg('minFinesLibresEntre') != null && !p.exentoFines) {
+    // Patrón «2 de descanso y 1 de trabajo»: entre dos fines de semana trabajados, al menos N libres.
+    const min = Number(reg('minFinesLibresEntre')), malos = []; let ultimo = -1, k = 0;
+    for (const s of semanas.values()) {
+      if (s.finde) { if (ultimo >= 0 && k - ultimo - 1 < min) malos.push(`semana del ${fechaTxt(dias[s.primerDia].fecha)} (${k - ultimo - 1} libre${k - ultimo - 1 === 1 ? '' : 's'} antes)`); ultimo = k; }
+      k++;
+    }
+    add({ id: 'minFinesLibresEntre', titulo: `Patrón de fines de semana: ${min} de descanso y 1 de trabajo`, ok: !malos.length,
+      resumen: malos.length ? `${malos.length} fines de semana trabajados con menos de ${min} libres antes.` : `Siempre al menos ${min} fines de semana libres entre dos trabajados.`,
+      fechas: malos, norma: 'Regla «Fines de semana libres entre dos trabajados»', normas: ['finesUnoDeTres'] });
   }
   // Fin de semana coherente con la semana (sin tardes de fin de semana en semana de mañana y al revés)
   {

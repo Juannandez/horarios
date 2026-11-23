@@ -323,10 +323,12 @@ export function seccionCobertura(cfg) {
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir-ausencia">Añadir ausencia</button></div>
   </section>
   <section class="panel"><h2>Refuerzos temporales</h2>
-    <p class="tenue">Personal extra entre unas fechas (sustituciones de verano, bolsa de sustitución). Es un grupo con su número de personas y su patrón, que solo está esas fechas.</p>
-    ${refuerzos.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Grupo</th><th scope="col" class="num">Personas</th><th scope="col">Desde</th><th scope="col">Hasta</th></tr></thead><tbody>
+    <p class="tenue">Personal extra entre unas fechas (sustituciones de verano, bolsa de sustitución). Es un grupo con su número de personas y su patrón, que solo está esas fechas. Puede tener condiciones propias, más flexibles que la plantilla: por ejemplo, trabajar fines de semana sin el patrón 2 + 1 o no tener vacaciones en ese tramo.</p>
+    ${refuerzos.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Grupo</th><th scope="col" class="num">Personas</th><th scope="col">Desde</th><th scope="col">Hasta</th><th scope="col">Condiciones propias (flexibles)</th></tr></thead><tbody>
       ${refuerzos.map(({ g, i }) => `<tr><td>${txt(`grupos.${i}.nombre`, g.nombre, 'aria-label="Nombre"')}</td><td class="num">${num(`grupos.${i}.personas`, g.personas, 'min="0" aria-label="Personas"')}</td>
-        <td><input type="date" data-ruta="grupos.${i}.desde" value="${esc(g.desde || '')}" aria-label="Desde"></td><td><input type="date" data-ruta="grupos.${i}.hasta" value="${esc(g.hasta || '')}" aria-label="Hasta"></td></tr>`).join('')}
+        <td><input type="date" data-ruta="grupos.${i}.desde" value="${esc(g.desde || '')}" aria-label="Desde"></td><td><input type="date" data-ruta="grupos.${i}.hasta" value="${esc(g.hasta || '')}" aria-label="Hasta"></td>
+        <td>${chk(`grupos.${i}.condiciones.libreFines`, !!(g.condiciones && g.condiciones.libreFines), 'Fines de semana sin las reglas de fines (patrón 2 + 1, topes)', 'data-estructura="1"')}
+          ${chk(`grupos.${i}.condiciones.sinVacaciones`, !!(g.condiciones && g.condiciones.sinVacaciones), 'Sin vacaciones (temporal)', 'data-estructura="1"')}</td></tr>`).join('')}
     </tbody></table></div>` : '<p class="tenue">No hay refuerzos.</p>'}
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir-refuerzo" data-colectivo="TA">Añadir refuerzo de teleasistencia</button><button type="button" class="btn" data-accion="anadir-refuerzo" data-colectivo="SUP">Añadir refuerzo de supervisión</button></div>
   </section>

@@ -70,7 +70,7 @@ const pct = (n, t) => (t ? Math.round(100 * n / t) : null);
 // quien trabaja de lunes a domingo (sin grupos «solo laborables») y a jornada completa.
 export function cifrasCuadrante(res, colectivo = 'TA') {
   const { D, dias, turnos: T, grid } = res;
-  const per = res.personas.filter(p => p.colectivo === colectivo && !p.soloLaborables && (p.horasSemana == null || Number(p.horasSemana) === 35));
+  const per = res.personas.filter(p => p.colectivo === colectivo && !p.soloLaborables && !p.exentoFines && (p.horasSemana == null || Number(p.horasSemana) === 35));
   const sabados = dias.filter(d => d.dow === 5);
   const lunes = dias.filter(d => d.dow === 0 && d.i + 7 <= D);
   const fines = [], finesMax = [], seguidosMax = [], semanasMenos2 = [], incoherentes = [], nochesCon = [];
