@@ -5,7 +5,7 @@
 //   Planday o la foto de publicación de Genesys). Se puede traer cualquiera al navegador para revisarla o volver a ella.
 import { estado, esc, fmtNum, fmtFecha, cambiado, avisar, confirmar, modal, api, clonar, completar, resultadoDe, resumenCambios, nuevoId } from './nucleo.js';
 import { infracciones, puntuacion } from './puntuacion.js';
-import { PLANTILLAS_ESCENARIO } from './escenarios-plantilla.js';
+import { PLANTILLAS_ESCENARIO, TURNOS_DOS_LINEAS } from './escenarios-plantilla.js';
 
 const MAX_ESCENARIOS = 8;
 let versiones = undefined;   // undefined = sin consultar; [] = ninguna
@@ -89,10 +89,25 @@ export function eventosEscenarios(raiz, repintar, irA) {
     if (a === 'plantilla') {
       const p = PLANTILLAS_ESCENARIO.find(x => x.id === b.dataset.plantilla);
       if (!p) return;
+      const fila = (k, et) => { const t = TURNOS_DOS_LINEAS.find(x => x.codigo === k); return `<tr><td>${et}</td>
+        <td><input type="time" id="dl-${k}-i" value="${t.inicio}" aria-label="${et}: entrada"></td><td><input type="time" id="dl-${k}-f" value="${t.fin}" aria-label="${et}: salida"></td></tr>`; };
+      const op = await modal({
+        titulo: 'Dos líneas de horario fijo',
+        html: `<p class="tenue">Cada persona va siempre en su línea y entra siempre a la misma hora en su franja; el solape lo pone la otra línea. Comprueba que la mañana A empieza antes de que acabe la noche (relevo con solape). Después podrás cambiar las horas en Parámetros › Turnos.</p>
+          <table class="tabla-lista"><thead><tr><th scope="col">Turno</th><th scope="col">Entrada</th><th scope="col">Salida</th></tr></thead><tbody>
+          ${fila('MA', 'Mañana línea A')}${fila('TA', 'Tarde línea A')}${fila('MB', 'Mañana línea B')}${fila('TB', 'Tarde línea B')}</tbody></table>
+          <label class="campo" style="margin-top:10px"><span>Personas en la línea A (%)</span><input type="number" id="dl-rep" value="50" min="0" max="100" style="width:90px"></label>`,
+        botones: [{ texto: 'Cancelar', valor: null }, { texto: 'Crear escenario', tipo: 'primario', valor: (velo) => ({
+          reparto: (Number(velo.querySelector('#dl-rep').value) || 0) / 100,
+          horas: Object.fromEntries(['MA', 'TA', 'MB', 'TB'].map(k => [k, [velo.querySelector(`#dl-${k}-i`).value, velo.querySelector(`#dl-${k}-f`).value]])) }) }],
+      });
+      if (!op) return;
       let nueva;
-      try { const { escenarios, ...sinNada } = clonar(cfg); void escenarios; nueva = p.crea(sinNada); }
+      try { const { escenarios, ...sinNada } = clonar(cfg); void escenarios; nueva = p.crea(sinNada, op); }
       catch (err) { return avisar(`No se ha podido crear el escenario: ${esc(err.message)}`, 'mal', 0); }
-      lista.push({ id: nuevoId('esc'), sede: cfg.id, nombre: p.nombre, nota: p.nota.slice(0, 200), fecha: new Date().toISOString(), cfg: nueva });
+      const h = (k) => op.horas[k].join('-');
+      const nota = `Línea A ${h('MA')} / ${h('TA')}, línea B ${h('MB')} / ${h('TB')}; ${Math.round(op.reparto * 100)} % en la línea A.`;
+      lista.push({ id: nuevoId('esc'), sede: cfg.id, nombre: p.nombre, nota, fecha: new Date().toISOString(), cfg: nueva });
       cambiado({ inmediato: true }); repintar();
       return avisar(`Escenario «${esc(p.nombre)}» creado a partir del cuadrante actual de ${esc(cfg.nombre)}. Ábrelo para verlo o compáralo con el actual.`, 'bien', 8000);
     }
