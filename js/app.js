@@ -48,11 +48,11 @@ function pintarAjustes() {
       ? `Versión de GitHub. Todo el mundo ve la configuración publicada${estado.guardado ? ` (publicada el ${fmtFecha(estado.guardado.slice(0, 10))})` : ' (la de partida: todavía no se ha publicado ninguna)'}. Lo que cambies se guarda en este ordenador hasta que lo publiques.`
       : 'Sin conexión con el servidor. La página funciona, pero los cambios solo se guardan en este navegador y las encuestas no se pueden enviar.';
   raiz.innerHTML = `<div class="cabecera"><div><h1>Ajustes</h1><p>${esc(servidor)}</p></div></div>
-    <section class="panel"><h2>Apariencia</h2><p class="tenue">Las de Gestlogix. Se guarda en este navegador.${estado.admin ? ' Con «Usar para todos», también en el servidor como apariencia por defecto.' : ''}</p>
+    <section class="panel"><h2>Apariencia</h2><p class="tenue">Se guarda en este navegador.${estado.admin ? ' Con «Usar para todos», también en el servidor como apariencia por defecto.' : ''}</p>
       <div class="apariencias" role="radiogroup" aria-label="Apariencia">${APARIENCIAS.map(([v, t, d]) =>
         `<label class="apariencia"><input type="radio" name="tema" value="${v}" ${tema === v ? 'checked' : ''}><span><b>${t}</b><small>${d}</small></span></label>`).join('')}</div>
       ${estado.admin ? '<div class="fila-acciones"><button type="button" class="btn mini" data-accion="tema-todos">Usar para todos</button></div>' : ''}
-      <p class="tenue" style="margin-top:10px">Fondo de capas: imagen de Vecteezy (licencia gratuita), la misma de Gestlogix.</p></section>
+      <p class="tenue" style="margin-top:10px">Fondo de capas: imagen de Vecteezy (licencia gratuita).</p></section>
     <section class="panel"><h2>Portal Horario</h2><p class="tenue">El sistema oficial de la Agencia para pedir cambios, días y horas de bolsa. «Mi horario» comprueba antes si se cubren los mínimos y lleva a esta dirección para pedirlo.</p>
       <label class="campo"><span>Dirección</span><input type="url" id="portal-horario" value="${esc(estado.todo.portalHorario || PORTAL_HORARIO)}" style="width:min(560px,100%)" ${estado.admin ? '' : 'disabled title="Solo administración"'}></label></section>
     <section class="panel"><h2>Administración</h2>

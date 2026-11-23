@@ -221,17 +221,23 @@ export function seccionGrupos(cfg) {
       <button type="button" class="btn" data-accion="anadir-grupo" data-colectivo="SUP">Añadir grupo de supervisores</button></div></section>`;
 }
 
+const DIAS_MIN = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const DIAS_MIN_LARGO = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 export function seccionMinimos(cfg) {
-  const filas = cfg.minimos.map((m, i) => `<tr>
+  const filas = cfg.minimos.map((m, i) => {
+    const dias = Array.isArray(m.dias) && m.dias.length === 7 ? m.dias : [m.laborable, m.laborable, m.laborable, m.laborable, m.laborable, m.sabado, m.domingo];
+    const fes = m.festivo ?? m.domingo ?? dias[6];
+    return `<tr>
     <td>${sel(`minimos.${i}.colectivo`, m.colectivo, COLECTIVOS.map(c => [c.id, c.nombre]), 'aria-label="Colectivo"')}</td>
     <td>${sel(`minimos.${i}.franja`, m.franja, FRANJAS.map(f => [f.id, f.nombre]), 'aria-label="Franja"')}</td>
-    <td class="num">${num(`minimos.${i}.laborable`, m.laborable, 'min="0" aria-label="De lunes a viernes"')}</td>
-    <td class="num">${num(`minimos.${i}.sabado`, m.sabado, 'min="0" aria-label="Sábado"')}</td>
-    <td class="num">${num(`minimos.${i}.domingo`, m.domingo, 'min="0" aria-label="Domingo y festivo"')}</td>
-    <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar" data-lista="minimos" data-i="${i}">Quitar</button></td></tr>`).join('');
+    ${dias.map((v, k) => `<td class="num${k >= 5 ? ' finde' : ''}">${num(`minimos.${i}.dias.${k}`, v ?? 0, `min="0" style="width:58px" aria-label="${DIAS_MIN_LARGO[k]}"`)}</td>`).join('')}
+    <td class="num finde">${num(`minimos.${i}.festivo`, fes ?? 0, 'min="0" style="width:58px" aria-label="Festivo"')}</td>
+    <td class="num"><button type="button" class="btn mini" data-accion="minimo-lv" data-i="${i}" title="Pone el valor del lunes de martes a viernes">L → M-V</button>
+      <button type="button" class="btn mini peligro" data-accion="quitar" data-lista="minimos" data-i="${i}">Quitar</button></td></tr>`;
+  }).join('');
   return `<section class="panel" id="sec-minimos"><h2>Mínimos</h2>
-    <p class="tenue">Personas en sala por franja y tipo de día. Valores de partida: Anexo 2 «Mínimos SAT 2013» de Sevilla. Si hay dos filas iguales, vale la más alta. En supervisión, el mínimo sube además con la ratio de Reglas.</p>
-    <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Colectivo</th><th scope="col">Franja</th><th scope="col" class="num">Lunes a viernes</th><th scope="col" class="num">Sábado</th><th scope="col" class="num">Domingo y festivo</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
+    <p class="tenue">Personas en sala por franja y día: cada día de la semana por separado y los festivos aparte (un festivo usa su columna aunque caiga entre semana). Valores de partida: Anexo 2 «Mínimos SAT 2013» de Sevilla. Si hay dos filas iguales, vale la más alta. En supervisión, el mínimo sube además con la ratio de Reglas. «L → M-V» copia el lunes al resto de la semana.</p>
+    <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Colectivo</th><th scope="col">Franja</th>${DIAS_MIN.map((d, k) => `<th scope="col" class="num" title="${DIAS_MIN_LARGO[k]}">${d}</th>`).join('')}<th scope="col" class="num">Festivo</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="minimos">Añadir mínimo</button></div></section>`;
 }
 
@@ -469,7 +475,7 @@ const NUEVOS = {
     let n = 1; while (cfg.turnos.some(t => t.codigo === `X${n}`)) n++;
     return { codigo: `X${n}`, nombre: 'Nuevo turno', inicio: '09:00', fin: '16:00', franja: 'manana', color: '#B9D7EA' };
   },
-  minimos: () => ({ colectivo: 'TA', franja: 'manana', laborable: 0, sabado: 0, domingo: 0 }),
+  minimos: () => ({ colectivo: 'TA', franja: 'manana', laborable: 0, sabado: 0, domingo: 0, dias: [0, 0, 0, 0, 0, 0, 0], festivo: 0 }),
   solapes: (cfg) => {
     const t = cfg.turnos.filter(x => x.franja !== 'libre');
     const base = (t.find(x => x.codigo === 'RM1') || t[0] || {}).codigo || '';
@@ -592,6 +598,11 @@ export function eventosParametros(raiz, repintar) {
       cambiado({ inmediato: true }); return repintar();
     }
     if (a === 'quitar-ausencia') { cfg.cobertura.ausencias.splice(i, 1); cambiado({ inmediato: true }); return repintar(); }
+    if (a === 'minimo-lv') {
+      const m = cfg.minimos[i]; if (!m || !Array.isArray(m.dias)) return;
+      for (let k = 1; k < 5; k++) m.dias[k] = m.dias[0];
+      cambiado({ inmediato: true }); return repintar();
+    }
     if (a === 'anadir-refuerzo') {
       const col = b.dataset.colectivo, base = cfg.grupos.find(g => g.colectivo === col && !g.soloLaborables) || cfg.grupos[0];
       const n = cfg.grupos.filter(g => g.desde || g.hasta).length + 1;

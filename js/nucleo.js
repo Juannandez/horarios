@@ -237,6 +237,14 @@ export function completarSede(cfg, base) {
   c.festivos = { fuente: { tipo: 'ninguna', region: '', url: '', trasladarDomingos: true }, locales: [], extra: [], quitar: [], enlaces: [], cache: null, ...c.festivos };
   c.manuales = dicc(c.manuales);
   if (!Array.isArray(c.solapes)) c.solapes = clonar(base.solapes || []);
+  // Mínimos por día de la semana (L…D) y festivo. Los antiguos (laborable, sábado, domingo y festivo) se pasan solos.
+  for (const m of c.minimos) {
+    if (!Array.isArray(m.dias) || m.dias.length !== 7) {
+      const l = Number(m.laborable) || 0, s = Number(m.sabado) || 0, d = Number(m.domingo) || 0;
+      m.dias = [l, l, l, l, l, s, d];
+    }
+    if (m.festivo == null) m.festivo = Number(m.domingo ?? m.dias[6]) || 0;
+  }
   if (!Array.isArray(c.contratos)) c.contratos = JSON.parse(JSON.stringify(base.contratos || []));
   if (!c.especiales || typeof c.especiales !== 'object' || Array.isArray(c.especiales)) c.especiales = {};
   // Cobertura y bolsa: lo que falte se completa con los valores de partida de la sede.

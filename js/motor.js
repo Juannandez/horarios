@@ -376,11 +376,17 @@ export function generar(cfgEntrada, opciones = {}) {
   };
 
   // Necesidad: tabla de mínimos (y, en supervisión, la ratio).
-  const tabla = COL.map(() => FR.map(() => ({ laborable: 0, sabado: 0, domingo: 0 })));
+  // Cada fila puede llevar el mínimo de cada día de la semana (dias: [L, M, X, J, V, S, D]) y de los festivos
+  // (festivo). Si no, vale el formato antiguo: laborable (L-V), sábado y domingo (también festivos).
+  const minimoDia = (m, d) => {
+    if (Array.isArray(m.dias) && m.dias.length === 7) return Number(d.festivo ? (m.festivo ?? m.dias[6]) : m.dias[d.dow]) || 0;
+    return Number(d.festivo ? (m.festivo ?? m.domingo) : d.dow === 6 ? m.domingo : d.dow === 5 ? m.sabado : m.laborable) || 0;
+  };
+  const tablaDia = COL.map(() => FR.map(() => new Int32Array(dias.length)));
   for (const m of cfg.minimos || []) {
     const c = COL.indexOf(m.colectivo), f = FR.indexOf(m.franja);
     if (c < 0 || f < 0) continue;
-    for (const k of ['laborable', 'sabado', 'domingo']) tabla[c][f][k] = Math.max(tabla[c][f][k], Number(m[k]) || 0);
+    for (const d of dias) tablaDia[c][f][d.i] = Math.max(tablaDia[c][f][d.i], minimoDia(m, d));
   }
   // «real»: el mínimo (y, en supervisión, la ratio). «necesidad»: lo que se planifica = mínimo + margen para imprevistos.
   // Los huecos se miden frente al mínimo real; el margen solo hace que el ajuste ponga gente de más si puede.
@@ -389,7 +395,7 @@ export function generar(cfgEntrada, opciones = {}) {
     if (!x || !m) return m;
     return margen.tipo === 'porcentaje' ? Math.ceil(m * (1 + x / 100)) : m + x;
   };
-  const real = COL.map((_, c) => FR.map((_, f) => Int32Array.from(dias, d => tabla[c][f][d.tipo])));
+  const real = COL.map((_, c) => FR.map((_, f) => Int32Array.from(tablaDia[c][f])));
   // Primero se planifica contra el mínimo real; el margen se añade en una pasada final (aplicarMargen), para que no
   // gaste noches ni fines de semana antes de tiempo.
   const necesidad = COL.map((_, c) => FR.map((_, f) => Int32Array.from(real[c][f])));
@@ -398,7 +404,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const aplicarRatio = () => {
     if (!ratio || ratio <= 0) return;
     for (let f = 0; f < FR.length; f++) for (let d = 0; d < D; d++) {
-      real[1][f][d] = Math.max(tabla[1][f][dias[d].tipo], Math.ceil(cob[0][f][d] / ratio));
+      real[1][f][d] = Math.max(tablaDia[1][f][d], Math.ceil(cob[0][f][d] / ratio));
       necesidad[1][f][d] = real[1][f][d];
     }
   };

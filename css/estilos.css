@@ -340,6 +340,9 @@ body:has(#barra-guardar:not(:empty)) #avisos, body:has(#barra-sel:not([hidden]))
 .rejilla-codigos small { display: block; font-weight: 400; font-size: .7rem; }
 
 @media (max-width: 900px) {
+  .titlebar .tb2-empresa { font-size: .95rem; }
+}
+@media (max-width: 420px) {
   .titlebar .tb2-empresa { display: none; }
 }
 @media (max-width: 640px) {
@@ -361,3 +364,4 @@ body:has(#barra-guardar:not(:empty)) #avisos, body:has(#barra-sel:not([hidden]))
   .tabla-caja { max-height: none; overflow: visible; border: 0; }
 }
 .tabla-lista tr.apagada td { opacity: .55; }
+a.tb2-empresa { text-decoration: none; color: inherit; }
