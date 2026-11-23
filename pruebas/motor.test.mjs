@@ -351,3 +351,21 @@ import { aplicarSolapes } from '../js/motor.js';
   assert.ok(res.personas.every(x => x.horas >= x.objetivo - 1e-9), 'con solape: nadie por debajo de su jornada');
   console.log(`OK solapes (${res.grid.filter(c => c === s1).length} turnos S1 en Sevilla; puntuación ${p.duro} · ${p.medio} · ${p.blando})`);
 }
+
+// ── Escenario de ejemplo: dos líneas de horario fijo ─────────────────────────
+import { dosLineas } from '../js/escenarios-plantilla.js';
+{
+  for (const sede of CONFIG_BASE.sedes) {
+    const s = dosLineas(structuredClone(sede)), r = generar(s), p = puntuacion(r, s);
+    const usa = (c) => r.grid.includes(r.idx.get(c));
+    assert.ok(['MA', 'TA', 'MB', 'TB'].every(usa), `${sede.nombre}: salen los turnos de las dos líneas`);
+    assert.ok(!usa('RM1') && !usa('RT1'), 'el rotatorio anterior desaparece');
+    const a = s.grupos.find(g => g.id === 'ta'), b = s.grupos.find(g => g.id === 'tb');
+    assert.equal(a.personas + b.personas, sede.grupos.find(g => g.id === 'ta').personas, 'mitad y mitad');
+    assert.equal(p.duro, 0, `${sede.nombre}: dos líneas sin reglas que bloquean incumplidas`);
+    assert.ok(r.personas.filter(x => x.grupo !== 'rv').every(x => x.horas >= x.objetivo - 1e-9), 'nadie por debajo de su jornada');
+    const h = {}; for (const x of r.huecos) h[`${x.colectivo} ${x.franja}`] = (h[`${x.colectivo} ${x.franja}`] || 0) + x.falta;
+    console.log(`${sede.nombre} con dos líneas: puntuación ${p.duro} · ${p.medio} · ${p.blando}`, JSON.stringify(h));
+  }
+  console.log('OK escenario de dos líneas de horario fijo');
+}

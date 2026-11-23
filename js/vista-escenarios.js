@@ -5,6 +5,7 @@
 //   Planday o la foto de publicación de Genesys). Se puede traer cualquiera al navegador para revisarla o volver a ella.
 import { estado, esc, fmtNum, fmtFecha, cambiado, avisar, confirmar, modal, api, clonar, completar, resultadoDe, resumenCambios, nuevoId } from './nucleo.js';
 import { infracciones, puntuacion } from './puntuacion.js';
+import { PLANTILLAS_ESCENARIO } from './escenarios-plantilla.js';
 
 const MAX_ESCENARIOS = 8;
 let versiones = undefined;   // undefined = sin consultar; [] = ninguna
@@ -32,7 +33,8 @@ export function pintarEscenarios(raiz, repintar) {
   if (estado.admin && versiones === undefined) { versiones = null; cargarVersiones(repintar); }
   raiz.innerHTML = `<div class="cabecera"><div><h1>Escenarios y versiones · ${esc(cfg.nombre)}</h1>
       <p>Guarda el cuadrante tal como está para probar otra cosa sin perderlo, y compara escenarios entre sí. Las versiones son las copias que deja cada «Guardar en el servidor».</p></div>
-    <div class="fila-acciones"><button type="button" class="btn primario" data-es="guardar" ${esc_.length >= MAX_ESCENARIOS ? 'disabled title="Como mucho 8 escenarios por sede: borra alguno"' : ''}>Guardar como escenario…</button></div></div>
+    <div class="fila-acciones"><button type="button" class="btn primario" data-es="guardar" ${esc_.length >= MAX_ESCENARIOS ? 'disabled title="Como mucho 8 escenarios por sede: borra alguno"' : ''}>Guardar como escenario…</button>
+      ${PLANTILLAS_ESCENARIO.map(p => `<button type="button" class="btn" data-es="plantilla" data-plantilla="${p.id}" title="${esc(p.nota)}" ${esc_.length >= MAX_ESCENARIOS ? 'disabled' : ''}>Crear escenario: ${esc(p.nombre.toLowerCase())}</button>`).join('')}</div></div>
 
     <section class="panel"><h2>Escenarios de ${esc(cfg.nombre)} (${fmtNum(esc_.length)} de ${MAX_ESCENARIOS})</h2>
       ${esc_.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Escenario</th><th scope="col">Guardado</th><th scope="col" class="num">Personas</th><th scope="col">Puntuación (duro · medio · blando)</th><th scope="col"></th></tr></thead><tbody>
@@ -83,6 +85,16 @@ export function eventosEscenarios(raiz, repintar, irA) {
       lista.push({ id: nuevoId('esc'), sede: cfg.id, nombre: nombre.nombre.slice(0, 60), nota: nombre.nota.slice(0, 200), fecha: new Date().toISOString(), cfg: sinNada });
       cambiado({ inmediato: true }); repintar();
       return avisar(`Escenario «${esc(nombre.nombre)}» guardado.`, 'bien');
+    }
+    if (a === 'plantilla') {
+      const p = PLANTILLAS_ESCENARIO.find(x => x.id === b.dataset.plantilla);
+      if (!p) return;
+      let nueva;
+      try { const { escenarios, ...sinNada } = clonar(cfg); void escenarios; nueva = p.crea(sinNada); }
+      catch (err) { return avisar(`No se ha podido crear el escenario: ${esc(err.message)}`, 'mal', 0); }
+      lista.push({ id: nuevoId('esc'), sede: cfg.id, nombre: p.nombre, nota: p.nota.slice(0, 200), fecha: new Date().toISOString(), cfg: nueva });
+      cambiado({ inmediato: true }); repintar();
+      return avisar(`Escenario «${esc(p.nombre)}» creado a partir del cuadrante actual de ${esc(cfg.nombre)}. Ábrelo para verlo o compáralo con el actual.`, 'bien', 8000);
     }
     if (a === 'borrar' && esc_) {
       if (!(await confirmar(`¿Borrar «${esc_.nombre}»?`, 'Se puede deshacer con Ctrl+Z mientras no recargues la página.', 'Borrar'))) return;
