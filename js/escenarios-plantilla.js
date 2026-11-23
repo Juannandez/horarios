@@ -54,7 +54,32 @@ export function dosLineas(sede, opciones = {}) {
   return c;
 }
 
+// Mínimos de teleasistencia que dimensionó la consultora (Escenario 3, 09-09-2026), por día de la semana.
+// Fuente: docs/fuentes-cgt/analisis-informe-consultora.md §2-3. Sevilla: lo que pide su patrón (89 punta L-V, 59 tarde
+// L-V, 44 punta en fin de semana, 9 de noche). Málaga: 86 punta L-V y 9 de noche del patrón; tarde L-V (53) y fin
+// de semana (47 sábado, 43 domingo) son su «necesidad» de 2025. La tarde de fin de semana no la da: se deja la actual.
+// El festivo vale como domingo. Supervisión, sin cambios.
+export const MINIMOS_CONSULTORA = {
+  sevilla: { manana: { lv: 89, s: 44, d: 44 }, tarde: { lv: 59 }, noche: { lv: 9, s: 9, d: 9 } },
+  malaga: { manana: { lv: 86, s: 47, d: 43 }, tarde: { lv: 53 }, noche: { lv: 9, s: 9, d: 9 } },
+};
+export function minimosConsultora(sede) {
+  const c = copia(sede), m = MINIMOS_CONSULTORA[c.id];
+  if (!m) throw new Error(`No hay mínimos de la consultora para ${c.nombre}.`);
+  for (const fila of c.minimos.filter(x => x.colectivo === 'TA' && m[x.franja])) {
+    const v = m[fila.franja];
+    const dias = Array.isArray(fila.dias) && fila.dias.length === 7 ? fila.dias.slice() : [fila.laborable, fila.laborable, fila.laborable, fila.laborable, fila.laborable, fila.sabado, fila.domingo].map(Number);
+    for (let k = 0; k < 5; k++) dias[k] = v.lv;
+    if (v.s != null) dias[5] = v.s;
+    if (v.d != null) dias[6] = v.d;
+    fila.dias = dias; fila.festivo = dias[6];
+  }
+  return c;
+}
+
 export const PLANTILLAS_ESCENARIO = [
   { id: 'dos-lineas', nombre: 'Dos líneas de horario fijo', crea: dosLineas,
     nota: 'Dos líneas de horario fijo con el mismo rotatorio: cada persona entra siempre a la misma hora en su franja y el solape lo pone la otra línea. Horas y reparto a elegir.' },
+  { id: 'minimos-consultora', nombre: 'Mínimos de la consultora', crea: (s) => minimosConsultora(s), sinVentana: true,
+    nota: 'Mínimos de teleasistencia del estudio de la consultora (Escenario 3): Sevilla 89 punta L-V, 59 tarde L-V, 44 fin de semana, 9 noche; Málaga 86 punta L-V, 53 tarde L-V, 47/43 sábado/domingo, 9 noche (tarde L-V y fin de semana de Málaga = su «necesidad» 2025). Tarde de fin de semana: la actual.' },
 ];

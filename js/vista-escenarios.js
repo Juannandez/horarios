@@ -89,6 +89,14 @@ export function eventosEscenarios(raiz, repintar, irA) {
     if (a === 'plantilla') {
       const p = PLANTILLAS_ESCENARIO.find(x => x.id === b.dataset.plantilla);
       if (!p) return;
+      if (p.sinVentana) {
+        let nueva;
+        try { const { escenarios, ...sinNada } = clonar(cfg); void escenarios; nueva = p.crea(sinNada); }
+        catch (err) { return avisar(`No se ha podido crear el escenario: ${esc(err.message)}`, 'mal', 0); }
+        lista.push({ id: nuevoId('esc'), sede: cfg.id, nombre: p.nombre, nota: p.nota.slice(0, 300), fecha: new Date().toISOString(), cfg: nueva });
+        cambiado({ inmediato: true }); repintar();
+        return avisar(`Escenario «${esc(p.nombre)}» creado para ${esc(cfg.nombre)}. Compáralo con el actual o ábrelo.`, 'bien', 8000);
+      }
       const fila = (k, et) => { const t = TURNOS_DOS_LINEAS.find(x => x.codigo === k); return `<tr><td>${et}</td>
         <td><input type="time" id="dl-${k}-i" value="${t.inicio}" aria-label="${et}: entrada"></td><td><input type="time" id="dl-${k}-f" value="${t.fin}" aria-label="${et}: salida"></td></tr>`; };
       const op = await modal({

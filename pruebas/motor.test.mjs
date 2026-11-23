@@ -369,3 +369,17 @@ import { dosLineas } from '../js/escenarios-plantilla.js';
   }
   console.log('OK escenario de dos líneas de horario fijo');
 }
+
+// ── Escenario de ejemplo: mínimos de la consultora ───────────────────────────
+import { minimosConsultora } from '../js/escenarios-plantilla.js';
+{
+  const todo = completar(structuredClone(CONFIG_BASE));
+  for (const sede of todo.sedes) {
+    const s = minimosConsultora(sede), m = s.minimos.find(x => x.colectivo === 'TA' && x.franja === 'manana');
+    assert.equal(m.dias[0], sede.id === 'sevilla' ? 89 : 86, 'punta L-V de la consultora');
+    const r = generar(s), p = puntuacion(r, s);
+    const h = {}; for (const x of r.huecos) h[`${x.colectivo} ${x.franja}`] = (h[`${x.colectivo} ${x.franja}`] || 0) + x.falta;
+    console.log(`${sede.nombre} con los mínimos de la consultora: puntuación ${p.duro} · ${p.medio} · ${p.blando}`, JSON.stringify(h));
+  }
+  console.log('OK escenario de mínimos de la consultora');
+}
