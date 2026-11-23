@@ -2,7 +2,7 @@
 import { CONFIG_BASE, SEDES_BASE } from './datos-base.js';
 import { generar } from './motor.js';
 import { calcularFestivos, claveFuente } from './festivos.js';
-import { EN_GITHUB, leerPublicada, versionesGithub, versionGithub } from './github.js';
+import { EN_GITHUB, leerPublicada, versionesGithub, versionGithub, tokenSesion, entrarConContrasena, cerrarSesionGithub, guardarGithub } from './github.js';
 
 const API = 'api/api.php';
 const CLAVE_BORRADOR = 'horarios.borrador';
@@ -155,7 +155,7 @@ export async function api(accion, cuerpo, parametros = {}, espera = 30000) {
 }
 
 function guardarSesion() {
-  if (DEMO) return;   // en GitHub el token va en localStorage (js/github.js)
+  if (DEMO) return;   // en GitHub la sesión la lleva js/github.js
   try { estado.token ? sessionStorage.setItem(CLAVE_SESION, estado.token) : sessionStorage.removeItem(CLAVE_SESION); } catch (e) {}
 }
 
@@ -169,6 +169,7 @@ export async function cargar() {
     estado.servidor = 'demo';
     const pub = await leerPublicada();
     if (pub) { delServidor = pub.config; estado.guardado = pub.guardado || ''; }
+    estado.admin = !!tokenSesion();   // la contraseña ya se escribió en esta pestaña
   } else try {
     const d = await api('estado', null, {}, 8000); // al arrancar: si en 8 s no contesta, se sigue sin conexión
     estado.servidor = 'ok';
@@ -336,10 +337,11 @@ export function cambiado({ inmediato = false } = {}) {
 }
 
 export async function entrar(clave) {
+  if (DEMO) { await entrarConContrasena(clave); estado.admin = true; return; }
   const d = await api('entrar', { clave });
   estado.token = d.token; estado.admin = true; guardarSesion();
 }
-export function salirSesion() { estado.token = ''; estado.admin = false; guardarSesion(); if (estado.plantilla) { estado.plantilla = null; regenerar(); } }
+export function salirSesion() { if (DEMO) cerrarSesionGithub(); estado.token = ''; estado.admin = false; guardarSesion(); if (estado.plantilla) { estado.plantilla = null; regenerar(); } }
 
 // Baja los festivos de la fuente de una sede para su año, una vez por sesión (el servidor guarda copia
 // 7 días). Al llegar, se rehace el cuadrante. Si falla, se siguen usando los últimos guardados.
@@ -392,7 +394,7 @@ export async function guardarEnServidor() {
     const d = estado.descargas[`${claveFuente(sede.festivos.fuente)}|${Number(sede.anio)}`];
     if (d && Array.isArray(d.lista)) sede.festivos.cache = d;
   }
-  const d = await api('guardar', { config: estado.todo, nota: resumenCambios() });
+  const d = DEMO ? { guardado: await guardarGithub(estado.todo, resumenCambios()) } : await api('guardar', { config: estado.todo, nota: resumenCambios() });
   estado.publicada = JSON.stringify(estado.todo);
   estado.guardado = d.guardado;
   borrarBorrador();

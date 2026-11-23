@@ -1,6 +1,6 @@
 // Arranque de la app: navegación, sesión, barra de guardado y vista Ajustes.
 import { DEMO, modal, resumenCambios } from './nucleo.js';
-import { repoGithub, urlSubida, ficheroPublicacion } from './github.js';
+import { repoGithub, urlSubida, ficheroPublicacion, hayAcceso, crearAcceso, cambiarContrasena, quitarAcceso } from './github.js';
 import { estado, esc, $, $$, cargar, alRegenerar, cambiosSinGuardar, guardarEnServidor, descartarCambios, entrar, salirSesion,
   avisar, confirmar, ponerTema, ponerMenuCorto, APARIENCIAS, deshacer, rehacer, puedeDeshacer, puedeRehacer, descargar, completar, cambiado, clonar, fmtFecha, ponerSede, api } from './nucleo.js';
 import { CONFIG_BASE } from './datos-base.js';
@@ -32,9 +32,46 @@ function pasosPublicar() {
       <li>5. En 1-2 minutos, todo el que abra o recargue la web verá esta versión. Al recargar tú, el aviso de «sin publicar» desaparece solo.</li></ol>
     <p class="tenue">El repositorio ${repo} es público: no escribas nombres ni datos de salud en notas, ausencias ni escenarios. El cuadrante va por códigos.</p>`;
 }
+// Administración en la versión de GitHub: una contraseña que descifra la clave de GitHub guardada en acceso.json.
+let accesoGithub;   // undefined = sin consultar; true/false = hay o no acceso preparado
+const pasosClave = () => `<details style="margin-top:8px"><summary>Cómo crear la clave de GitHub (una vez, 3 minutos)</summary><ol class="tenue">
+    <li>En github.com, con tu cuenta: foto → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+    <li>Nombre «horarios», caducidad de 90 días o un año. <b>Repository access</b>: «Only select repositories» → <b>${esc(repoGithub())}</b>.</li>
+    <li><b>Permissions</b> → Repository permissions → <b>Contents: Read and write</b>. Nada más. Pulsa <b>Generate token</b> y cópiala.</li>
+    <li>Pégala aquí con tu contraseña. Se guarda <b>cifrada</b> en el repositorio; desde entonces, en cualquier ordenador, basta la contraseña. No la mandes por correo ni la pegues en ningún chat.</li></ol></details>`;
+const formPreparar = (titulo) => `<form id="form-preparar" class="campos" style="margin-top:8px" autocomplete="off">
+    <p style="width:100%;margin:0"><b>${titulo}</b></p>
+    <label class="campo"><span>Clave de GitHub</span><input type="password" id="gh-token" placeholder="github_pat_…" required spellcheck="false" style="width:min(360px,100%)"></label>
+    <label class="campo"><span>Contraseña (12 o más; mejor una frase)</span><input type="password" id="gh-pass" minlength="12" required autocomplete="new-password"></label>
+    <label class="campo"><span>Repite la contraseña</span><input type="password" id="gh-pass2" minlength="12" required autocomplete="new-password"></label>
+    <button type="submit" class="btn primario">Preparar el acceso</button></form>${pasosClave()}`;
+const manual = () => `<details style="margin-top:10px"><summary>Sin contraseña: publicar a mano (descargar y subir el fichero)</summary>${pasosPublicar()}</details>`;
+function pintarAccesoGithub() {
+  const caja = $('#acceso-github'); if (!caja) return;
+  const pend = cambiosSinGuardar() ? 'Tienes cambios <b>sin guardar</b> en este ordenador.' : 'Lo que ves es la versión publicada, la misma para todos.';
+  if (estado.admin) {
+    caja.innerHTML = `<p>${pend} Sesión de administración abierta en esta pestaña: «Guardar para todos» la publica y todo el mundo la ve en 1-2 minutos.</p>
+      <div class="fila-acciones"><button type="button" class="btn primario" data-accion="guardar" ${cambiosSinGuardar() ? '' : 'disabled'}>Guardar para todos</button><button type="button" class="btn" data-accion="salir">Cerrar sesión</button></div>
+      <form id="form-cambiar-github" class="campos" style="margin-top:10px" autocomplete="off"><label class="campo"><span>Contraseña nueva</span><input type="password" id="gh-nueva" minlength="12" required autocomplete="new-password"></label>
+        <button type="submit" class="btn">Cambiar la contraseña</button>
+        <button type="button" class="btn peligro" data-accion="quitar-acceso">Quitar el acceso</button></form>
+      <p class="banda">El repositorio es público: no escribas nombres ni datos de salud en notas, ausencias ni escenarios. La plantilla con nombres no se guarda aquí.</p>`;
+  } else if (accesoGithub === undefined) {
+    caja.innerHTML = '<p class="tenue">Comprobando el acceso…</p>';
+  } else if (accesoGithub) {
+    caja.innerHTML = `<p>${pend} Para guardar para todos, entra con la contraseña de administración.</p>
+      <form class="fila-acciones" id="form-entrar"><label class="oculto" for="clave">Contraseña</label>
+        <input type="password" id="clave" autocomplete="current-password" placeholder="Contraseña de administración" required>
+        <button type="submit" class="btn primario">Entrar</button></form>
+      <details style="margin-top:10px"><summary>¿Has olvidado la contraseña o ha caducado la clave?</summary>${formPreparar('Vuelve a preparar el acceso con una clave nueva')}</details>${manual()}`;
+  } else {
+    caja.innerHTML = `<p>${pend} Todavía no hay contraseña de administración. Prepárala una vez y luego, desde cualquier ordenador, entra con ella y guarda para todos.</p>${formPreparar('Preparar el acceso (una vez)')}${manual()}`;
+  }
+}
 function ajustesGithub() {
-  return `<p>${cambiosSinGuardar() ? 'Tienes cambios <b>sin publicar</b>, guardados solo en este ordenador.' : 'Lo que ves es la versión publicada: no hay cambios pendientes.'}
-    Para que todos vean una única versión, publícala así (sin claves, con tu cuenta de github.com):</p>${pasosPublicar()}`;
+  if (accesoGithub === undefined && !estado.admin) hayAcceso().then(v => { accesoGithub = v; pintarAccesoGithub(); });
+  setTimeout(pintarAccesoGithub);
+  return '<div id="acceso-github"><p class="tenue">Comprobando el acceso…</p></div>';
 }
 async function publicarGithub() {
   await modal({ titulo: 'Publicar para todos', html: pasosPublicar(), botones: [{ texto: 'Cerrar', valor: null }] });
@@ -150,7 +187,7 @@ function pintarBarraGuardar() {
     ? `<div class="guardar-barra" role="region" aria-label="Cambios sin guardar">${historia}<span>Hay cambios que todavía no están en el servidor.</span>
         <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-accion="guardar">${DEMO ? 'Guardar para todos' : 'Guardar en el servidor'}</button></span></div>`
     : DEMO ? `<div class="guardar-barra" role="region" aria-label="Cambios sin publicar">${historia}<span>Cambios <b>sin publicar</b>, guardados en este ordenador. Los demás ven la versión publicada.</span>
-        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-accion="publicar-github">Publicar para todos…</button></span></div>`
+        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-ir="ajustes">Guardar para todos…</button></span></div>`
     : `<div class="guardar-barra" role="region" aria-label="Cambios de prueba">${historia}<span>Cambios de prueba: no se guardan y al recargar vuelve la versión publicada, la única que ve todo el mundo. Para cambiarla, entra como administración en Ajustes.</span>
         <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Volver a la versión publicada</button></span></div>`;
 }
@@ -244,6 +281,12 @@ document.addEventListener('click', async (e) => {
   if (a === 'descargar-publicacion') { descargar('config.json', ficheroPublicacion(estado.todo, resumenCambios())); return avisar('config.json descargado. Ahora ábrelo en GitHub y súbelo (paso 2).', 'bien'); }
   if (a === 'publicar-github') return publicarGithub();
   if (estado.vista !== 'ajustes') return;
+  if (a === 'quitar-acceso') {
+    if (!(await confirmar('¿Quitar el acceso con contraseña?', 'Se borra la clave cifrada del repositorio. Para volver a guardar desde la web habrá que preparar el acceso con una clave nueva. Conviene además revocar la clave en github.com.', 'Quitar el acceso'))) return;
+    try { await quitarAcceso(); accesoGithub = false; estado.admin = false; avisar('Acceso quitado.'); }
+    catch (err) { avisar(`No se ha quitado el acceso. ${esc(err.message)}`, 'mal', 0); }
+    return pintar();
+  }
   if (a === 'salir') { salirSesion(); avisar('Sesión cerrada.'); return pintar(); }
   if (a === 'tema-todos') { estado.todo.tema = document.documentElement.dataset.apariencia || 'day'; cambiado(); avisar('Tema por defecto cambiado. Guarda en el servidor para aplicarlo a todos.'); return pintar(); }
   if (a === 'exportar') return descargar('configuracion-horarios.json', JSON.stringify(estado.todo, null, 2));
@@ -278,10 +321,25 @@ raiz.addEventListener('submit', async (e) => {
     catch (err) { avisar(`No se ha cambiado la clave. ${esc(err.message)}`, 'mal', 0); }
     return;
   }
+  if (e.target.id === 'form-preparar') {
+    e.preventDefault();
+    const tk = $('#gh-token').value, p1 = $('#gh-pass').value, p2 = $('#gh-pass2').value;
+    if (p1 !== p2) return avisar('Las dos contraseñas no coinciden.', 'mal');
+    const b = e.target.querySelector('button[type=submit]'); b.disabled = true;
+    try { await crearAcceso(tk, p1); accesoGithub = true; estado.admin = true; e.target.reset(); avisar('Acceso preparado: la clave está guardada cifrada. Desde cualquier ordenador, entra con tu contraseña.', 'bien', 9000); pintar(); }
+    catch (err) { b.disabled = false; avisar(`No se ha preparado el acceso. ${esc(err.message)}`, 'mal', 0); }
+    return;
+  }
+  if (e.target.id === 'form-cambiar-github') {
+    e.preventDefault();
+    try { await cambiarContrasena($('#gh-nueva').value); e.target.reset(); avisar('Contraseña cambiada. Úsala la próxima vez.', 'bien'); }
+    catch (err) { avisar(`No se ha cambiado la contraseña. ${esc(err.message)}`, 'mal', 0); }
+    return;
+  }
   if (e.target.id !== 'form-entrar') return;
   e.preventDefault();
   const clave = $('#clave').value;
-  try { await entrar(clave); avisar(DEMO ? 'Clave de GitHub aceptada: ya puedes guardar para todos.' : 'Sesión de administración iniciada.', 'bien'); pintar(); }
+  try { await entrar(clave); avisar(DEMO ? 'Contraseña correcta: ya puedes guardar para todos (en esta pestaña).' : 'Sesión de administración iniciada.', 'bien'); pintar(); }
   catch (err) { avisar(`No se ha iniciado la sesión. ${esc(err.message)}`, 'mal', 0); $('#clave').select(); }
 });
 
