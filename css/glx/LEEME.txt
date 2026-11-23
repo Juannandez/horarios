@@ -1,0 +1,9 @@
+Hojas de estilo de Gestlogix copiadas tal cual de https://demo.gestlogix.com/estatico/ (tokens.css, estilos.css,
+fondo/background-app-estrias.css) el 20-11-2026. No se retocan: los ajustes de la app de horarios van en ../estilos.css.
+Para actualizarlas, se vuelven a copiar de la demo.
+
+fondo/capas-claro.jpg y fondo/capas-oscuro.jpg: el fondo de capas de la interfaz v2 de Gestlogix, copiado de
+https://demo.gestlogix.com/estatico/fondo/ el 21-11-2026. Imagen de Vecteezy (licencia gratuita, con cita: se cita en
+Ajustes). La hoja estilos.css apunta a /estatico/fondo/: ../estilos.css lo vuelve a declarar con estas copias.
+La app usa la interfaz v2 (data-interfaz="v2" en index.html): menú fijo con bloques plegables, botón « para dejarlo
+en iconos y las cinco apariencias (Light, Silver, Blue Manager, Dark Blue y Black).

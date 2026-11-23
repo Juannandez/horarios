@@ -1,0 +1,143 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Gestlogix · los colores. Copiados TAL CUAL de Studio Flow
+   (src/studio_flow/app/index.html, bloque «SISTEMA VISUAL — tokens»), el
+   16/10/2026, por decisión de Juan: «quiero rescatar el diseño de Studio Flow».
+   Tres temas del mismo esqueleto: night (el de referencia, el :root), midnight y
+   day. Gestlogix arranca en DAY (lo pone estatico/tema.js) y se cambia en Ajustes.
+   ⚠️ Ninguna regla de estilos.css lleva un color fijo: todo cuelga de aquí. Si
+   Studio Flow cambia sus tokens, se vuelven a copiar, no se retocan a mano.
+   ═══════════════════════════════════════════════════════════════════════════ */
+  :root{
+  /* ══════════════════════════════════════════════════════════════════
+     SISTEMA VISUAL — tokens
+     Tres temas del mismo esqueleto. Night es el de referencia: gris
+     neutro con --bg en el #232323 de Capture One, para que la ventana
+     no se pelee con la de al lado. Midnight lo desvía a azul frío y Day
+     lo invierte a una rampa de grises claros con el texto en negro.
+     Ninguna regla de más abajo lleva un color fijo: todo cuelga de aquí.
+     ══════════════════════════════════════════════════════════════════ */
+  --bg:#232323; --bg2:#191919; --panel:#1F1F1F; --panel2:#282828; --elev:#303030;
+  --line:rgba(255,255,255,.075); --line2:rgba(255,255,255,.13);
+  --ink:#E9E9E9; --muted:#A2A2A2; --disabled:#777777;
+  --blue:#025E95; --blue-l:#1a7dbf; --blue-d:#014872; --link:#4aa3dc;
+  --amber:#D58238; --amber-l:#E39C5C; --amber-d:#A05D22; --naranja:#D58238;
+  /* El logo: la escalera sube de naranja a rojo. Los tres tonos por tema
+     los calcula `scripts/generar_logo.py` para que ninguno baje de 3,6:1
+     de contraste con SU fondo — con los de marca, el rojo del marco se
+     quedaba en 2,76:1 sobre este gris y no se veía. */
+  --logo-1:#F6A81E; --logo-2:#EC6A2A; --logo-3:#E03B28;
+  --sf-hover-op:50%;
+--btn-0:#E39C5C; --btn-1:#D58238; --btn-2:#BE6E28;
+--btn-filo:#8A4E1B; --btn-tinta:#1B160B;
+  --gold:#E6A700;  --gold-l:#f0c040;  --gold-d:#b07f00;
+  --ok:#5fae5c; --warn:#E6A700; --bad:#ff6b6b;
+  /* Bachillerato en el horario (2026-09-23): las otras etapas usan colores
+     que ya existían —dorado, verde, azul— y a esta le faltaba uno. */
+  --etapa-bach:#A07CE0;
+  --sf-sheen:rgba(255,255,255,.030); --sf-panel-b:#1B1B1B;
+  --sf-fuera:#101010; --sf-ring:rgba(0,0,0,.9);
+  --sf-grad:radial-gradient(105% 85% at 46% 8%, #2E2E2E 0%, rgba(46,46,46,0) 64%),radial-gradient(125% 115% at 50% 46%, rgba(0,0,0,0) 30%, rgba(0,0,0,.62) 100%),linear-gradient(158deg, #262626 0%, #232323 44%, #1A1A1A 100%);
+  --sf-hz-a:23,23,23; --sf-hz-b:47,47,47; --sf-escala:0.40;
+  --sf-lista-a:#1F1F1F; --sf-lista-b:#272727; --sf-fila-hover:rgba(0,0,0,.34);
+  --sf-velo:rgba(0,0,0,.26);
+  --sf-linea:45,45,45; --sf-amax:0;
+  --sf-tb:linear-gradient(#2A2A2A,#202020); --sf-tb-line:#141414;
+  --sf-lift:0 1px 2px rgba(0,0,0,.22), 0 12px 30px -10px rgba(0,0,0,.42);
+  --sf-hueco:#1B1B1B;
+  --muted2:#9c9c9c;
+color-scheme:dark;
+  --sans:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'SF Mono',ui-monospace,Menlo,monospace;
+}
+:root[data-sf-theme="midnight"]{
+  --bg:#1E2229; --bg2:#171B21; --panel:#1A1E24; --panel2:#232830; --elev:#2E343E;
+  --line:rgba(190,210,235,.075); --line2:rgba(190,210,235,.13);
+  --ink:#E7EAEE; --muted:#A0AAB6; --disabled:#6F7986;
+  --blue:#0a6ba6; --blue-l:#3a93cf; --blue-d:#04527f; --link:#63b3e6;
+  --amber:#DB9557; --amber-l:#E6AE79; --amber-d:#A86324; --naranja:#D58238;
+  --logo-1:#F6A81E; --logo-2:#EC6A2A; --logo-3:#DF3825;
+  --sf-hover-op:50%;
+--btn-0:#E39C5C; --btn-1:#D58238; --btn-2:#BE6E28;
+--btn-filo:#8A4E1B; --btn-tinta:#1B160B;
+  --gold:#f0b41a;  --gold-l:#f7c94e;  --gold-d:#bb8b00;
+  --ok:#79c076; --warn:#f0b41a; --bad:#ff8585;
+  --sf-sheen:rgba(210,226,246,.034); --sf-panel-b:#171A20;
+  --sf-fuera:#0D1014; --sf-ring:rgba(0,0,0,.9);
+  --sf-grad:radial-gradient(105% 85% at 46% 8%, #2A303A 0%, rgba(42,48,58,0) 64%),radial-gradient(125% 115% at 50% 46%, rgba(0,0,0,0) 30%, rgba(0,0,0,.62) 100%),linear-gradient(158deg, #22262E 0%, #1E2229 44%, #151920 100%);
+  --sf-hz-a:21,25,31; --sf-hz-b:45,51,61; --sf-escala:0.42;
+  --sf-lista-a:#1A1E24; --sf-lista-b:#232830; --sf-fila-hover:rgba(0,0,0,.36);
+  --sf-velo:rgba(0,0,0,.28);
+  --sf-linea:41,46,56; --sf-amax:0;
+  --sf-tb:linear-gradient(#262B34,#1A1E24); --sf-tb-line:#12151A;
+  --sf-lift:0 1px 2px rgba(0,0,0,.26), 0 12px 30px -10px rgba(0,0,0,.46);
+  --sf-hueco:#191D23;
+  --muted2:#8792A0;
+color-scheme:dark;
+}
+:root[data-sf-theme="day"]{
+  --bg:#E3E3E3; --bg2:#D8D8D8; --panel:#DCDCDC; --panel2:#EAEAEA; --elev:#F2F2F2;
+  --line:rgba(0,0,0,.105); --line2:rgba(0,0,0,.175);
+  --ink:#0D0D0D; --muted:#4A4A4A; --disabled:#8A8A8A;
+  --blue:#025E95; --blue-l:#17608C; --blue-d:#014872; --link:#17608C;
+  --amber:#8F531E; --amber-l:#A05D22; --amber-d:#6E4016; --naranja:#A05D22;
+  /* En Día bajan los tres: el naranja claro sobre este gris daba 1,55:1. */
+  --logo-1:#A16906; --logo-2:#C74E12; --logo-3:#C22D1C;
+  --sf-hover-op:100%;
+--btn-0:#E39C5C; --btn-1:#D58238; --btn-2:#BE6E28;
+--btn-filo:#8A4E1B; --btn-tinta:#1B160B;
+  --gold:#745400;  --gold-l:#8a6400;  --gold-d:#573f00;
+  --ok:#336630; --warn:#745400; --bad:#A33434;
+  --sf-sheen:rgba(255,255,255,.55); --sf-panel-b:#D5D5D5;
+  --sf-fuera:#C9C9C9; --sf-ring:rgba(0,0,0,.18);
+  --sf-grad:radial-gradient(105% 85% at 46% 8%, #EFEFEF 0%, rgba(239,239,239,0) 64%),radial-gradient(125% 115% at 50% 46%, rgba(0,0,0,0) 30%, rgba(0,0,0,.10) 100%),linear-gradient(158deg, #E8E8E8 0%, #E3E3E3 44%, #D4D4D4 100%);
+  --sf-hz-a:214,214,214; --sf-hz-b:241,241,241; --sf-escala:-0.38;
+  --sf-lista-a:#DCDCDC; --sf-lista-b:#E9E9E9; --sf-fila-hover:rgba(0,0,0,.055);
+  --sf-velo:rgba(0,0,0,.045);
+  --sf-linea:214,214,214; --sf-amax:0;
+  --sf-tb:linear-gradient(#E8E8E8,#DBDBDB); --sf-tb-line:rgba(0,0,0,.16);
+  --sf-lift:0 1px 2px rgba(0,0,0,.05), 0 12px 30px -10px rgba(0,0,0,.16);
+  --sf-hueco:#D6D6D6;
+  --muted2:#6B6B6B;
+color-scheme:light;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Capa de Gestlogix, ENCIMA de los tokens de Studio Flow (que no se tocan).
+   Juan, 16/10/2026, después de ver el diseño de Studio Flow puesto:
+   «el modo day lo quiero en blanco, no en gris, y los botones en azul, como
+   antes; las fuentes, tamaños y tipos me gustaban más los anteriores».
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --gl-boton:#025E95;           /* el azul de Studio Flow en los temas oscuros */
+  --gl-boton-hover:#1a7dbf;
+  --gl-boton-tinta:#FFFFFF;
+  --gl-sec-tinta:#4aa3dc;       /* el texto del botón secundario */
+  --gl-titulo:var(--ink);
+  --gl-acento:var(--blue-l);
+  --gl-marca:var(--blue-l);     /* foco, paso actual, menú activo, borde de las bandas */
+}
+/* Night y Midnight, como Studio Flow (Juan, 19/10/2026: «para los otros modos evita
+   el azul», «pon el tema igual que el de Studio Flow»): botón principal naranja (su
+   .btn.primary, en estilos.css), el secundario gris, y las marcas en naranja. */
+:root:not([data-sf-theme="day"]){
+  --gl-boton:var(--btn-1); --gl-boton-hover:var(--btn-0); --gl-boton-tinta:var(--btn-tinta);
+  --gl-sec-tinta:var(--ink); --gl-acento:var(--btn-0); --gl-marca:var(--btn-1);
+  /* El .btn.primary de Studio Flow, en degradado, y su .btn gris para el secundario. */
+  --gl-boton-fondo:linear-gradient(178deg,var(--btn-0),var(--btn-1) 52%,var(--btn-2));
+  --gl-boton-hover-fondo:linear-gradient(178deg,var(--btn-0),var(--btn-0) 52%,var(--btn-1));
+  --gl-boton-filo:var(--btn-filo);
+  --gl-boton-sombra:0 1px 2px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,238,220,.44);
+  --gl-sec-fondo:var(--panel2); --gl-sec-filo:var(--line2); --gl-sec-hover:var(--elev);
+}
+/* Day: el fondo en #FBF6F2, el de MovingCert (Juan, 22/10/2026; antes #EEE), y las cajas
+   (formularios, tablas) en blanco, con los azules de la primera versión de Gestlogix (los del PDF). */
+:root[data-sf-theme="day"]{
+  --bg:#FBF6F2; --bg2:#F6F8F9; --panel:#FFFFFF; --panel2:#F2F6F7; --elev:#FFFFFF;
+  --line:rgba(0,0,0,.10); --line2:rgba(0,0,0,.17);
+  --ink:#12242B; --muted:#536268; --muted2:#6B7A80;
+  --sf-tb:linear-gradient(#FFFFFF,#FAFBFB); --sf-tb-line:rgba(0,0,0,.10);
+  --sf-fila-hover:rgba(0,53,77,.045);
+  --sf-lift:0 1px 2px rgba(0,0,0,.05), 0 8px 22px -12px rgba(0,0,0,.18);
+  --gl-boton:#00354D; --gl-boton-hover:#0B5B7D; --gl-sec-tinta:#00354D;
+  --gl-titulo:#00354D; --gl-acento:#1296A8;
+}

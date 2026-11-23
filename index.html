@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es" data-interfaz="v2" data-sf-theme="day" data-apariencia="day">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Horarios SAT</title>
+  <meta name="description" content="Cuadrante de supervisores y teleasistentes del SAT con turno rotatorio, parámetros editables y encuestas anónimas.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/glx/tokens.css">
+  <link rel="stylesheet" href="css/glx/background-app-estrias.css">
+  <link rel="stylesheet" href="css/glx/estilos.css">
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="js/tema.js"></script>
+</head>
+<body>
+  <a class="saltar" href="#principal">Saltar al contenido</a>
+  <div id="app">
+    <header class="titlebar">
+      <button id="abrir-menu" class="tb-menu" type="button" aria-label="Abrir el menú" aria-controls="menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <button id="plegar-menu" class="tb-plegar" type="button" title="Plegar o desplegar el menú" aria-label="Plegar el menú" aria-controls="menu">«</button>
+      <a href="#cuadrante" class="tb2-brand marca" aria-label="Gestlogix, al cuadrante"><span class="marca-texto">Gestlogix</span></a>
+      <span class="tb2-sep" aria-hidden="true"></span>
+      <span class="tb2-empresa"><span>SAT · Horarios</span></span>
+      <div class="segmentado sedes" id="sedes" role="group" aria-label="Sede"></div>
+      <span class="spacer"></span>
+      <form class="tb-busca" role="search"><input type="search" id="buscar" placeholder="Buscar persona o grupo" aria-label="Buscar persona o grupo" autocomplete="off"></form>
+      <button type="button" class="tb-salir" id="sesion">Sin sesión</button>
+    </header>
+    <nav id="menu" class="lateral" aria-label="Menú principal"></nav>
+    <main id="principal" class="contenido" tabindex="-1"><p class="nota">Cargando el cuadrante…</p></main>
+  </div>
+  <div id="avisos" role="status" aria-live="polite"></div>
+  <div id="barra-guardar"></div>
+  <div id="modales"></div>
+  <script src="js/arranque.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
