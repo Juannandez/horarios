@@ -166,6 +166,7 @@ const SEVILLA = {
     { codigo: 'T1',  nombre: 'Tarde 1',          inicio: '15:00', fin: '22:00', franja: 'tarde',  color: '#E8794A' },
     { codigo: 'T2',  nombre: 'Tarde 2',          inicio: '16:00', fin: '23:00', franja: 'tarde',  color: '#F6B89A' },
     { codigo: 'N',   nombre: 'Noche',            inicio: '22:00', fin: '08:00', franja: 'noche',  color: '#2E4A86' },
+    { codigo: 'S1',  nombre: 'Solape mañana-tarde', inicio: '11:00', fin: '18:00', franja: 'manana', color: '#B7D3F2' },
     ...LIBRES(),
   ],
   // Un solo turno rotatorio. Plantilla de 2027: 256 teleasistentes (antes rotatorio 117, fijos
@@ -175,6 +176,9 @@ const SEVILLA = {
     grupo('sup', 'SUP', 'Turno rotatorio común (supervisión)', 'SUP', 29, [], { patronDe: 'ta' }),
   ],
   // Mínimos por franja y tipo de día. "domingo" vale también para festivos.
+  // Solapes y horas de entrada que rotan (Parámetros › Turnos). De ejemplo, desactivada: los miércoles de una de
+  // cada dos semanas de mañana se entra a las 11:00 (S1) en lugar de a las 08:15.
+  solapes: [{ activo: false, grupo: 'ta', base: 'RM1', turno: 'S1', dias: [2], cada: 2, desfase: 0 }],
   minimos: [
     { colectivo: 'TA',  franja: 'manana', laborable: 47, sabado: 39, domingo: 29 },
     { colectivo: 'TA',  franja: 'tarde',  laborable: 37, sabado: 29, domingo: 28 },
@@ -214,6 +218,7 @@ const MALAGA = {
     { codigo: 'T1',  nombre: 'Tarde 1',          inicio: '15:00', fin: '22:00', franja: 'tarde',  color: '#E8794A' },
     { codigo: 'T2',  nombre: 'Tarde 2',          inicio: '16:00', fin: '23:00', franja: 'tarde',  color: '#F6B89A' },
     { codigo: 'N',   nombre: 'Noche',            inicio: '22:00', fin: '08:00', franja: 'noche',  color: '#2E4A86' },
+    { codigo: 'S1',  nombre: 'Solape mañana-tarde', inicio: '11:00', fin: '18:00', franja: 'manana', color: '#B7D3F2' },
     ...LIBRES(),
   ],
   // Un solo turno rotatorio. Plantilla de 2027: 242 teleasistentes (antes R1 e iR1 98, fijos discontinuos 22,
@@ -223,6 +228,9 @@ const MALAGA = {
     grupo('sup', 'SUP', 'Turno rotatorio común (supervisión)', 'SUP', 24, [], { patronDe: 'ta', horasObjetivo: 1494.5 }),
   ],
   // Mínimos de Málaga desde el 15-10-2026: punta 09:45-14:30, tarde 16:45-19:45 y noche.
+  // Solapes y horas de entrada que rotan (Parámetros › Turnos). De ejemplo, desactivada: los miércoles de una de
+  // cada dos semanas de mañana se entra a las 11:00 (S1) en lugar de a las 08:15.
+  solapes: [{ activo: false, grupo: 'ta', base: 'RM1', turno: 'S1', dias: [2], cada: 2, desfase: 0 }],
   minimos: [
     { colectivo: 'TA',  franja: 'manana', laborable: 46, sabado: 35, domingo: 28 },
     { colectivo: 'TA',  franja: 'tarde',  laborable: 32, sabado: 26, domingo: 25 },

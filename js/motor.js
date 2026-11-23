@@ -57,6 +57,27 @@ export function calendario(anio, festivos = []) {
   return dias;
 }
 
+// Solapes y horas de entrada que rotan: reglas que, sin tocar el patrón guardado, cambian un turno por otro
+// ciertos días de la semana. Como cada persona empieza el ciclo en una semana distinta, el solape rota solo
+// entre todo el grupo. Regla: { activo, grupo, base, turno, dias: [0-6, lunes = 0], cada, desfase }.
+// «cada» = cada cuántas semanas con el turno base se aplica (1 = todas, 2 = una sí y otra no…).
+export function aplicarSolapes(patron, grupoId, solapes, existe = () => true) {
+  const reglas = (solapes || []).filter(r => r && r.activo && r.grupo === grupoId && r.base && r.turno && r.base !== r.turno && existe(r.turno));
+  if (!reglas.length) return patron;
+  const p = patron.slice(), semanas = p.length / 7;
+  for (const r of reglas) {
+    const dias = new Set((r.dias || []).map(Number));
+    const cada = Math.max(1, Math.floor(Number(r.cada) || 1)), desfase = Math.max(0, Math.floor(Number(r.desfase) || 0));
+    let k = 0;
+    for (let w = 0; w < semanas; w++) {
+      if (!p.slice(w * 7, w * 7 + 7).includes(r.base)) continue;
+      if ((k + desfase) % cada === 0) for (const d of dias) if (p[w * 7 + d] === r.base) p[w * 7 + d] = r.turno;
+      k++;
+    }
+  }
+  return p;
+}
+
 export function resolverPatron(grupo, grupos, visto = new Set()) {
   if (grupo.patronDe && !visto.has(grupo.id)) {
     const otro = grupos.find(g => g.id === grupo.patronDe);
@@ -161,7 +182,8 @@ export function generar(cfgEntrada, opciones = {}) {
   const personas = [];
   const patrones = new Map();
   for (const g of grupos) {
-    const patron = resolverPatron(g, cfg.grupos || []).map(c => (idx.has(c) ? c : 'L'));
+    const patronBase = resolverPatron(g, cfg.grupos || []).map(c => (idx.has(c) ? c : 'L'));
+    const patron = aplicarSolapes(patronBase, g.id, cfg.solapes, c => idx.has(c));
     patrones.set(g.id, patron);
     const semanas = patron.length / 7;
     const n = Math.min(Math.floor(tamGrupo(g)), 2000);
@@ -171,7 +193,7 @@ export function generar(cfgEntrada, opciones = {}) {
     const pref = {};
     // Solo en las franjas que el grupo deja cubrir al ajuste.
     const permitidas = Array.isArray(g.franjasAjuste) ? g.franjasAjuste : FR;
-    for (const f of FR) pref[f] = permitidas.includes(f) ? (patron.find(c => turnosMap.get(c).franja === f) || (T.find(t => t.franja === f) || {}).codigo) : null;
+    for (const f of FR) pref[f] = permitidas.includes(f) ? (patronBase.find(c => turnosMap.get(c).franja === f) || (T.find(t => t.franja === f) || {}).codigo) : null;
     for (let i = 0; i < n; i++) {
       const real = deReales ? deReales[i] : null;
       const base = Number(g.horasObjetivo) || 1480.5;

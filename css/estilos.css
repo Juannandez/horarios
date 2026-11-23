@@ -360,3 +360,4 @@ body:has(#barra-guardar:not(:empty)) #avisos, body:has(#barra-sel:not([hidden]))
   .contenido { margin: 0 !important; padding: 0 !important; }
   .tabla-caja { max-height: none; overflow: visible; border: 0; }
 }
+.tabla-lista tr.apagada td { opacity: .55; }

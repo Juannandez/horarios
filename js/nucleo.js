@@ -235,6 +235,7 @@ export function completarSede(cfg, base) {
   if (!c.festivos || Array.isArray(c.festivos) || typeof c.festivos !== 'object') c.festivos = base.festivos;
   c.festivos = { fuente: { tipo: 'ninguna', region: '', url: '', trasladarDomingos: true }, locales: [], extra: [], quitar: [], enlaces: [], cache: null, ...c.festivos };
   c.manuales = dicc(c.manuales);
+  if (!Array.isArray(c.solapes)) c.solapes = clonar(base.solapes || []);
   if (!Array.isArray(c.contratos)) c.contratos = JSON.parse(JSON.stringify(base.contratos || []));
   if (!c.especiales || typeof c.especiales !== 'object' || Array.isArray(c.especiales)) c.especiales = {};
   // Cobertura y bolsa: lo que falte se completa con los valores de partida de la sede.

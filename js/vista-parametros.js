@@ -1,6 +1,6 @@
 // Vista Parámetros: todo lo que define el cuadrante, en listas donde se añade y se quita.
 import { estado, esc, $, $$, DIAS_CORTOS, MESES, fmtNum, estiloTurno, confirmar, modal, cambiado, leerRuta, ponerRuta, nuevoId, tinta, sedeBase, clonar, avisar, pedirFestivos } from './nucleo.js';
-import { estimarPatron, prepararTurno, resolverPatron, fmtH } from './motor.js';
+import { estimarPatron, prepararTurno, resolverPatron, aplicarSolapes, fmtH } from './motor.js';
 import { COLECTIVOS, FRANJAS, FRANJA_NOMBRE, REGLAS_CATALOGO, TIPOS_FUENTE, nivelRegla } from './datos-base.js';
 import { NIVELES } from './puntuacion.js';
 import { turnosAMedida, casoEspecial } from './contratos.js';
@@ -121,7 +121,40 @@ function seccionTurnos(cfg) {
     <div class="herramientas"><div class="grupo" role="group" aria-label="Ordenar turnos"><span class="etiqueta">Ordenar</span>
       ${[['franja', 'Franja'], ['codigo', 'Código'], ['inicio', 'Hora de inicio'], ['lista', 'Como se crearon']].map(([v, t]) => `<button type="button" class="btn mini" data-accion="orden-turnos" data-valor="${v}" aria-pressed="${ordenTurnos === v}">${t}</button>`).join('')}</div></div>
     <div class="tabla-caja" style="max-height:none"><table class="tabla-lista tabla-turnos"><thead><tr><th scope="col">Color</th><th scope="col">Muestra</th><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Inicio</th><th scope="col">Fin</th><th scope="col" class="num">Horas</th><th scope="col">Franja</th><th scope="col">Ajuste</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
-    <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="turnos">Añadir turno</button></div></section>`;
+    <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="turnos">Añadir turno</button></div></section>
+    ${seccionSolapes(cfg)}`;
+}
+
+// Solapes y horas de entrada que rotan: cambian un turno por otro ciertos días, sin tocar el patrón (motor.js,
+// aplicarSolapes). Cada persona empieza el ciclo en una semana distinta, así que el cambio rota entre el grupo.
+function seccionSolapes(cfg) {
+  const trabajan = cfg.turnos.filter(t => t.franja !== 'libre');
+  const opT = trabajan.map(t => [t.codigo, `${t.codigo} ${t.inicio}–${t.fin}`]);
+  const grupos = cfg.grupos.map(g => [g.id, g.nombre]);
+  const filas = (cfg.solapes || []).map((r, i) => {
+    const g = cfg.grupos.find(x => x.id === r.grupo);
+    let efecto = '';
+    if (g) {
+      const base = resolverPatron(g, cfg.grupos), con = aplicarSolapes(base, g.id, [{ ...r, activo: true }]);
+      const cambios = con.reduce((a, c, k) => a + (c !== base[k] ? 1 : 0), 0);
+      efecto = cambios ? `Cada persona lo hace unos ${fmtNum(cambios * 52 / (base.length / 7))} días al año (${cambios} en el ciclo de ${base.length / 7} semanas).`
+        : `No cambia nada: el turno ${esc(r.base)} no sale esos días en el patrón de «${esc(g.nombre)}».`;
+    }
+    return `<tr class="${r.activo ? '' : 'apagada'}">
+      <td>${chk(`solapes.${i}.activo`, r.activo, 'Activa', 'data-estructura="1"')}</td>
+      <td>${sel(`solapes.${i}.grupo`, r.grupo, grupos, 'aria-label="Grupo" data-estructura="1"')}</td>
+      <td>${sel(`solapes.${i}.base`, r.base, opT, 'aria-label="Turno que se cambia" data-estructura="1"')}</td>
+      <td>${sel(`solapes.${i}.turno`, r.turno, opT, 'aria-label="Turno de solape" data-estructura="1"')}</td>
+      <td><div class="dias-libres">${DIAS_CORTOS.map((d, k) => `<label class="casilla"><input type="checkbox" data-solape="${i}" data-dia="${k}" ${(r.dias || []).map(Number).includes(k) ? 'checked' : ''}><span>${d}</span></label>`).join('')}</div></td>
+      <td>${sel(`solapes.${i}.cada`, r.cada || 1, [[1, 'Todas las semanas'], [2, '1 de cada 2'], [3, '1 de cada 3'], [4, '1 de cada 4']], 'aria-label="Cada cuántas semanas" data-tipo="num" data-estructura="1"')}
+        ${Number(r.cada) > 1 ? `<br>${sel(`solapes.${i}.desfase`, r.desfase || 0, Array.from({ length: Number(r.cada) }, (_, k) => [k, k ? `Empezando en la ${k + 1}.ª` : 'Empezando en la 1.ª']), 'aria-label="Desfase" data-tipo="num" data-estructura="1"')}` : ''}</td>
+      <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar" data-lista="solapes" data-i="${i}">Quitar</button></td></tr>
+      <tr class="${r.activo ? '' : 'apagada'}"><td></td><td colspan="6" class="tenue">${efecto}</td></tr>`;
+  }).join('');
+  return `<section class="panel" id="sec-solapes"><h2>Solapes y horas de entrada que rotan</h2>
+    <p class="tenue">Cambia un turno por otro (por ejemplo, un solape de 11:00 a 18:00) ciertos días de la semana, sin tocar el patrón. Como cada persona va en una semana distinta del ciclo, el cambio rota solo: unos días se entra a una hora y otros a otra. Activa o desactiva cada regla cuando quieras. El turno de solape cuenta para los mínimos de su franja (la que pongas arriba en «Turnos»); para un horario nuevo, créalo antes con «Añadir turno».</p>
+    ${filas ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Activa</th><th scope="col">Grupo</th><th scope="col">En lugar de</th><th scope="col">Se entra con</th><th scope="col">Días</th><th scope="col">Semanas</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>` : '<p class="tenue">No hay reglas de solape.</p>'}
+    <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="solapes">Añadir regla de solape</button></div></section>`;
 }
 
 function editorPatron(g, gi, cfg, turnosMap) {
@@ -435,6 +468,12 @@ const NUEVOS = {
     return { codigo: `X${n}`, nombre: 'Nuevo turno', inicio: '09:00', fin: '16:00', franja: 'manana', color: '#B9D7EA' };
   },
   minimos: () => ({ colectivo: 'TA', franja: 'manana', laborable: 0, sabado: 0, domingo: 0 }),
+  solapes: (cfg) => {
+    const t = cfg.turnos.filter(x => x.franja !== 'libre');
+    const base = (t.find(x => x.codigo === 'RM1') || t[0] || {}).codigo || '';
+    const otro = (t.find(x => x.codigo !== base && /^S/.test(x.codigo)) || t.find(x => x.codigo !== base) || {}).codigo || '';
+    return { activo: true, grupo: (cfg.grupos[0] || {}).id || '', base, turno: otro, dias: [2], cada: 1, desfase: 0 };
+  },
 };
 
 export function eventosParametros(raiz, repintar) {
@@ -458,6 +497,14 @@ export function eventosParametros(raiz, repintar) {
       const t = cfg.turnos.find(x => x.codigo === el.value);
       if (t) { el.style.background = t.color; el.style.color = tinta(t.color); }
       return cambiado();
+    }
+    if (el.dataset.solape != null) {
+      if (!final) return;
+      const r = cfg.solapes[Number(el.dataset.solape)], d = Number(el.dataset.dia);
+      const dias = new Set((r.dias || []).map(Number));
+      if (el.checked) dias.add(d); else dias.delete(d);
+      r.dias = [...dias].sort();
+      cambiado(); return repintar();
     }
     if (el.dataset.voluntario != null) {
       if (!final) return;
