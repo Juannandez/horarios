@@ -1,0 +1,1908 @@
+{
+ "guardado": "2026-11-23T20:52:21.922Z",
+ "nota": "Sevilla: reglas",
+ "config": {
+  "version": 2,
+  "tema": "day",
+  "encuestas": [
+   {
+    "id": "preferencias",
+    "titulo": "Preferencias de turno",
+    "activa": true,
+    "descripcion": "Encuesta anónima de la Sección Sindical CGT sobre el sistema de turnos del SAT. Tarda 2 minutos.",
+    "preguntas": [
+     {
+      "id": "p0",
+      "tipo": "unica",
+      "texto": "¿En qué sede trabajas?",
+      "opciones": [
+       "Sevilla",
+       "Málaga"
+      ],
+      "obligatoria": true
+     },
+     {
+      "id": "p1",
+      "tipo": "unica",
+      "texto": "¿En qué colectivo trabajas?",
+      "opciones": [
+       "Teleasistencia",
+       "Supervisión"
+      ],
+      "obligatoria": true
+     },
+     {
+      "id": "p2",
+      "tipo": "unica",
+      "texto": "¿Qué turno tienes ahora?",
+      "opciones": [
+       "Rotatorio",
+       "Mañana fija",
+       "Tarde fija",
+       "Continuo",
+       "Fijo discontinuo"
+      ],
+      "obligatoria": true
+     },
+     {
+      "id": "p3",
+      "tipo": "unica",
+      "texto": "¿Qué te parece un turno común para toda la plantilla?",
+      "opciones": [
+       "A favor",
+       "A favor con condiciones",
+       "En contra",
+       "No lo tengo claro"
+      ],
+      "obligatoria": true
+     },
+     {
+      "id": "p4",
+      "tipo": "unica",
+      "texto": "¿Cuántas noches al año estarías dispuesto o dispuesta a hacer?",
+      "opciones": [
+       "Ninguna",
+       "Hasta 14",
+       "Entre 15 y 28",
+       "Más de 28"
+      ],
+      "obligatoria": true
+     },
+     {
+      "id": "p5",
+      "tipo": "unica",
+      "texto": "¿Cómo prefieres los fines de semana?",
+      "opciones": [
+       "1 de cada 3",
+       "1 de cada 4",
+       "Me da igual si se compensa",
+       "Otra opción"
+      ],
+      "obligatoria": true
+     },
+     {
+      "id": "p6",
+      "tipo": "multiple",
+      "texto": "¿Qué es lo más importante para ti? Marca todo lo que quieras.",
+      "opciones": [
+       "Saber el cuadrante con antelación",
+       "Fines de semana coherentes con la semana",
+       "Tope real de noches",
+       "Poder cambiar turnos",
+       "Mantener el plus rotativo",
+       "Turnos fijos"
+      ],
+      "obligatoria": false
+     },
+     {
+      "id": "p7",
+      "tipo": "texto",
+      "texto": "¿Algo más que quieras contarnos?",
+      "opciones": [],
+      "obligatoria": false
+     }
+    ]
+   },
+   {
+    "id": "valoracion",
+    "titulo": "Valoración del cuadrante",
+    "activa": true,
+    "descripcion": "Dinos qué te parece el cuadrante que genera esta página para tu sede con los parámetros actuales.",
+    "preguntas": [
+     {
+      "id": "v0",
+      "tipo": "unica",
+      "texto": "¿En qué sede trabajas?",
+      "opciones": [
+       "Sevilla",
+       "Málaga"
+      ],
+      "obligatoria": true
+     },
+     {
+      "id": "v1",
+      "tipo": "unica",
+      "texto": "¿En qué colectivo trabajas?",
+      "opciones": [
+       "Teleasistencia",
+       "Supervisión"
+      ],
+      "obligatoria": true
+     },
+     {
+      "id": "v2",
+      "tipo": "escala",
+      "texto": "Del 1 al 5, ¿cómo valoras el reparto de noches?",
+      "opciones": [],
+      "obligatoria": true
+     },
+     {
+      "id": "v3",
+      "tipo": "escala",
+      "texto": "Del 1 al 5, ¿cómo valoras el reparto de fines de semana?",
+      "opciones": [],
+      "obligatoria": true
+     },
+     {
+      "id": "v4",
+      "tipo": "escala",
+      "texto": "Del 1 al 5, ¿cómo valoras la rotación de mañanas y tardes?",
+      "opciones": [],
+      "obligatoria": true
+     },
+     {
+      "id": "v5",
+      "tipo": "texto",
+      "texto": "¿Qué cambiarías?",
+      "opciones": [],
+      "obligatoria": false
+     }
+    ]
+   }
+  ],
+  "sedes": [
+   {
+    "id": "sevilla",
+    "nombre": "Sevilla",
+    "titulo": "SAT Sevilla · propuesta de cuadrante",
+    "anio": 2027,
+    "turnos": [
+     {
+      "codigo": "RM1",
+      "nombre": "Mañana rotatorio",
+      "inicio": "08:15",
+      "fin": "15:15",
+      "franja": "manana",
+      "color": "#FFD37A"
+     },
+     {
+      "codigo": "M1",
+      "nombre": "Mañana 1",
+      "inicio": "07:45",
+      "fin": "14:45",
+      "franja": "manana",
+      "color": "#F7BF4F"
+     },
+     {
+      "codigo": "M2",
+      "nombre": "Mañana 2",
+      "inicio": "08:00",
+      "fin": "15:00",
+      "franja": "manana",
+      "color": "#F2D9A0"
+     },
+     {
+      "codigo": "C1",
+      "nombre": "Continuo",
+      "inicio": "09:00",
+      "fin": "16:00",
+      "franja": "manana",
+      "color": "#C9E4C5"
+     },
+     {
+      "codigo": "RT1",
+      "nombre": "Tarde rotatorio",
+      "inicio": "15:00",
+      "fin": "22:00",
+      "franja": "tarde",
+      "color": "#F39A5E"
+     },
+     {
+      "codigo": "T1",
+      "nombre": "Tarde 1",
+      "inicio": "15:00",
+      "fin": "22:00",
+      "franja": "tarde",
+      "color": "#E8794A"
+     },
+     {
+      "codigo": "T2",
+      "nombre": "Tarde 2",
+      "inicio": "16:00",
+      "fin": "23:00",
+      "franja": "tarde",
+      "color": "#F6B89A"
+     },
+     {
+      "codigo": "N",
+      "nombre": "Noche",
+      "inicio": "22:00",
+      "fin": "08:00",
+      "franja": "noche",
+      "color": "#2E4A86"
+     },
+     {
+      "codigo": "S1",
+      "nombre": "Solape mañana-tarde",
+      "inicio": "11:00",
+      "fin": "18:00",
+      "franja": "manana",
+      "color": "#B7D3F2"
+     },
+     {
+      "codigo": "L",
+      "nombre": "Libre",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#FFFFFF",
+      "disponible": true,
+      "fijo": true
+     },
+     {
+      "codigo": "V",
+      "nombre": "Vacaciones",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#7FC07C",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "D",
+      "nombre": "Descanso por exceso de jornada",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#DCE8EE",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "SN",
+      "nombre": "Saliente de noche",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#C9D3E8",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "B",
+      "nombre": "Baja o ausencia",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#E8C9C9",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "BO",
+      "nombre": "Día de bolsa de horas",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#D9E7C6",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "AP",
+      "nombre": "Asunto propio",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#E6D8F0",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "VS",
+      "nombre": "Día suelto de vacaciones",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#B9DDB6",
+      "disponible": false,
+      "fijo": true
+     }
+    ],
+    "grupos": [
+     {
+      "id": "ta",
+      "colectivo": "TA",
+      "nombre": "Turno rotatorio común",
+      "prefijo": "TA",
+      "personas": 256,
+      "patron": [
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "N",
+       "N",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "N",
+       "N",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "N",
+       "N",
+       "N",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1"
+      ],
+      "patronDe": "",
+      "flexible": true,
+      "horasObjetivo": 1480.5,
+      "franjasAjuste": [
+       "manana",
+       "tarde",
+       "noche"
+      ],
+      "vacaciones": {
+       "activo": true,
+       "dias": 30,
+       "desde": "06-01",
+       "hasta": "09-30"
+      }
+     },
+     {
+      "id": "sup",
+      "colectivo": "SUP",
+      "nombre": "Turno rotatorio común (supervisión)",
+      "prefijo": "SUP",
+      "personas": 29,
+      "patron": [],
+      "patronDe": "ta",
+      "flexible": true,
+      "horasObjetivo": 1480.5,
+      "franjasAjuste": [
+       "manana",
+       "tarde",
+       "noche"
+      ],
+      "vacaciones": {
+       "activo": true,
+       "dias": 30,
+       "desde": "06-01",
+       "hasta": "09-30"
+      }
+     },
+     {
+      "id": "rv",
+      "colectivo": "TA",
+      "nombre": "Refuerzo de verano",
+      "prefijo": "RV",
+      "personas": 35,
+      "patron": [],
+      "patronDe": "ta",
+      "flexible": true,
+      "horasObjetivo": 1480.5,
+      "franjasAjuste": [
+       "manana",
+       "tarde",
+       "noche"
+      ],
+      "vacaciones": {
+       "activo": false,
+       "dias": 0,
+       "desde": "06-01",
+       "hasta": "09-30"
+      },
+      "desde": "2027-06-21",
+      "hasta": "2027-09-30",
+      "condiciones": {
+       "libreFines": true,
+       "sinVacaciones": true
+      }
+     }
+    ],
+    "solapes": [
+     {
+      "activo": true,
+      "grupo": "ta",
+      "base": "RM1",
+      "turno": "S1",
+      "dias": [
+       2
+      ],
+      "cada": 2,
+      "desfase": 0
+     }
+    ],
+    "minimos": [
+     {
+      "colectivo": "TA",
+      "franja": "manana",
+      "laborable": 47,
+      "sabado": 39,
+      "domingo": 29,
+      "dias": [
+       47,
+       47,
+       47,
+       47,
+       47,
+       39,
+       29
+      ],
+      "festivo": 29
+     },
+     {
+      "colectivo": "TA",
+      "franja": "tarde",
+      "laborable": 37,
+      "sabado": 29,
+      "domingo": 28,
+      "dias": [
+       37,
+       37,
+       37,
+       37,
+       37,
+       29,
+       28
+      ],
+      "festivo": 28
+     },
+     {
+      "colectivo": "TA",
+      "franja": "noche",
+      "laborable": 8,
+      "sabado": 8,
+      "domingo": 8,
+      "dias": [
+       8,
+       8,
+       8,
+       8,
+       8,
+       8,
+       8
+      ],
+      "festivo": 8
+     },
+     {
+      "colectivo": "SUP",
+      "franja": "manana",
+      "laborable": 2,
+      "sabado": 2,
+      "domingo": 2,
+      "dias": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "festivo": 2
+     },
+     {
+      "colectivo": "SUP",
+      "franja": "tarde",
+      "laborable": 2,
+      "sabado": 2,
+      "domingo": 2,
+      "dias": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "festivo": 2
+     },
+     {
+      "colectivo": "SUP",
+      "franja": "noche",
+      "laborable": 1,
+      "sabado": 1,
+      "domingo": 1,
+      "dias": [
+       1,
+       1,
+       1,
+       1,
+       1,
+       1,
+       1
+      ],
+      "festivo": 1
+     }
+    ],
+    "reglas": {
+     "maxNoches": {
+      "activo": true,
+      "valor": 14
+     },
+     "bloquesNoche": {
+      "activo": true,
+      "valor": "2-2-3"
+     },
+     "maxNochesSeguidas": {
+      "activo": true,
+      "valor": 3
+     },
+     "descansoTrasNoche": {
+      "activo": true,
+      "valor": 3
+     },
+     "finesCoherentes": {
+      "activo": true,
+      "valor": true
+     },
+     "maxFines": {
+      "activo": true,
+      "valor": 17
+     },
+     "minFinesLibresEntre": {
+      "activo": true,
+      "valor": 2
+     },
+     "maxFinesSeguidos": {
+      "activo": true,
+      "valor": 1
+     },
+     "minFinesLibresMes": {
+      "activo": false,
+      "valor": 1
+     },
+     "descanso": {
+      "activo": true,
+      "valor": 12
+     },
+     "maxSeguidos": {
+      "activo": true,
+      "valor": 5
+     },
+     "tope": {
+      "activo": true,
+      "valor": 0
+     },
+     "ratio": {
+      "activo": true,
+      "valor": 16
+     },
+     "ajuste": {
+      "activo": true
+     }
+    },
+    "vacaciones": {
+     "modo": "periodos",
+     "diasHabiles": 17,
+     "diasSueltos": 5,
+     "horasDia": 7,
+     "semilla": "estival-2027",
+     "periodos": [
+      {
+       "n": 1,
+       "inicio": "2027-06-21",
+       "fin": "2027-07-13",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 2,
+       "inicio": "2027-06-28",
+       "fin": "2027-07-20",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 3,
+       "inicio": "2027-07-05",
+       "fin": "2027-07-27",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 4,
+       "inicio": "2027-07-12",
+       "fin": "2027-08-03",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 5,
+       "inicio": "2027-07-19",
+       "fin": "2027-08-10",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 6,
+       "inicio": "2027-07-26",
+       "fin": "2027-08-18",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 7,
+       "inicio": "2027-08-02",
+       "fin": "2027-08-25",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 8,
+       "inicio": "2027-08-09",
+       "fin": "2027-09-01",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 9,
+       "inicio": "2027-08-16",
+       "fin": "2027-09-08",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 10,
+       "inicio": "2027-08-23",
+       "fin": "2027-09-14",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 11,
+       "inicio": "2027-08-30",
+       "fin": "2027-09-21",
+       "plazas": {
+        "TA": 24,
+        "SUP": 3
+       }
+      }
+     ],
+     "solicitudes": {},
+     "sueltosEnJornada": false,
+     "nota": "Periodos y plazas del correo de Procesos horarios de Sevilla (2027). Supervisión: 3 plazas, orientativo."
+    },
+    "festivos": {
+     "fuente": {
+      "tipo": "nager",
+      "region": "ES-AN",
+      "url": "",
+      "trasladarDomingos": true
+     },
+     "locales": [
+      {
+       "nombre": "Miércoles de Feria (local)",
+       "regla": "pascua",
+       "dias": 17
+      },
+      {
+       "nombre": "Corpus Christi (local)",
+       "regla": "pascua",
+       "dias": 60
+      }
+     ],
+     "extra": [],
+     "quitar": [],
+     "enlaces": [
+      {
+       "texto": "Junta de Andalucía: calendario laboral (todos los años)",
+       "url": "https://www.juntadeandalucia.es/temas/trabajar/relaciones/calendario.html"
+      },
+      {
+       "texto": "BOE 13-10-2026: fiestas laborales de 2027 (nacionales y por comunidad)",
+       "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-21254"
+      },
+      {
+       "texto": "BOJA 5-5-2026: Decreto 84/2026, fiestas de Andalucía para 2027",
+       "url": "https://www.juntadeandalucia.es/eboja/2026/84/BOJA26-084-00002-5812-01_00337048.pdf"
+      },
+      {
+       "texto": "BOJA 29-10-2026: fiestas locales de 2027 de todos los municipios",
+       "url": "https://www.juntadeandalucia.es/eboja/2026/210/BOJA26-210-00021-14189-01_00345419.pdf"
+      }
+     ],
+     "cache": {
+      "clave": "nager|ES-AN|",
+      "anio": 2027,
+      "fecha": "2026-11-20",
+      "lista": [
+       {
+        "fecha": "2027-01-01",
+        "nombre": "Año Nuevo"
+       },
+       {
+        "fecha": "2027-01-06",
+        "nombre": "Día de Reyes / Epifanía del Señor"
+       },
+       {
+        "fecha": "2027-02-28",
+        "nombre": "Día de Andalucía"
+       },
+       {
+        "fecha": "2027-03-25",
+        "nombre": "Jueves Santo"
+       },
+       {
+        "fecha": "2027-03-26",
+        "nombre": "Viernes Santo"
+       },
+       {
+        "fecha": "2027-05-01",
+        "nombre": "Fiesta del trabajo"
+       },
+       {
+        "fecha": "2027-08-15",
+        "nombre": "Asunción"
+       },
+       {
+        "fecha": "2027-10-12",
+        "nombre": "Fiesta Nacional de España"
+       },
+       {
+        "fecha": "2027-11-01",
+        "nombre": "Día de todos los Santos"
+       },
+       {
+        "fecha": "2027-12-06",
+        "nombre": "Día de la Constitución"
+       },
+       {
+        "fecha": "2027-12-08",
+        "nombre": "Inmaculada Concepción"
+       },
+       {
+        "fecha": "2027-12-25",
+        "nombre": "Navidad"
+       }
+      ]
+     }
+    },
+    "manuales": {},
+    "contratos": [
+     {
+      "id": "completa",
+      "nombre": "Jornada completa",
+      "horasSemana": 35,
+      "sinNoches": false,
+      "turnos": {
+       "manana": "",
+       "tarde": "",
+       "noche": ""
+      }
+     },
+     {
+      "id": "r30",
+      "nombre": "Reducida 30 h",
+      "horasSemana": 30,
+      "sinNoches": true,
+      "turnos": {
+       "manana": "",
+       "tarde": "",
+       "noche": ""
+      }
+     },
+     {
+      "id": "r25",
+      "nombre": "Reducida 25 h",
+      "horasSemana": 25,
+      "sinNoches": true,
+      "turnos": {
+       "manana": "",
+       "tarde": "",
+       "noche": ""
+      }
+     },
+     {
+      "id": "r20",
+      "nombre": "Reducida 20 h",
+      "horasSemana": 20,
+      "sinNoches": true,
+      "turnos": {
+       "manana": "",
+       "tarde": "",
+       "noche": ""
+      }
+     }
+    ],
+    "cobertura": {
+     "cesion": {
+      "modo": "todos",
+      "tope": 16
+     },
+     "bolsa": {
+      "modo": "ambas",
+      "tope": 35,
+      "inicial": {},
+      "consumida": {}
+     },
+     "margen": {
+      "noche": 0,
+      "dia": 0,
+      "tipo": "personas"
+     },
+     "ausencias": [],
+     "aguante": {
+      "avisar": true
+     }
+    },
+    "especiales": {}
+   },
+   {
+    "id": "malaga",
+    "nombre": "Málaga",
+    "titulo": "SAT Málaga · propuesta de cuadrante",
+    "anio": 2027,
+    "turnos": [
+     {
+      "codigo": "RM1",
+      "nombre": "Mañana rotatorio",
+      "inicio": "08:15",
+      "fin": "15:15",
+      "franja": "manana",
+      "color": "#FFD37A"
+     },
+     {
+      "codigo": "RMF",
+      "nombre": "Mañana fijo discontinuo",
+      "inicio": "08:00",
+      "fin": "15:00",
+      "franja": "manana",
+      "color": "#FBE3A6"
+     },
+     {
+      "codigo": "M1",
+      "nombre": "Mañana 1",
+      "inicio": "07:45",
+      "fin": "14:45",
+      "franja": "manana",
+      "color": "#F7BF4F"
+     },
+     {
+      "codigo": "M2",
+      "nombre": "Mañana 2",
+      "inicio": "08:00",
+      "fin": "15:00",
+      "franja": "manana",
+      "color": "#F2D9A0"
+     },
+     {
+      "codigo": "C1",
+      "nombre": "Continuo",
+      "inicio": "09:00",
+      "fin": "16:00",
+      "franja": "manana",
+      "color": "#C9E4C5"
+     },
+     {
+      "codigo": "RT1",
+      "nombre": "Tarde rotatorio",
+      "inicio": "15:00",
+      "fin": "22:00",
+      "franja": "tarde",
+      "color": "#F39A5E"
+     },
+     {
+      "codigo": "T1",
+      "nombre": "Tarde 1",
+      "inicio": "15:00",
+      "fin": "22:00",
+      "franja": "tarde",
+      "color": "#E8794A"
+     },
+     {
+      "codigo": "T2",
+      "nombre": "Tarde 2",
+      "inicio": "16:00",
+      "fin": "23:00",
+      "franja": "tarde",
+      "color": "#F6B89A"
+     },
+     {
+      "codigo": "N",
+      "nombre": "Noche",
+      "inicio": "22:00",
+      "fin": "08:00",
+      "franja": "noche",
+      "color": "#2E4A86"
+     },
+     {
+      "codigo": "S1",
+      "nombre": "Solape mañana-tarde",
+      "inicio": "11:00",
+      "fin": "18:00",
+      "franja": "manana",
+      "color": "#B7D3F2"
+     },
+     {
+      "codigo": "L",
+      "nombre": "Libre",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#FFFFFF",
+      "disponible": true,
+      "fijo": true
+     },
+     {
+      "codigo": "V",
+      "nombre": "Vacaciones",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#7FC07C",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "D",
+      "nombre": "Descanso por exceso de jornada",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#DCE8EE",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "SN",
+      "nombre": "Saliente de noche",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#C9D3E8",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "B",
+      "nombre": "Baja o ausencia",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#E8C9C9",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "BO",
+      "nombre": "Día de bolsa de horas",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#D9E7C6",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "AP",
+      "nombre": "Asunto propio",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#E6D8F0",
+      "disponible": false,
+      "fijo": true
+     },
+     {
+      "codigo": "VS",
+      "nombre": "Día suelto de vacaciones",
+      "inicio": "",
+      "fin": "",
+      "franja": "libre",
+      "color": "#B9DDB6",
+      "disponible": false,
+      "fijo": true
+     }
+    ],
+    "grupos": [
+     {
+      "id": "ta",
+      "colectivo": "TA",
+      "nombre": "Turno rotatorio común",
+      "prefijo": "TA",
+      "personas": 242,
+      "patron": [
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "N",
+       "N",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "N",
+       "N",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "N",
+       "N",
+       "N",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1"
+      ],
+      "patronDe": "",
+      "flexible": true,
+      "horasObjetivo": 1494.5,
+      "franjasAjuste": [
+       "manana",
+       "tarde",
+       "noche"
+      ],
+      "vacaciones": {
+       "activo": true,
+       "dias": 30,
+       "desde": "06-01",
+       "hasta": "09-30"
+      }
+     },
+     {
+      "id": "sup",
+      "colectivo": "SUP",
+      "nombre": "Turno rotatorio común (supervisión)",
+      "prefijo": "SUP",
+      "personas": 24,
+      "patron": [],
+      "patronDe": "ta",
+      "flexible": true,
+      "horasObjetivo": 1494.5,
+      "franjasAjuste": [
+       "manana",
+       "tarde",
+       "noche"
+      ],
+      "vacaciones": {
+       "activo": true,
+       "dias": 30,
+       "desde": "06-01",
+       "hasta": "09-30"
+      }
+     },
+     {
+      "id": "rv",
+      "colectivo": "TA",
+      "nombre": "Refuerzo de verano",
+      "prefijo": "RV",
+      "personas": 35,
+      "patron": [],
+      "patronDe": "ta",
+      "flexible": true,
+      "horasObjetivo": 1494.5,
+      "franjasAjuste": [
+       "manana",
+       "tarde",
+       "noche"
+      ],
+      "vacaciones": {
+       "activo": false,
+       "dias": 0,
+       "desde": "06-01",
+       "hasta": "09-30"
+      },
+      "desde": "2027-06-21",
+      "hasta": "2027-09-30",
+      "condiciones": {
+       "libreFines": true,
+       "sinVacaciones": true
+      }
+     }
+    ],
+    "solapes": [
+     {
+      "activo": false,
+      "grupo": "ta",
+      "base": "RM1",
+      "turno": "S1",
+      "dias": [
+       2
+      ],
+      "cada": 2,
+      "desfase": 0
+     }
+    ],
+    "minimos": [
+     {
+      "colectivo": "TA",
+      "franja": "manana",
+      "laborable": 46,
+      "sabado": 35,
+      "domingo": 28,
+      "dias": [
+       46,
+       46,
+       46,
+       46,
+       46,
+       35,
+       28
+      ],
+      "festivo": 28
+     },
+     {
+      "colectivo": "TA",
+      "franja": "tarde",
+      "laborable": 32,
+      "sabado": 26,
+      "domingo": 25,
+      "dias": [
+       32,
+       32,
+       32,
+       32,
+       32,
+       26,
+       25
+      ],
+      "festivo": 25
+     },
+     {
+      "colectivo": "TA",
+      "franja": "noche",
+      "laborable": 8,
+      "sabado": 8,
+      "domingo": 8,
+      "dias": [
+       8,
+       8,
+       8,
+       8,
+       8,
+       8,
+       8
+      ],
+      "festivo": 8
+     },
+     {
+      "colectivo": "SUP",
+      "franja": "manana",
+      "laborable": 2,
+      "sabado": 2,
+      "domingo": 2,
+      "dias": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "festivo": 2
+     },
+     {
+      "colectivo": "SUP",
+      "franja": "tarde",
+      "laborable": 2,
+      "sabado": 2,
+      "domingo": 2,
+      "dias": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "festivo": 2
+     },
+     {
+      "colectivo": "SUP",
+      "franja": "noche",
+      "laborable": 1,
+      "sabado": 1,
+      "domingo": 1,
+      "dias": [
+       1,
+       1,
+       1,
+       1,
+       1,
+       1,
+       1
+      ],
+      "festivo": 1
+     }
+    ],
+    "reglas": {
+     "maxNoches": {
+      "activo": true,
+      "valor": 14
+     },
+     "bloquesNoche": {
+      "activo": true,
+      "valor": "2-2-3"
+     },
+     "maxNochesSeguidas": {
+      "activo": true,
+      "valor": 3
+     },
+     "descansoTrasNoche": {
+      "activo": true,
+      "valor": 3
+     },
+     "finesCoherentes": {
+      "activo": true,
+      "valor": true
+     },
+     "maxFines": {
+      "activo": true,
+      "valor": 17
+     },
+     "minFinesLibresEntre": {
+      "activo": true,
+      "valor": 2
+     },
+     "maxFinesSeguidos": {
+      "activo": false,
+      "valor": 2
+     },
+     "minFinesLibresMes": {
+      "activo": false,
+      "valor": 1
+     },
+     "descanso": {
+      "activo": true,
+      "valor": 12
+     },
+     "maxSeguidos": {
+      "activo": true,
+      "valor": 5
+     },
+     "tope": {
+      "activo": true,
+      "valor": 0
+     },
+     "ratio": {
+      "activo": true,
+      "valor": 16
+     },
+     "ajuste": {
+      "activo": true
+     }
+    },
+    "vacaciones": {
+     "modo": "periodos",
+     "diasHabiles": 17,
+     "diasSueltos": 5,
+     "horasDia": 7,
+     "semilla": "estival-2027",
+     "periodos": [
+      {
+       "n": 1,
+       "inicio": "2027-06-21",
+       "fin": "2027-07-13",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 2,
+       "inicio": "2027-06-28",
+       "fin": "2027-07-20",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 3,
+       "inicio": "2027-07-05",
+       "fin": "2027-07-27",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 4,
+       "inicio": "2027-07-12",
+       "fin": "2027-08-03",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 5,
+       "inicio": "2027-07-19",
+       "fin": "2027-08-10",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 6,
+       "inicio": "2027-07-26",
+       "fin": "2027-08-18",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 7,
+       "inicio": "2027-08-02",
+       "fin": "2027-08-25",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 8,
+       "inicio": "2027-08-09",
+       "fin": "2027-09-01",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 9,
+       "inicio": "2027-08-16",
+       "fin": "2027-09-08",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 10,
+       "inicio": "2027-08-23",
+       "fin": "2027-09-14",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      },
+      {
+       "n": 11,
+       "inicio": "2027-08-30",
+       "fin": "2027-09-21",
+       "plazas": {
+        "TA": 22,
+        "SUP": 3
+       }
+      }
+     ],
+     "solicitudes": {},
+     "sueltosEnJornada": false,
+     "nota": "Orientativo: mismos periodos que Sevilla y plazas repartidas por plantilla. Cámbialos con los de Málaga."
+    },
+    "festivos": {
+     "fuente": {
+      "tipo": "nager",
+      "region": "ES-AN",
+      "url": "",
+      "trasladarDomingos": true
+     },
+     "locales": [
+      {
+       "nombre": "Incorporación de Málaga a la Corona de Castilla (local)",
+       "regla": "fija",
+       "fecha": "08-19"
+      },
+      {
+       "nombre": "Virgen de la Victoria (local)",
+       "regla": "fija",
+       "fecha": "09-08"
+      }
+     ],
+     "extra": [],
+     "quitar": [],
+     "enlaces": [
+      {
+       "texto": "Junta de Andalucía: calendario laboral (todos los años)",
+       "url": "https://www.juntadeandalucia.es/temas/trabajar/relaciones/calendario.html"
+      },
+      {
+       "texto": "BOE 13-10-2026: fiestas laborales de 2027 (nacionales y por comunidad)",
+       "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-21254"
+      },
+      {
+       "texto": "BOJA 5-5-2026: Decreto 84/2026, fiestas de Andalucía para 2027",
+       "url": "https://www.juntadeandalucia.es/eboja/2026/84/BOJA26-084-00002-5812-01_00337048.pdf"
+      },
+      {
+       "texto": "BOJA 29-10-2026: fiestas locales de 2027 de todos los municipios",
+       "url": "https://www.juntadeandalucia.es/eboja/2026/210/BOJA26-210-00021-14189-01_00345419.pdf"
+      }
+     ],
+     "cache": {
+      "clave": "nager|ES-AN|",
+      "anio": 2027,
+      "fecha": "2026-11-20",
+      "lista": [
+       {
+        "fecha": "2027-01-01",
+        "nombre": "Año Nuevo"
+       },
+       {
+        "fecha": "2027-01-06",
+        "nombre": "Día de Reyes / Epifanía del Señor"
+       },
+       {
+        "fecha": "2027-02-28",
+        "nombre": "Día de Andalucía"
+       },
+       {
+        "fecha": "2027-03-25",
+        "nombre": "Jueves Santo"
+       },
+       {
+        "fecha": "2027-03-26",
+        "nombre": "Viernes Santo"
+       },
+       {
+        "fecha": "2027-05-01",
+        "nombre": "Fiesta del trabajo"
+       },
+       {
+        "fecha": "2027-08-15",
+        "nombre": "Asunción"
+       },
+       {
+        "fecha": "2027-10-12",
+        "nombre": "Fiesta Nacional de España"
+       },
+       {
+        "fecha": "2027-11-01",
+        "nombre": "Día de todos los Santos"
+       },
+       {
+        "fecha": "2027-12-06",
+        "nombre": "Día de la Constitución"
+       },
+       {
+        "fecha": "2027-12-08",
+        "nombre": "Inmaculada Concepción"
+       },
+       {
+        "fecha": "2027-12-25",
+        "nombre": "Navidad"
+       }
+      ]
+     }
+    },
+    "manuales": {},
+    "contratos": [
+     {
+      "id": "completa",
+      "nombre": "Jornada completa",
+      "horasSemana": 35,
+      "sinNoches": false,
+      "turnos": {
+       "manana": "",
+       "tarde": "",
+       "noche": ""
+      }
+     },
+     {
+      "id": "r30",
+      "nombre": "Reducida 30 h",
+      "horasSemana": 30,
+      "sinNoches": true,
+      "turnos": {
+       "manana": "",
+       "tarde": "",
+       "noche": ""
+      }
+     },
+     {
+      "id": "r25",
+      "nombre": "Reducida 25 h",
+      "horasSemana": 25,
+      "sinNoches": true,
+      "turnos": {
+       "manana": "",
+       "tarde": "",
+       "noche": ""
+      }
+     },
+     {
+      "id": "r20",
+      "nombre": "Reducida 20 h",
+      "horasSemana": 20,
+      "sinNoches": true,
+      "turnos": {
+       "manana": "",
+       "tarde": "",
+       "noche": ""
+      }
+     }
+    ],
+    "cobertura": {
+     "cesion": {
+      "modo": "todos",
+      "tope": 18
+     },
+     "bolsa": {
+      "modo": "ambas",
+      "tope": 35,
+      "inicial": {},
+      "consumida": {}
+     },
+     "margen": {
+      "noche": 0,
+      "dia": 0,
+      "tipo": "personas"
+     },
+     "ausencias": [],
+     "aguante": {
+      "avisar": true
+     }
+    },
+    "especiales": {}
+   }
+  ],
+  "escenarios": [],
+  "portalHorario": ""
+ }
+}
