@@ -116,13 +116,40 @@ function panelInfracciones() {
       <span class="inf-n">${fmtNum(x.casos.length)}</span><span>${esc(x.titulo)}</span></button>`;
   return `<section class="panel inf-panel" aria-label="Infracciones y puntuación">
     <div class="inf-cab"><h2>Puntuación</h2>
-      <span class="inf-punt ${punt.duro ? 'mal' : 'bien'}" title="Incumplimientos de reglas que bloquean (deben ser 0)"><b>${fmtNum(-punt.duro || 0)}</b> duro</span>
-      <span class="inf-punt ${punt.medio ? 'medio' : 'bien'}" title="Personas que faltan frente a los mínimos"><b>${fmtNum(-punt.medio || 0)}</b> medio</span>
-      <span class="inf-punt ${punt.blando ? 'aviso' : 'bien'}" title="Avisos de reglas que avisan"><b>${fmtNum(-punt.blando || 0)}</b> blando</span>
-      <span class="tenue">Cuanto más cerca de 0, mejor: primero el duro, luego la cobertura y luego los avisos.</span>
+      ${[['duro', punt.duro, 'mal', 'Incumplimientos de reglas que bloquean (deben ser 0)'], ['medio', punt.medio, 'medio', 'Personas que faltan frente a los mínimos'], ['blando', punt.blando, 'aviso', 'Avisos de reglas que avisan']].map(([k, n, cl, t]) =>
+        `<button type="button" class="inf-punt ${n ? cl : 'bien'}" data-punt="${k}" aria-expanded="${u.detallePunt === k}" title="${t}. Pulsa para ver de dónde sale"><b>${fmtNum(-n || 0)}</b> ${k}</button>`).join('')}
+      <span class="tenue">Cuanto más cerca de 0, mejor: primero el duro, luego la cobertura y luego los avisos. Pulsa un número para ver de dónde sale.</span>
       ${u.infraccion ? '<button type="button" class="btn mini" data-infraccion="">Ver a todo el mundo</button>' : ''}</div>
+    ${u.detallePunt ? detallePuntuacion(u.detallePunt, lista, punt) : ''}
     <div class="inf-lista">${filas.map(chip).join('') || '<span class="tenue">No hay reglas activas.</span>'}</div>
   </section>`;
+}
+
+// De dónde sale cada número de la puntuación.
+const NIVEL_DE = { duro: 'bloquea', blando: 'avisa' };
+function detallePuntuacion(k, lista, punt) {
+  const { res } = estado;
+  if (k === 'medio') {
+    const fr = (f) => FRANJA_NOMBRE[f].toLowerCase(), col = (c) => (c === 'TA' ? 'Teleasistencia' : 'Supervisión');
+    const resumen = {};
+    for (const h of res.huecos) { const x = `${h.colectivo}|${h.franja}`; resumen[x] = (resumen[x] || 0) + h.falta; }
+    const filas = [...res.huecos].sort((a, b) => a.d - b.d || a.colectivo.localeCompare(b.colectivo));
+    const ci = (c) => res.colectivos.indexOf(c), fi = (f) => res.franjas.indexOf(f);
+    return `<div class="inf-detalle"><h3>Medio: ${fmtNum(punt.medio)} personas-turno que faltan para los mínimos</h3>
+      <p class="tenue">Cada día y franja se cuenta la gente en sala (fila de abajo del cuadrante) y se compara con el mínimo de ese día (Parámetros › <a href="#parametros/minimos">Mínimos</a>; en supervisión, también la ratio de Reglas). Cada persona que falta resta 1. Se arregla con más personas, otro patrón, otros topes o mínimos distintos.</p>
+      ${filas.length ? `<p>${Object.entries(resumen).map(([x, n]) => { const [c, f] = x.split('|'); return `${col(c)} de ${fr(f)}: <b>${fmtNum(n)}</b>`; }).join(' · ')}</p>
+      <div class="tabla-caja" style="max-height:300px"><table class="tabla-lista"><thead><tr><th scope="col">Día</th><th scope="col">Colectivo</th><th scope="col">Franja</th><th scope="col" class="num">Mínimo</th><th scope="col" class="num">En sala</th><th scope="col" class="num">Faltan</th><th scope="col"></th></tr></thead><tbody>
+        ${filas.map(h => `<tr><td>${fmtFecha(h.fecha)}${res.dias[h.d].festivo ? ' <span class="pildora">festivo</span>' : ''}</td><td>${col(h.colectivo)}</td><td>${FRANJA_NOMBRE[h.franja]}</td>
+          <td class="num">${fmtNum(res.necesidad[ci(h.colectivo)][fi(h.franja)][h.d])}</td><td class="num">${fmtNum(res.cobertura[ci(h.colectivo)][fi(h.franja)][h.d])}</td>
+          <td class="num" style="color:var(--bad);font-weight:700">−${fmtNum(h.falta)}</td>
+          <td class="num"><button type="button" class="btn mini" data-ir-dia="${h.d}" data-ir-col="${h.colectivo}">Ver en el cuadrante</button></td></tr>`).join('')}
+      </tbody></table></div>` : '<p>No falta nadie: todos los días y franjas llegan al mínimo.</p>'}</div>`;
+  }
+  const nivel = NIVEL_DE[k], reglas = lista.filter(x => x.nivel === nivel);
+  const n = reglas.reduce((s, x) => s + x.casos.length, 0);
+  return `<div class="inf-detalle"><h3>${k === 'duro' ? 'Duro' : 'Blando'}: ${fmtNum(n)} ${k === 'duro' ? 'incumplimientos de reglas que bloquean' : 'avisos de reglas que avisan'}</h3>
+    <p class="tenue">Sale de las reglas con nivel «${k === 'duro' ? 'Bloquea' : 'Avisa'}» (Parámetros › <a href="#parametros/reglas">Reglas</a>). Cada caso (una persona en unos días) resta 1. ${k === 'duro' ? 'El ajuste nunca las incumple: si sale algo aquí, es por un cambio a mano.' : 'El ajuste las respeta si puede; a mano se permiten con aviso.'}</p>
+    ${reglas.length ? `<ul class="inf-reglas-detalle">${reglas.map(x => `<li><b>${fmtNum(x.casos.length)}</b> · ${esc(x.titulo)}${x.casos.length ? ` <button type="button" class="btn mini" data-infraccion="${x.k}">Ver quién</button>` : ''}</li>`).join('')}</ul>` : '<p>No hay reglas con ese nivel.</p>'}</div>`;
 }
 
 function cifras() {
@@ -133,7 +160,7 @@ function cifras() {
   const conAvisos = res.personas.filter(p => p.alertas.length).length;
   const ajustes = res.stats.movidos + res.stats.cubiertos;
   return `<div class="cifras">
-    <div class="cifra ${faltaTA + faltaSUP ? 'mal' : ''}"><b>${fmtNum(faltaTA + faltaSUP)}</b><span>turnos sin cubrir frente al mínimo, en ${fmtNum(diasHueco)} días (teleasistencia ${fmtNum(faltaTA)} · supervisión ${fmtNum(faltaSUP)})</span></div>
+    <button type="button" class="cifra cifra-boton ${faltaTA + faltaSUP ? 'mal' : ''}" data-punt="medio" title="Ver qué días y franjas"><b>${fmtNum(faltaTA + faltaSUP)}</b><span>turnos sin cubrir frente al mínimo, en ${fmtNum(diasHueco)} días (teleasistencia ${fmtNum(faltaTA)} · supervisión ${fmtNum(faltaSUP)}) · <u>ver cuáles</u></span></button>
     <div class="cifra"><b>${fmtNum(ajustes)}</b><span>turnos que el ajuste ha movido o añadido para cubrir mínimos u horas</span></div>
     <div class="cifra ${conAvisos ? 'mal' : ''}"><b>${fmtNum(conAvisos)}</b><span>personas con algún aviso (noches, fines de semana, horas o descansos)</span></div>
     <div class="cifra"><b>${fmtNum(res.P)}</b><span>personas en ${estado.cfg.grupos.length} grupos</span></div>
@@ -199,7 +226,7 @@ function tablaMes(lista) {
   const varios = u.mesHasta > u.mesDesde;
   const ligera = u.mesHasta - u.mesDesde >= 3;
   virtual = null;
-  const cab = dias.map(d => `<th scope="col" class="dia ${d.finde ? 'finde' : ''} ${d.festivo ? 'festivo' : ''} ${varios && d.dia === 1 ? 'inicio-mes' : ''}" ${d.festivo ? `title="${esc(d.festivo)}"` : ''}>${varios && d.dia === 1 ? `<span class="mes-corto">${MESES[d.mes].slice(0, 3)}</span>` : ''}${d.dia}<small>${DIAS_CORTOS[d.dow]}</small></th>`).join('');
+  const cab = dias.map(d => `<th scope="col" data-d="${d.i}" class="dia ${d.finde ? 'finde' : ''} ${d.festivo ? 'festivo' : ''} ${varios && d.dia === 1 ? 'inicio-mes' : ''} ${u.resaltarDia === d.i ? 'resaltado' : ''}" ${d.festivo ? `title="${esc(d.festivo)}"` : ''}>${varios && d.dia === 1 ? `<span class="mes-corto">${MESES[d.mes].slice(0, 3)}</span>` : ''}${d.dia}<small>${DIAS_CORTOS[d.dow]}</small></th>`).join('');
   // Un color por turno como clase (t0, t1…): mucho menos HTML que repetir el estilo en cada casilla.
   const hojaColores = `<style>${res.turnos.map((t, i) => `.cuadrante .t${i}{${estiloTurno(t)}}`).join('')}</style>`;
   const fila = (p) => {
@@ -233,7 +260,8 @@ function tablaMes(lista) {
       const celdas = dias.map(d => {
         const n = res.cobertura[ci][fi][d.i], m = res.necesidad[ci][fi][d.i];
         const justo = estado.cfg.cobertura.aguante.avisar && n === m && m > 0;
-        return n < m ? `<td class="c falta" title="${n} de ${m}: faltan ${m - n}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}" title="${n} (mínimo ${m}): aguanta ${n - m} ${n - m === 1 ? 'baja' : 'bajas'}">${n}</td>`;
+        const rz = u.resaltarDia === d.i ? ' resaltado' : '';
+        return n < m ? `<td class="c falta${rz}" title="${n} de ${m}: faltan ${m - n}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}${rz}" title="${n} (mínimo ${m}): aguanta ${n - m} ${n - m === 1 ? 'baja' : 'bajas'}">${n}</td>`;
       }).join('');
       pie.push(`<tr${fi === 0 && c !== cols[0] ? ' class="inicio-col"' : ''}><th scope="row" class="fija" title="Personas en sala; en rojo, las que faltan para el mínimo">${fi === 0 ? (c === 'TA' ? 'Teleasistencia' : 'Supervisión') : ''}</th><td class="fija2">${FRANJA_NOMBRE[f]}</td>${celdas}<td></td><td></td><td></td></tr>`);
     });
@@ -365,6 +393,19 @@ export function eventosCuadrante(raiz, repintar) {
       return repintar();
     }
     if (b.dataset.mejorar) { if (await mejorarReparto()) repintar(); return; }
+    if (b.dataset.punt) { u.detallePunt = u.detallePunt === b.dataset.punt ? '' : b.dataset.punt; return repintar(); }
+    if (b.dataset.irDia) {
+      // Va al mes de ese día, con el colectivo del hueco, y lo marca en el cuadrante.
+      const d = Number(b.dataset.irDia), mc = estado.res.dias[d].mc;
+      Object.assign(u, { modo: 'mes', mesDesde: mc, mesHasta: mc, colectivo: b.dataset.irCol || 'todos', infraccion: '', resaltarDia: d });
+      repintar();
+      requestAnimationFrame(() => {
+        const caja = document.querySelector('.tabla-caja .cuadrante') && document.querySelector('.cuadrante').closest('.tabla-caja');
+        const th = document.querySelector(`.cuadrante thead th[data-d="${d}"]`);
+        if (caja && th) { caja.scrollIntoView({ block: 'start', behavior: 'smooth' }); caja.scrollLeft = Math.max(0, th.offsetLeft - 300); }
+      });
+      return;
+    }
     if (b.dataset.infraccion != null) { u.infraccion = u.infraccion === b.dataset.infraccion ? '' : b.dataset.infraccion; return repintar(); }
     if (b.dataset.resaltar != null) { u.resaltar = u.resaltar === b.dataset.resaltar ? '' : b.dataset.resaltar; return repintar(); }
     if (b.dataset.pdfCol) {
