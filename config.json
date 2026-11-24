@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-23T22:35:56.668Z",
- "nota": "Rotatorio 2 + 1: una semana de tarde cada 3 (27 semanas); escenarios rehechos",
+ "guardado": "2026-11-24T08:51:47.965Z",
+ "nota": "Sevilla: año",
  "config": {
   "version": 2,
   "tema": "day",
@@ -165,7 +165,7 @@
     "id": "sevilla",
     "nombre": "Sevilla",
     "titulo": "SAT Sevilla · propuesta de cuadrante",
-    "anio": 2027,
+    "anio": 2028,
     "turnos": [
      {
       "codigo": "RM1",
