@@ -119,10 +119,6 @@ td.celda:hover { filter: brightness(.93); }
 .celda.man::before { content: ""; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 8px 8px 0; border-color: transparent currentColor transparent transparent; }
 .cuadrante td.res { padding: 0 8px; text-align: right; white-space: nowrap; }
 .cuadrante td.res.alerta { color: var(--bad); font-weight: 600; }
-.cuadrante tfoot td, .cuadrante tfoot th { position: sticky; bottom: 0; background: var(--panel2); font-size: 11px; height: 24px; }
-.cuadrante tfoot tr:nth-child(2) td, .cuadrante tfoot tr:nth-child(2) th { bottom: 24px; }
-.cuadrante tfoot tr:nth-child(1) td, .cuadrante tfoot tr:nth-child(1) th { bottom: 48px; }
-.cuadrante tfoot tr:nth-child(n+4) { position: static; }
 .cuadrante tfoot td.falta { color: var(--bad); font-weight: 700; text-decoration: underline; }
 .cuadrante tfoot td.c { text-align: center; }
 .cuadrante th.enlace { cursor: pointer; text-decoration: underline; text-decoration-color: var(--line2); text-underline-offset: 3px; }
@@ -385,19 +381,7 @@ a.tb2-empresa { text-decoration: none; color: inherit; }
 .tabla-lista.tabla-turnos td:nth-child(7) > span { flex-direction: column; }
 .param-cuerpo .tabla-lista select { max-width: 230px; }
 .tabla-horas input[type=number] { width: 54px !important; }
-/* Pie del cuadrante: las 6 filas de personas en sala, siempre a la vista (no solo al final de la lista). */
-.cuadrante tfoot td, .cuadrante tfoot th { height: 22px; line-height: 1; }
-.cuadrante tfoot tr { position: static; }
-.cuadrante tfoot tr td, .cuadrante tfoot tr th { position: sticky; }
-.cuadrante tfoot tr:nth-last-child(1) > * { bottom: 0; }
-.cuadrante tfoot tr:nth-last-child(2) > * { bottom: 22px; }
-.cuadrante tfoot tr:nth-last-child(3) > * { bottom: 44px; }
-.cuadrante tfoot tr:nth-last-child(4) > * { bottom: 66px; }
-.cuadrante tfoot tr:nth-last-child(5) > * { bottom: 88px; }
-.cuadrante tfoot tr:nth-last-child(6) > * { bottom: 110px; }
-.cuadrante tfoot tr:first-child > * { border-top: 2px solid var(--line2); }
 .cuadrante tfoot th.fija { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 11px; color: var(--ink); }
-.cuadrante tfoot th.fija, .cuadrante tfoot td.fija2 { z-index: 2; }
 .cuadrante tfoot tr.inicio-col > * { border-top: 2px solid var(--line2); }
 /* Tablas de edición más compactas, para que quepan sin barra horizontal en pantallas de portátil. */
 .tabla-lista th, .tabla-lista td { padding-left: 6px; padding-right: 6px; }
@@ -417,3 +401,12 @@ a.tb2-empresa { text-decoration: none; color: inherit; }
 .tabla-caja .tabla-lista thead th { white-space: normal; }
 .tabla-lista.tabla-turnos td:nth-child(4) input { width: 130px !important; }
 .tabla-lista.tabla-turnos select { max-width: 120px !important; }
+
+/* Pie del cuadrante (personas en sala): el pie entero va fijo abajo de una pieza (no fila a fila con alturas a mano,
+   que dejaban ver los turnos por debajo) y con fondo opaco. Las dos primeras columnas siguen fijas a la izquierda. */
+.cuadrante tfoot { position: sticky; bottom: 0; z-index: 4; }
+.cuadrante tfoot td, .cuadrante tfoot th { position: static; background: var(--panel2); font-size: 11px; height: 22px; line-height: 1; padding-top: 0; padding-bottom: 0; }
+.cuadrante tfoot .fija, .cuadrante tfoot .fija2 { position: sticky; z-index: 5; background: var(--panel2); }
+.cuadrante tfoot tr:first-child > * { border-top: 2px solid var(--line2); box-shadow: 0 -4px 6px -4px rgba(0,0,0,.18); }
+.cuadrante tfoot td.justo { background: color-mix(in srgb, var(--warn) 30%, var(--panel2)); }
+.cuadrante tfoot td.falta { background: color-mix(in srgb, var(--bad) 12%, var(--panel2)); }
