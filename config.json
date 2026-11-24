@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-24T08:51:47.965Z",
- "nota": "Sevilla: año",
+ "guardado": "2026-11-24T13:25:15.524Z",
+ "nota": "Sin cambios en el cuadrante.",
  "config": {
   "version": 2,
   "tema": "day",
@@ -872,6 +872,7 @@
      ],
      "solicitudes": {},
      "sueltosEnJornada": false,
+     "sueltosOctDic": 1,
      "nota": "Periodos y plazas del correo de Procesos horarios de Sevilla (2027). Supervisión: 3 plazas, orientativo."
     },
     "festivos": {
@@ -1036,6 +1037,54 @@
      "aguante": {
       "avisar": true
      }
+    },
+    "aj": {
+     "activo": true,
+     "modo": "reparto",
+     "fechas": [
+      "12-24",
+      "12-31"
+     ],
+     "desde": "12-20",
+     "hasta": "12-31",
+     "enJornada": true,
+     "elegidos": {}
+    },
+    "minimosFecha": [
+     {
+      "activo": true,
+      "colectivo": "TA",
+      "franja": "noche",
+      "fecha": "12-24",
+      "modo": "suma",
+      "valor": 1,
+      "nota": "Nochebuena"
+     },
+     {
+      "activo": true,
+      "colectivo": "TA",
+      "franja": "noche",
+      "fecha": "12-31",
+      "modo": "suma",
+      "valor": 1,
+      "nota": "Nochevieja"
+     }
+    ],
+    "repartoFestivos": {
+     "noche": "salida",
+     "especiales": [
+      "12-24",
+      "12-25",
+      "12-31",
+      "01-01",
+      "01-06"
+     ],
+     "historial": {},
+     "anioHistorial": null
+    },
+    "ciclo": {
+     "continuo": true,
+     "inicio": "2026-12-28"
     },
     "especiales": {}
    },
@@ -1758,6 +1807,7 @@
      ],
      "solicitudes": {},
      "sueltosEnJornada": false,
+     "sueltosOctDic": 1,
      "nota": "Orientativo: mismos periodos que Sevilla y plazas repartidas por plantilla. Cámbialos con los de Málaga."
     },
     "festivos": {
@@ -1922,6 +1972,54 @@
      "aguante": {
       "avisar": true
      }
+    },
+    "aj": {
+     "activo": true,
+     "modo": "fijo",
+     "fechas": [
+      "12-24",
+      "12-31"
+     ],
+     "desde": "12-20",
+     "hasta": "12-31",
+     "enJornada": true,
+     "elegidos": {}
+    },
+    "minimosFecha": [
+     {
+      "activo": true,
+      "colectivo": "TA",
+      "franja": "noche",
+      "fecha": "12-24",
+      "modo": "suma",
+      "valor": 1,
+      "nota": "Nochebuena"
+     },
+     {
+      "activo": true,
+      "colectivo": "TA",
+      "franja": "noche",
+      "fecha": "12-31",
+      "modo": "suma",
+      "valor": 1,
+      "nota": "Nochevieja"
+     }
+    ],
+    "repartoFestivos": {
+     "noche": "salida",
+     "especiales": [
+      "12-24",
+      "12-25",
+      "12-31",
+      "01-01",
+      "01-06"
+     ],
+     "historial": {},
+     "anioHistorial": null
+    },
+    "ciclo": {
+     "continuo": true,
+     "inicio": "2026-12-28"
     },
     "especiales": {}
    }
