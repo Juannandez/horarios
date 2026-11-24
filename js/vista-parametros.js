@@ -111,16 +111,17 @@ function seccionTurnos(cfg) {
       <td>${txt(`turnos.${i}.nombre`, t.nombre, 'aria-label="Nombre del turno"')}</td>
       <td>${libre ? '<span class="tenue">—</span>' : `<input type="time" data-ruta="turnos.${i}.inicio" value="${esc(t.inicio)}" aria-label="Hora de inicio">`}</td>
       <td>${libre ? '<span class="tenue">—</span>' : `<input type="time" data-ruta="turnos.${i}.fin" value="${esc(t.fin)}" aria-label="Hora de fin">`}</td>
+      <td>${libre ? '<span class="tenue">—</span>' : `<span style="display:inline-flex;gap:4px"><input type="time" data-ruta="turnos.${i}.inicio2" value="${esc(t.inicio2 || '')}" aria-label="Segundo tramo: inicio"><input type="time" data-ruta="turnos.${i}.fin2" value="${esc(t.fin2 || '')}" aria-label="Segundo tramo: fin"></span>${t.inicio2 && !p.partido ? '<br><small style="color:var(--bad)">Tiene que empezar después del primero</small>' : ''}`}</td>
       <td class="num">${libre ? '—' : fmtH(p.horas) + ' h'}</td>
       <td>${t.fijo ? `<span class="tenue">${FRANJA_NOMBRE.libre}</span>` : sel(`turnos.${i}.franja`, t.franja, [...FRANJAS.map(f => [f.id, f.nombre]), ['libre', FRANJA_NOMBRE.libre]], 'aria-label="Franja" data-estructura="1"')}</td>
       <td>${libre && t.codigo !== 'D' && t.codigo !== 'SN' ? chk(`turnos.${i}.disponible`, t.disponible !== false, 'Se le puede llamar') : ''}</td>
       <td class="num">${t.fijo ? '<span class="tenue">Fijo</span>' : `<button type="button" class="btn mini peligro" data-accion="quitar" data-lista="turnos" data-i="${i}">Quitar</button>`}</td></tr>`;
   }).join('');
   return `<section class="panel" id="sec-turnos"><h2>Turnos</h2>
-    <p class="tenue">Los turnos de mañana, tarde y noche cubren su franja. Los de «libre o ausencia» no suman horas; si marcas «Se le puede llamar», el ajuste puede poner a esa persona a trabajar ese día.</p>
+    <p class="tenue">Los turnos de mañana, tarde y noche cubren su franja. Los de «libre o ausencia» no suman horas; si marcas «Se le puede llamar», el ajuste puede poner a esa persona a trabajar ese día. Un turno partido (como el P, de 09:45 a 14:30 y de 16:15 a 19:30) lleva un segundo tramo el mismo día: cuenta las horas de los dos y cubre la franja que elijas.</p>
     <div class="herramientas"><div class="grupo" role="group" aria-label="Ordenar turnos"><span class="etiqueta">Ordenar</span>
       ${[['franja', 'Franja'], ['codigo', 'Código'], ['inicio', 'Hora de inicio'], ['lista', 'Como se crearon']].map(([v, t]) => `<button type="button" class="btn mini" data-accion="orden-turnos" data-valor="${v}" aria-pressed="${ordenTurnos === v}">${t}</button>`).join('')}</div></div>
-    <div class="tabla-caja" style="max-height:none"><table class="tabla-lista tabla-turnos"><thead><tr><th scope="col">Color</th><th scope="col">Muestra</th><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Inicio</th><th scope="col">Fin</th><th scope="col" class="num">Horas</th><th scope="col">Franja</th><th scope="col">Ajuste</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
+    <div class="tabla-caja" style="max-height:none"><table class="tabla-lista tabla-turnos"><thead><tr><th scope="col">Color</th><th scope="col">Muestra</th><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Inicio</th><th scope="col">Fin</th><th scope="col" title="Turno partido: segundo tramo del mismo día">2.º tramo (partido)</th><th scope="col" class="num">Horas</th><th scope="col">Franja</th><th scope="col">Ajuste</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="turnos">Añadir turno</button></div></section>
     ${seccionSolapes(cfg)}`;
 }
@@ -214,8 +215,16 @@ export function seccionGrupos(cfg) {
       <details ${g.patronDe ? '' : 'open'}><summary>Patrón de turnos</summary>${editorPatron(g, gi, cfg, turnosMap)}</details>
     </article>`;
   }).join('');
+  const ci = cfg.ciclo || {}, g0 = cfg.grupos.find(g => !g.patronDe) || cfg.grupos[0];
+  const sem0 = g0 ? Math.max(1, resolverPatron(g0, cfg.grupos).length / 7) : 1;
+  const enSemana = (((res.semanaCiclo0 || 0) % sem0) + sem0) % sem0 + 1;
   return `<section class="panel" id="sec-grupos"><h2>Grupos y patrones</h2>
     <p class="tenue">Cada grupo repite su patrón semana a semana. Cada persona empieza en una semana distinta del ciclo, para que el grupo quede repartido. Para que supervisores y teleasistentes tengan el mismo rotatorio, elige «El mismo que…».</p>
+    <div class="campos">
+      ${chk('ciclo.continuo', ci.continuo, 'El ciclo sigue de un año a otro (no vuelve a empezar el 1 de enero)', 'data-estructura="1"')}
+      ${ci.continuo ? campo('Semana 1 del ciclo: la del lunes', `<input type="date" data-ruta="ciclo.inicio" value="${esc(ci.inicio || '')}" aria-label="Lunes de la semana 1 del ciclo">`) : ''}
+    </div>
+    <p class="tenue">${ci.continuo ? `En ${esc(cfg.anio)}, la primera semana del año es la ${enSemana}.ª del ciclo${g0 ? ` de «${esc(g0.nombre)}» (${sem0} semanas)` : ''}: cada persona sigue donde acabó el año anterior.` : 'Cada año, la persona 1 vuelve a la semana 1 del ciclo el 1 de enero.'}</p>
     ${tarjetas}
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir-grupo" data-colectivo="TA">Añadir grupo de teleasistentes</button>
       <button type="button" class="btn" data-accion="anadir-grupo" data-colectivo="SUP">Añadir grupo de supervisores</button></div></section>`;
@@ -238,7 +247,81 @@ export function seccionMinimos(cfg) {
   return `<section class="panel" id="sec-minimos"><h2>Mínimos</h2>
     <p class="tenue">Personas en sala por franja y día: cada día de la semana por separado y los festivos aparte (un festivo usa su columna aunque caiga entre semana). Valores de partida: Anexo 2 «Mínimos SAT 2013» de Sevilla. Si hay dos filas iguales, vale la más alta. En supervisión, el mínimo sube además con la ratio de Reglas. «L → M-V» copia el lunes al resto de la semana.</p>
     <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Colectivo</th><th scope="col">Franja</th>${DIAS_MIN.map((d, k) => `<th scope="col" class="num" title="${DIAS_MIN_LARGO[k]}">${d}</th>`).join('')}<th scope="col" class="num">Festivo</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
-    <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="minimos">Añadir mínimo</button></div></section>`;
+    <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="minimos">Añadir mínimo</button></div></section>
+  ${seccionMinimosFecha(cfg)}`;
+}
+
+// Mínimos de un día concreto (convenio: un teleasistente más en Nochebuena y Nochevieja).
+function seccionMinimosFecha(cfg) {
+  const lista = cfg.minimosFecha || [];
+  const filas = lista.map((m, i) => `<tr>
+    <td>${chk(`minimosFecha.${i}.activo`, m.activo !== false, '<span class="oculto">Activo</span>')}</td>
+    <td><input type="date" data-ruta="minimosFecha.${i}.fecha" data-tipo="mmdd" value="${cfg.anio}-${esc(String(m.fecha || '01-01').slice(-5))}" aria-label="Día y mes"></td>
+    <td>${txt(`minimosFecha.${i}.nota`, m.nota || '', 'aria-label="Nota" style="width:140px"')}</td>
+    <td>${sel(`minimosFecha.${i}.colectivo`, m.colectivo, COLECTIVOS.map(c => [c.id, c.nombre]), 'aria-label="Colectivo"')}</td>
+    <td>${sel(`minimosFecha.${i}.franja`, m.franja, FRANJAS.map(f => [f.id, f.nombre]), 'aria-label="Franja"')}</td>
+    <td>${sel(`minimosFecha.${i}.modo`, m.modo || 'suma', [['suma', 'Sumar al del día'], ['fija', 'Poner exactamente']], 'aria-label="Cómo"')}</td>
+    <td class="num">${num(`minimosFecha.${i}.valor`, m.valor ?? 0, 'style="width:64px" aria-label="Personas"')}</td>
+    <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar" data-lista="minimosFecha" data-i="${i}">Quitar</button></td></tr>`).join('');
+  return `<section class="panel" id="sec-minimos-fecha"><h2>Mínimos de días concretos</h2>
+    <p class="tenue">Para un día del año que necesita otra cifra que su día de la semana: por ejemplo, un teleasistente más de noche en Nochebuena y Nochevieja (convenio). «Sumar» añade al mínimo de ese día; «Poner exactamente» lo sustituye. Vale para todos los años.</p>
+    ${lista.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Activo</th><th scope="col">Día</th><th scope="col">Nota</th><th scope="col">Colectivo</th><th scope="col">Franja</th><th scope="col">Cómo</th><th scope="col" class="num">Personas</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>` : '<p class="tenue">No hay días concretos.</p>'}
+    <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="minimosFecha">Añadir día concreto</button></div></section>`;
+}
+
+// Navidad y festivos: días AJ, cómputo del festivo de noche y reparto de los festivos especiales (también entre años).
+const ESPECIALES_TIPICOS = [['12-24', 'Nochebuena'], ['12-25', 'Navidad'], ['12-31', 'Nochevieja'], ['01-01', 'Año Nuevo'], ['01-06', 'Reyes']];
+export function seccionNavidad(cfg) {
+  const res = estado.res, aj = cfg.aj || {}, rf = cfg.repartoFestivos || {};
+  const mmdd = (ruta, valor) => `<input type="date" data-ruta="${ruta}" data-tipo="mmdd" value="${cfg.anio}-${esc(String(valor || '12-24').slice(-5))}" min="${cfg.anio}-01-01" max="${cfg.anio}-12-31">`;
+  // Resultado de los AJ
+  const conAJ = res.personas.filter(p => p.diasAJ);
+  const en = {}; let otros = 0, sin = 0;
+  for (const p of conAJ) { for (const f of p.diasAJ) { const k = f.slice(5); if ((aj.fechas || []).includes(k)) en[k] = (en[k] || 0) + 1; else otros++; } if (p.ajFaltan && p.hasta > p.desde && res.dias[p.hasta - 1].mes === 11) sin++; }
+  const nombreDe = (id) => (res.personas.find(p => p.id === id) || {}).nombre || '';
+  const elegidos = Object.entries(aj.elegidos || {}).sort((a, b) => a[0].localeCompare(b[0], 'es', { numeric: true }));
+  const sinEleccion = res.personas.filter(p => !(aj.elegidos || {})[p.id]);
+  const listaE = (x) => (Array.isArray(x) ? x : x && typeof x === 'object' ? Object.values(x) : []);
+  // Festivos especiales
+  const fechasFest = res.dias.filter(d => d.festivo).map(d => [d.fecha.slice(5), d.festivo]);
+  const opciones = [...ESPECIALES_TIPICOS, ...fechasFest.filter(([k]) => !ESPECIALES_TIPICOS.some(([t]) => t === k))];
+  const esp = new Set(rf.especiales || []);
+  const ta = res.personas.filter(p => p.colectivo === 'TA' && p.hasta - p.desde > 300);
+  const totales = ta.map(p => (p.especialesTrab || []).length + (p.historialEspeciales || 0)).sort((a, b) => a - b);
+  const media = totales.length ? totales.reduce((a, b) => a + b, 0) / totales.length : 0;
+  const nHist = Object.keys(rf.historial || {}).length;
+  return `<section class="panel" id="sec-aj"><h2>Días AJ (24 y 31 de diciembre)</h2>
+    <p class="tenue">El 24 y el 31 de diciembre son permiso retribuido (convenio, art. 36.3): cada persona libra ${(aj.fechas || []).length} días AJ que le cuentan como jornada. Quien trabaja a turnos esos días los disfruta cuando el servicio lo permite. Las noches no se tocan (van en bloque): quien hace noche el 24 o el 31 tiene su AJ otro día de la ventana.</p>
+    <div class="campos">
+      ${chk('aj.activo', aj.activo, 'Poner los días AJ en el cuadrante', 'data-estructura="1"')}
+      ${aj.activo ? `${campo('Dónde', sel('aj.modo', aj.modo || 'fijo', [['fijo', 'El 24 y el 31 mientras sobre gente; si no, otro día'], ['reparto', 'Repartidos en la ventana, donde más gente sobre (práctica de la empresa)'], ['elegido', 'En los días que elige cada persona (petición de CGT)']], 'data-estructura="1"'))}
+      ${campo('Días', `<span style="display:inline-flex;gap:4px">${(aj.fechas || []).map((f, k) => mmdd(`aj.fechas.${k}`, f)).join('')}</span>`)}
+      ${campo('Ventana: desde', mmdd('aj.desde', aj.desde || '12-20'))}${campo('hasta', mmdd('aj.hasta', aj.hasta || '12-31'))}
+      ${chk('aj.enJornada', aj.enJornada !== false, 'Cuentan como jornada (las horas del turno que no se hace)')}` : ''}
+    </div>
+    ${aj.activo ? `<p>Resultado: ${(aj.fechas || []).map(f => `<b>${fmtNum(en[f] || 0)}</b> personas con AJ el ${Number(f.slice(3))}-${f.slice(0, 2)}`).join(' · ')} · <b>${fmtNum(otros)}</b> AJ en otro día de la ventana${sin ? ` · <span style="color:var(--bad)"><b>${fmtNum(sin)}</b> personas sin sitio para algún AJ</span>` : ''}.</p>` : ''}
+    ${aj.activo && aj.modo === 'elegido' ? `<h3 style="margin:16px 0 8px">Días elegidos</h3>
+      <p class="tenue">Se respetan aunque falte gente (el ajuste cubre el hueco). Quien no elige, como «el 24 y el 31».</p>
+      ${elegidos.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Persona</th><th scope="col">Primer AJ</th><th scope="col">Segundo AJ</th><th scope="col"></th></tr></thead><tbody>
+        ${elegidos.map(([id, v]) => { const l = listaE(v); return `<tr><th scope="row">${esc(id)}${nombreDe(id) ? `<br><span class="tenue">${esc(nombreDe(id))}</span>` : ''}</th>
+          ${[0, 1].map(k => `<td><input type="date" data-aj-elegido="${esc(id)}" data-k="${k}" value="${esc(l[k] || '')}" min="${cfg.anio}-01-01" max="${cfg.anio}-12-31" aria-label="AJ ${k + 1}"></td>`).join('')}
+          <td class="num"><button type="button" class="btn mini peligro" data-accion="aj-quitar" data-id="${esc(id)}">Quitar</button></td></tr>`; }).join('')}
+      </tbody></table></div>` : ''}
+      <div class="herramientas"><div class="grupo"><label class="oculto" for="aj-nueva">Persona</label><select id="aj-nueva">${sinEleccion.map(p => `<option value="${esc(p.id)}">${esc(p.id)}${p.nombre ? ` · ${esc(p.nombre)}` : ''}</option>`).join('')}</select>
+        <button type="button" class="btn" data-accion="aj-anadir" ${sinEleccion.length ? '' : 'disabled'}>Añadir elección</button></div></div>` : ''}
+  </section>
+  <section class="panel" id="sec-festivos-reparto"><h2>Festivos: cómputo y reparto</h2>
+    <div class="campos">${campo('El festivo de noche cuenta para', sel('repartoFestivos.noche', rf.noche || 'salida', [['salida', 'Quien sale del turno (convenio)'], ['entrada', 'Quien entra en el turno']]))}</div>
+    <p class="tenue">Con «quien sale», la noche del 24 al 25 cuenta como festivo de Navidad y la del 31 al 1 como Año Nuevo. Se usa para los festivos a devolver del informe de cada persona y para repartir los festivos con equidad.</p>
+    <h3 style="margin:16px 0 8px">Festivos especiales</h3>
+    <p class="tenue">Los que se reparten aparte, con equidad y sin que toquen siempre a los mismos: «Mejorar reparto» (en el cuadrante) iguala por grupo los de este año más los de años anteriores.</p>
+    <div class="campos" role="group" aria-label="Festivos especiales">${opciones.map(([k, n]) => `<label class="casilla"><input type="checkbox" data-especial="${esc(k)}" ${esp.has(k) ? 'checked' : ''}><span>${esc(n)} (${Number(k.slice(3))}-${k.slice(0, 2)})</span></label>`).join('')}</div>
+    <p>Teleasistencia (todo el año): de media <b>${fmtNum(media, 1)}</b> festivos especiales por persona${nHist ? ', con los de años anteriores' : ''}; entre <b>${totales[0] ?? 0}</b> y <b>${totales.at(-1) ?? 0}</b>.</p>
+    <h3 style="margin:16px 0 8px">Años anteriores</h3>
+    <p class="tenue">${nHist ? `Hay historial de ${fmtNum(nHist)} personas${rf.anioHistorial ? ` (hasta ${esc(rf.anioHistorial)})` : ''}. Cuenta en el reparto de este año.` : 'Sin historial. Al terminar el año, guarda los de este cuadrante: el año que viene, quien los trabajó tenderá a librarlos.'} Va por código de persona: con el ciclo que sigue de un año a otro, cada código es la misma persona.</p>
+    <div class="fila-acciones"><button type="button" class="btn" data-accion="historial-guardar">Sumar los de ${esc(cfg.anio)} al historial</button>
+      ${nHist ? '<button type="button" class="btn peligro" data-accion="historial-borrar">Borrar el historial</button>' : ''}</div>
+  </section>`;
 }
 
 export function seccionReglas(cfg) {
@@ -383,6 +466,8 @@ export function seccionContratos(cfg) {
       <td><input type="date" data-ruta="${r}.alta" value="${esc(e.alta)}" aria-label="Alta"></td>
       <td><input type="date" data-ruta="${r}.baja" value="${esc(e.baja)}" aria-label="Baja"></td>
       <td class="num">${num(`${r}.semanaInicio`, e.semanaInicio || '', 'min="0" aria-label="Semana de inicio en el ciclo" style="width:70px"')}</td>
+      <td>${sel(`${r}.reduccion.contrato`, e.reduccion.contrato, [['', 'Sin reducción'], ...cfg.contratos.filter(c => c.id !== 'completa').map(c => [c.id, `${c.nombre} (${String(c.horasSemana).replace('.', ',')} h)`])], 'aria-label="Reducción temporal: contrato" data-estructura="1"')}
+        ${e.reduccion.contrato ? `<br><input type="date" data-ruta="${r}.reduccion.desde" value="${esc(e.reduccion.desde)}" aria-label="Reducción desde"> <input type="date" data-ruta="${r}.reduccion.hasta" value="${esc(e.reduccion.hasta)}" aria-label="Reducción hasta">` : ''}</td>
       <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar-especial" data-id="${esc(id)}">Quitar</button></td></tr>`;
   }).join('');
   const sinCaso = personas.filter(p => !(cfg.especiales || {})[p.id]);
@@ -391,12 +476,12 @@ export function seccionContratos(cfg) {
     <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Contrato</th><th scope="col" class="num">Horas/semana</th><th scope="col">Noches</th><th scope="col">Turno de mañana</th><th scope="col">Turno de tarde</th><th scope="col" class="num">Personas</th><th scope="col"></th></tr></thead><tbody>${filasC}</tbody></table></div>
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir-contrato">Añadir contrato</button></div></section>
   <section class="panel" id="sec-especiales"><h2>Casos especiales</h2>
-    <p class="tenue">Lo que cada persona tiene distinto del ciclo de su grupo: contrato, franjas que puede hacer, sin fines de semana, días libres fijos (conciliación), fechas de alta y de baja, y la semana del ciclo en que empieza (como el «Base schedule» de Quinyx). El ajuste cubre con otras personas lo que ella no hace. Van por código de persona; con la plantilla real abierta, también se ve el nombre.</p>
+    <p class="tenue">Lo que cada persona tiene distinto del ciclo de su grupo: contrato, franjas que puede hacer, sin fines de semana, días libres fijos (conciliación), fechas de alta y de baja, la semana del ciclo en que empieza (como el «Base schedule» de Quinyx) y una reducción temporal con fechas (lactancia, cuidado de un familiar, tratamiento: otro contrato solo esos días). El ajuste cubre con otras personas lo que ella no hace. Van por código de persona; con la plantilla real abierta, también se ve el nombre.</p>
     <div class="herramientas"><div class="grupo">
       <label class="oculto" for="esp-nueva">Persona</label><select id="esp-nueva">${sinCaso.map(p => `<option value="${esc(p.id)}">${esc(p.id)}${p.nombre ? ` · ${esc(p.nombre)}` : ''}</option>`).join('')}</select>
       <button type="button" class="btn" data-accion="anadir-especial" ${sinCaso.length ? '' : 'disabled'}>Añadir caso</button></div>
       <div class="grupo"><label class="oculto" for="esp-buscar">Buscar</label><input type="text" id="esp-buscar" placeholder="Buscar código o nombre" value="${esc(u.buscar)}" style="width:200px"></div></div>
-    ${ids.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista tabla-especiales"><thead><tr><th scope="col">Persona</th><th scope="col">Contrato</th><th scope="col">Franjas</th><th scope="col">Fines de semana</th><th scope="col">Días libres fijos</th><th scope="col">Alta</th><th scope="col">Baja</th><th scope="col" class="num">Semana de inicio</th><th scope="col"></th></tr></thead><tbody>${filasE || '<tr><td colspan="9">Nadie con ese código o nombre.</td></tr>'}</tbody></table></div>`
+    ${ids.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista tabla-especiales"><thead><tr><th scope="col">Persona</th><th scope="col">Contrato</th><th scope="col">Franjas</th><th scope="col">Fines de semana</th><th scope="col">Días libres fijos</th><th scope="col">Alta</th><th scope="col">Baja</th><th scope="col" class="num">Semana de inicio</th><th scope="col" title="Otro contrato entre dos fechas: lactancia, cuidado de un familiar, tratamiento…">Reducción temporal</th><th scope="col"></th></tr></thead><tbody>${filasE || '<tr><td colspan="10">Nadie con ese código o nombre.</td></tr>'}</tbody></table></div>`
       : '<p class="tenue">Todavía no hay casos especiales: todo el mundo sigue el ciclo de su grupo con jornada completa.</p>'}
   </section>`;
 }
@@ -413,6 +498,8 @@ const APARTADOS = [
   { id: 'cobertura', titulo: 'Cobertura y bolsa', icono: 'escudo', pinta: seccionCobertura,
     resumen: (cfg, res) => { const n = res.personas.reduce((a, p) => a + (p.nochesCedidas || 0), 0); return `${n} noches cedidas · ${cfg.cobertura.ausencias.length} ausencias`; },
     aviso: (cfg, res) => res.huecos.reduce((a, h) => a + h.falta, 0), avisoTexto: 'personas que faltan para los mínimos' },
+  { id: 'navidad', titulo: 'Navidad y festivos', icono: 'calendario', pinta: seccionNavidad,
+    resumen: (cfg, res) => { const n = res.personas.reduce((a, p) => a + (p.diasAJ || []).length, 0); return cfg.aj && cfg.aj.activo ? `${fmtNum(n)} días AJ · festivo de noche: ${(cfg.repartoFestivos || {}).noche === 'entrada' ? 'quien entra' : 'quien sale'}` : 'Sin días AJ'; } },
   { id: 'grupos', titulo: 'Grupos y patrones', icono: 'usuarios', pinta: seccionGrupos,
     resumen: (cfg, res) => `${cfg.grupos.length} ${cfg.grupos.length === 1 ? 'grupo' : 'grupos'} · ${fmtNum(res.P)} personas`,
     aviso: (cfg, res) => res.personas.filter(p => p.alertas.length).length, avisoTexto: 'personas con avisos' },
@@ -476,6 +563,7 @@ const NUEVOS = {
     return { codigo: `X${n}`, nombre: 'Nuevo turno', inicio: '09:00', fin: '16:00', franja: 'manana', color: '#B9D7EA' };
   },
   minimos: () => ({ colectivo: 'TA', franja: 'manana', laborable: 0, sabado: 0, domingo: 0, dias: [0, 0, 0, 0, 0, 0, 0], festivo: 0 }),
+  minimosFecha: () => ({ activo: true, colectivo: 'TA', franja: 'noche', fecha: '12-24', modo: 'suma', valor: 1, nota: '' }),
   solapes: (cfg) => {
     const t = cfg.turnos.filter(x => x.franja !== 'libre');
     const base = (t.find(x => x.codigo === 'RM1') || t[0] || {}).codigo || '';
@@ -540,6 +628,20 @@ export function eventosParametros(raiz, repintar) {
       const id = el.dataset.diasLibres;
       cfg.especiales[id] = { ...(cfg.especiales[id] || {}), diasLibres: $$(`input[data-dias-libres="${CSS.escape(id)}"]:checked`, raiz).map(x => Number(x.value)) };
       return cambiado();
+    }
+    if (el.dataset.ajElegido != null) {
+      if (!final) return;
+      const id = el.dataset.ajElegido, v = cfg.aj.elegidos[id];
+      const l = (Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v) : []).slice(0, 2);
+      while (l.length < 2) l.push('');
+      l[Number(el.dataset.k)] = el.value;
+      cfg.aj.elegidos[id] = l;
+      return cambiado();
+    }
+    if (el.dataset.especial != null) {
+      if (!final) return;
+      cfg.repartoFestivos.especiales = $$('input[data-especial]:checked', raiz).map(x => x.dataset.especial);
+      cambiado(); return setTimeout(() => repintar(), 200);
     }
     if (el.id === 'esp-buscar') { (estado.ui.especiales ||= { buscar: '' }).buscar = el.value; if (final) repintar(); return; }
     if (el.dataset.franjaAjuste != null) {
@@ -629,6 +731,28 @@ export function eventosParametros(raiz, repintar) {
       cfg.especiales[id] = { contrato: '', franjas: '', sinFindes: false, diasLibres: [], alta: '', baja: '', semanaInicio: 0 };
       cambiado({ inmediato: true }); return repintar();
     }
+    if (a === 'aj-anadir') {
+      const id = $('#aj-nueva', raiz) && $('#aj-nueva', raiz).value;
+      if (!id) return;
+      cfg.aj.elegidos[id] = cfg.aj.fechas.map(f => `${cfg.anio}-${f}`);
+      cambiado({ inmediato: true }); return repintar();
+    }
+    if (a === 'aj-quitar') { delete cfg.aj.elegidos[b.dataset.id]; cambiado({ inmediato: true }); return repintar(); }
+    if (a === 'historial-guardar') {
+      const h = cfg.repartoFestivos.historial;
+      if (cfg.repartoFestivos.anioHistorial != null && Number(cfg.repartoFestivos.anioHistorial) >= Number(cfg.anio)
+        && !(await confirmar('¿Sumar otra vez?', `El historial ya llega hasta ${esc(cfg.repartoFestivos.anioHistorial)}. Si sumas los de ${esc(cfg.anio)}, contarán dos veces.`, 'Sumar'))) return;
+      let n = 0;
+      for (const p of estado.res.personas) { const k = (p.especialesTrab || []).length; if (k) { h[p.id] = (Number(h[p.id]) || 0) + k; n++; } }
+      cfg.repartoFestivos.anioHistorial = cfg.anio;
+      cambiado({ inmediato: true }); repintar();
+      return avisar(`Sumados los festivos especiales de ${cfg.anio} de ${n} personas. Para el año que viene, cambia el año en «Año y festivos».`, 'bien');
+    }
+    if (a === 'historial-borrar') {
+      if (!(await confirmar('¿Borrar el historial?', 'Se pierden los festivos especiales de años anteriores de todas las personas.', 'Borrar'))) return;
+      cfg.repartoFestivos.historial = {}; cfg.repartoFestivos.anioHistorial = null;
+      cambiado({ inmediato: true }); return repintar();
+    }
     if (a === 'quitar-especial') { delete cfg.especiales[b.dataset.id]; cambiado({ inmediato: true }); return repintar(); }
     if (a === 'anadir') lista.push(NUEVOS[b.dataset.lista](cfg));
     else if (a === 'quitar') {
@@ -678,7 +802,7 @@ export function eventosParametros(raiz, repintar) {
       estado.todo.sedes[i2] = sedeBase(cfg.id);
     } else if (a === 'copiar-sede') {
       const otras = estado.todo.sedes.filter(x => x.id !== cfg.id);
-      const partes = [['turnos', 'Turnos'], ['solapes', 'Solapes y horas de entrada que rotan'], ['grupos', 'Grupos y patrones (personas por grupo incluidas)'], ['contratos', 'Contratos y turnos a medida'], ['minimos', 'Mínimos'], ['reglas', 'Reglas'], ['cobertura', 'Cobertura y bolsa (sin las bajas de personas)'], ['vacaciones', 'Vacaciones (periodos y plazas, sin las peticiones)'], ['festivos', 'Festivos (ojo: las fiestas locales son de cada ciudad)']];
+      const partes = [['turnos', 'Turnos'], ['solapes', 'Solapes y horas de entrada que rotan'], ['grupos', 'Grupos y patrones (personas por grupo incluidas)'], ['contratos', 'Contratos y turnos a medida'], ['minimos', 'Mínimos'], ['minimosFecha', 'Mínimos de días concretos'], ['reglas', 'Reglas'], ['aj', 'Días AJ (sin los días que ha elegido cada persona)'], ['repartoFestivos', 'Cómputo y reparto de festivos (sin el historial de las personas)'], ['ciclo', 'Ciclo que sigue de un año a otro'], ['cobertura', 'Cobertura y bolsa (sin las bajas de personas)'], ['vacaciones', 'Vacaciones (periodos y plazas, sin las peticiones)'], ['festivos', 'Festivos (ojo: las fiestas locales son de cada ciudad)']];
       const elegido = await modal({
         titulo: `Copiar a ${cfg.nombre} lo de otra sede`,
         html: `<p>Cada sede tiene su propio horario. Para no repetir el trabajo, copia a <b>${esc(cfg.nombre)}</b> lo que ya tengas hecho en la otra. Lo copiado sustituye lo que tiene ${esc(cfg.nombre)} en esas partes; lo demás no cambia y se puede deshacer con Ctrl+Z.</p>
@@ -693,6 +817,8 @@ export function eventosParametros(raiz, repintar) {
         // Lo que es de cada persona o de cada ciudad no se copia: las bajas, las peticiones de vacaciones.
         if (k === 'cobertura' && cfg.cobertura) cfg.cobertura.ausencias = [];
         if (k === 'vacaciones' && cfg.vacaciones) cfg.vacaciones.solicitudes = {};
+        if (k === 'aj' && cfg.aj) cfg.aj.elegidos = {};
+        if (k === 'repartoFestivos' && cfg.repartoFestivos) { cfg.repartoFestivos.historial = {}; cfg.repartoFestivos.anioHistorial = null; }
       }
       if (elegido.que.includes('turnos') && !elegido.que.includes('grupos')) {
         const codigos = new Set(cfg.turnos.map(t => t.codigo));

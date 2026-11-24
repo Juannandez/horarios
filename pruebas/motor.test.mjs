@@ -194,7 +194,7 @@ import { leerCsvPlantilla } from '../js/plantilla.js';
   const r = generar(sede);
   const ver = (id, fn) => { const pi = r.personas.findIndex(p => p.id === id); const out = []; for (let d = 0; d < r.D; d++) { const t = r.turnos[r.grid[pi * r.D + d]]; if (t.trabaja && fn(t, r.dias[d])) out.push(d); } return { p: r.personas[pi], n: out.length }; };
   const a = ver('TA 001', t => !['MR5', 'TR5'].includes(t.codigo));
-  assert.equal(a.n, 0, 'la reducida de 25 h solo hace MR5 y TR5'); assert.equal(a.p.objetivo, 1057.5, '25/35 de 1.480,5 h (los días sueltos no se suman de partida)');
+  assert.equal(a.n, 0, 'la reducida de 25 h solo hace MR5 y TR5'); assert.equal(a.p.objetivo + (a.p.horasAJ || 0), 1057.5, '25/35 de 1.480,5 h (los días sueltos no se suman de partida)');
   assert.equal(ver('TA 002', t => t.franja !== 'manana').n, 0, 'solo mañanas');
   assert.ok(Math.abs(ver('TA 002', () => false).p.horas - ver('TA 002', () => false).p.objetivo) < 7, 'solo mañanas llega a su jornada');
   assert.equal(ver('TA 003', (t, d) => d.finde).n, 0, 'sin fines de semana');
@@ -246,7 +246,7 @@ import { calendarioICS } from '../js/ics.js';
   for (const sede of CONFIG_BASE.sedes) {
     const s = structuredClone(sede), r = generar(s), p = puntuacion(r, s);
     const base = Number(s.grupos[0].horasObjetivo);
-    assert.equal(r.personas[0].objetivo, base, `${s.nombre}: jornada del convenio, sin los días sueltos`);
+    assert.equal(r.personas[0].objetivo + (r.personas[0].horasAJ || 0), base, `${s.nombre}: jornada del convenio, sin los días sueltos`);
     assert.equal(p.duro, 0, `${s.nombre}: ninguna regla que bloquea incumplida`);
     assert.equal(p.blando, 0, `${s.nombre}: ningún aviso`);
     assert.ok(r.personas.every(x => x.noches <= x.topeNoches), `${s.nombre}: nadie pasa de su tope de noches (oficio + cesión)`);
@@ -254,7 +254,7 @@ import { calendarioICS } from '../js/ics.js';
     console.log(`${s.nombre}: puntuación ${p.duro} · ${p.medio} · ${p.blando}`);
   }
   const s2 = structuredClone(CONFIG_BASE.sedes[0]); s2.vacaciones.sueltosEnJornada = true;
-  assert.equal(generar(s2).personas[0].objetivo, 1515.5, 'con «sumar los días sueltos», 1.480,5 + 35 h');
+  assert.equal((x => x.objetivo + (x.horasAJ || 0))(generar(s2).personas[0]), 1515.5, 'con «sumar los días sueltos», 1.480,5 + 35 h');
   // Día libre fijo: si no caben más turnos, aviso con el motivo
   const s3 = structuredClone(CONFIG_BASE.sedes[0]); s3.especiales = { 'TA 004': { diasLibres: [2] } };
   const r3 = generar(s3), p4 = r3.personas.find(x => x.id === 'TA 004');
@@ -400,4 +400,91 @@ import { minimosConsultora } from '../js/escenarios-plantilla.js';
   const bien = cs.filter(c => c && c.ok).length;
   assert.ok(bien > ta.length / 2, `la mayoría cumple una de cada 3 (${bien} de ${ta.length})`);
   console.log(`OK rotatorio 2 + 1: ${tipos.join('')} · ${bien} de ${ta.length} personas dentro de «una de cada 3» (±2 semanas)`);
+}
+
+// ── Bloque A: AJ, mínimos por fecha, fin de semana completo, horas de entrada, festivos, ciclo, reducción, partido ──
+{
+  const { infracciones: inf } = await import('../js/puntuacion.js');
+  const { analizarPersona: ana } = await import('../js/informe.js');
+  // Turno partido: dos tramos, 4,75 + 3,25 = 8 h; el descanso cuenta desde el final del segundo.
+  const tp = prepararTurno({ codigo: 'P', inicio: '09:45', fin: '14:30', inicio2: '16:15', fin2: '19:30', franja: 'manana' });
+  assert.equal(tp.horas, 8); assert.equal(tp.fm, 19 * 60 + 30); assert.ok(tp.partido);
+  assert.equal(prepararTurno({ codigo: 'X', inicio: '09:00', fin: '14:00', inicio2: '13:00', fin2: '15:00', franja: 'manana' }).horas, 5, 'un segundo tramo que pisa el primero no cuenta');
+  const sev = structuredClone(CONFIG_BASE.sedes[0]);
+  const r = generar(sev);
+  // Días AJ: dos por persona de alta en diciembre, el 24 y el 31 mientras sobra gente; cuentan como jornada.
+  const dic = r.personas.filter(p => p.hasta === r.D && p.desde < r.D - 31);
+  assert.ok(dic.every(p => (p.diasAJ || []).length === 2), 'todos con 2 días AJ');
+  const en24 = dic.filter(p => p.diasAJ.includes('2027-12-24')).length;
+  assert.ok(en24 > dic.length / 3, `muchos con AJ el 24 (${en24})`);
+  assert.ok(dic.every(p => Math.abs(p.objetivo + p.horasAJ - (1480.5 * p.horasSemana / 35)) < 0.2 || p.especial), 'el AJ resta sus horas de la jornada a planificar');
+  const d24 = r.dias.find(d => d.fecha === '2027-12-24').i;
+  for (const f of [0, 1]) assert.ok(r.cobertura[0][f][d24] >= r.necesidad[0][f][d24], 'el 24 sigue cubierto de día');
+  // Mínimos por fecha: un teleasistente más de noche el 24 y el 31.
+  const d23 = d24 - 1;
+  assert.equal(r.necesidad[0][2][d24], r.necesidad[0][2][d23] + 1, '+1 de noche en Nochebuena');
+  // Elegido: el día que elige la persona se respeta.
+  const d27 = r.dias.find(d => d.fecha === '2027-12-27').i;
+  const iDia = r.personas.findIndex((p, k) => p.grupo === 'ta' && r.origen[k * r.D + d27] === 0 && ['manana', 'tarde'].includes(r.turnos[r.grid[k * r.D + d27]].franja));
+  const idDia = r.personas[iDia].id;
+  const s2 = structuredClone(sev); s2.aj.modo = 'elegido'; s2.aj.elegidos = { [idDia]: ['2027-12-27', ''] };
+  const p10 = generar(s2).personas[iDia];
+  assert.ok(p10.diasAJ.includes('2027-12-27') && p10.diasAJ.length === 2, `AJ en el día elegido (${p10.diasAJ})`);
+  // Festivo de noche: cuenta para quien sale (la noche del 24 al 25 es Navidad).
+  const nav = r.personas.find((p, pi) => r.turnos[r.grid[pi * r.D + d24]].franja === 'noche');
+  assert.ok(nav.festivosCuentan.some(x => x.fecha === '2027-12-25' && x.d === d24), 'noche del 24 → festivo de Navidad');
+  assert.ok(!nav.festivosCuentan.some(x => x.fecha === '2027-12-24'));
+  const s3 = structuredClone(sev); s3.repartoFestivos.noche = 'entrada';
+  const r3 = generar(s3), nav3 = r3.personas.find(p => p.id === nav.id);
+  assert.ok(!nav3.festivosCuentan.some(x => x.d === d24), 'con «quien entra», la noche del 24 no cuenta en Navidad');
+  assert.ok(nav.especialesTrab.includes('2027-12-25'), 'Navidad es festivo especial');
+  // Historial de festivos especiales: entra en el informe y en la equidad.
+  const s4 = structuredClone(sev); s4.repartoFestivos.historial = { 'TA 001': 9 };
+  const r4 = generar(s4);
+  const cEsp = ana(r4, 0, s4).comprobaciones.find(x => x.id === 'festivosEspeciales');
+  assert.ok(cEsp && cEsp.ok === false && /9 en años anteriores/.test(cEsp.resumen), 'el historial cuenta');
+  // Fin de semana completo: un sábado libre a mano con el domingo trabajado sale como infracción.
+  const pi = r.personas.findIndex(p => p.grupo === 'ta');
+  const sab = r.dias.find(d => d.dow === 5 && d.mes === 2 && r.turnos[r.grid[pi * r.D + d.i]].trabaja && r.turnos[r.grid[pi * r.D + d.i + 1]].trabaja);
+  const s5 = structuredClone(sev); s5.manuales = { [`${r.personas[pi].id}|${sab.fecha}`]: 'L' };
+  const r5 = generar(s5);
+  assert.ok(inf(r5, s5).find(x => x.k === 'finCompleto').casos.some(c => c.pi === pi), 'fin de semana partido detectado');
+  assert.equal(inf(r, sev).find(x => x.k === 'finCompleto').casos.length, 0, 'el cuadrante de partida no parte fines de semana');
+  // Horas de entrada: 3 en el rotatorio (mañana, tarde y noche); con tope 2, avisa.
+  assert.ok(r.personas.every(p => p.horasEntrada.length <= 4));
+  const s6 = structuredClone(sev); s6.reglas.maxEntradas.valor = 2;
+  assert.ok(inf(generar(s6), s6).find(x => x.k === 'maxEntradas').casos.length > 0, 'tope de 2 horas de entrada');
+  // Días sueltos oct-dic: el tope sale de Parámetros › Vacaciones.
+  const s7 = structuredClone(sev); s7.vacaciones.sueltosOctDic = 3;
+  assert.ok(/Como mucho 3 días sueltos/.test(ana(generar(s7), 0, s7).comprobaciones.find(x => x.id === 'vacacionesOctDic').titulo));
+  // Ciclo que sigue de un año a otro: en 2028 empieza en la semana 52 del ciclo (la del 27-12-2027).
+  assert.equal(r.semanaCiclo0, 0);
+  const s8 = structuredClone(sev); s8.anio = 2028; s8.festivos = []; s8.vacaciones.modo = 'escalonado';
+  const r8 = generar(s8);
+  assert.equal(r8.semanaCiclo0, 52);
+  s8.ciclo.continuo = false; assert.equal(generar(s8).semanaCiclo0, 0);
+  // Mismo turno del ciclo el lunes 27-12-2027 en los dos años (la semana compartida).
+  const dl = r.dias.find(d => d.fecha === '2027-12-27').i;
+  const patron = r.patrones.get('ta'), sem = patron.length / 7;
+  const p0 = r.personas.find(p => p.grupo === 'ta');
+  assert.equal(patron[((r.dias[dl].semana + r.semanaCiclo0 + p0.desfase) % sem) * 7], patron[((0 + r8.semanaCiclo0 + p0.desfase) % sem) * 7]);
+  // Reducción temporal (lactancia): solo turnos del contrato entre las fechas y jornada en proporción.
+  const s9 = structuredClone(sev);
+  const c = s9.contratos.find(x => x.id === 'r25'); const { nuevos, mapa } = turnosAMedida(c, s9.turnos);
+  s9.turnos.push(...nuevos); c.turnos = { ...c.turnos, ...mapa };
+  s9.especiales = { 'TA 020': { reduccion: { contrato: 'r25', desde: '2027-03-01', hasta: '2027-08-31' } } };
+  const r9 = generar(s9), i9 = r9.personas.findIndex(p => p.id === 'TA 020'), p9 = r9.personas[i9];
+  let malos = 0, fuera = 0;
+  for (const d of r9.dias) {
+    const t = r9.turnos[r9.grid[i9 * r9.D + d.i]];
+    if (!t.trabaja || t.franja === 'noche') continue;
+    const dentro = d.fecha >= '2027-03-01' && d.fecha <= '2027-08-31';
+    if (dentro && !['MR5', 'TR5'].includes(t.codigo)) malos++;
+    if (!dentro && ['MR5', 'TR5'].includes(t.codigo)) fuera++;
+  }
+  assert.equal(malos, 0, 'en la reducción, solo MR5 y TR5'); assert.equal(fuera, 0, 'fuera de la reducción, jornada completa');
+  const obj = p9.objetivo + (p9.horasAJ || 0);
+  assert.ok(obj > 1057.5 && obj < 1480.5, `jornada en proporción: ${obj}`);
+  assert.ok(ana(r9, i9, s9).comprobaciones.find(x => x.id === 'horas').fechas.some(f => /Reducción temporal/.test(f)));
+  console.log(`OK bloque A: AJ (${en24} el 24), +1 de noche el 24 y el 31, festivo de noche para quien sale, fin de semana completo, horas de entrada, ciclo continuo (2028 en la semana 53), reducción temporal (${obj} h), turno partido`);
 }

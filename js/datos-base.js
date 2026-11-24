@@ -50,7 +50,26 @@ const LIBRES = () => [
   { codigo: 'BO', nombre: 'Día de bolsa de horas', inicio: '', fin: '', franja: 'libre', color: '#D9E7C6', disponible: false, fijo: true },
   { codigo: 'AP', nombre: 'Asunto propio', inicio: '', fin: '', franja: 'libre', color: '#E6D8F0', disponible: false, fijo: true },
   { codigo: 'VS', nombre: 'Día suelto de vacaciones', inicio: '', fin: '', franja: 'libre', color: '#B9DDB6', disponible: false, fijo: true },
+  { codigo: 'AJ', nombre: 'Día AJ (permiso del 24 y el 31 de diciembre)', inicio: '', fin: '', franja: 'libre', color: '#F4D9A8', disponible: false, fijo: true },
 ];
+// Turno partido (acuerdo de la Comisión): dos tramos el mismo día, sin noches. No lo usa el rotatorio de partida: se
+// pone en el patrón de un grupo de lunes a viernes o en un contrato.
+const PARTIDO = () => ({ codigo: 'P', nombre: 'Partido', inicio: '09:45', fin: '14:30', inicio2: '16:15', fin2: '19:30', franja: 'manana', color: '#D7C4E8' });
+
+// Navidad y festivos de partida (Parámetros › Navidad y festivos).
+// AJ: 2 días de permiso por el 24 y el 31 de diciembre que cuentan como jornada (convenio art. 36.3). «fijo» = el 24 y
+// el 31 (reivindicación de CGT); quien esos días hace noche, otro día entre el 20 y el 31.
+export const AJ_BASE = () => ({ activo: true, modo: 'fijo', fechas: ['12-24', '12-31'], desde: '12-20', hasta: '12-31', enJornada: true, elegidos: {} });
+// Un teleasistente más de noche en Nochebuena y Nochevieja (convenio).
+export const MINIMOS_FECHA = () => [
+  { activo: true, colectivo: 'TA', franja: 'noche', fecha: '12-24', modo: 'suma', valor: 1, nota: 'Nochebuena' },
+  { activo: true, colectivo: 'TA', franja: 'noche', fecha: '12-31', modo: 'suma', valor: 1, nota: 'Nochevieja' },
+];
+// El festivo de noche cuenta para quien sale del turno (convenio). Festivos especiales que se reparten con equidad,
+// también entre años (historial: los trabajados en años anteriores, por código de persona).
+export const REPARTO_FESTIVOS = () => ({ noche: 'salida', especiales: ['12-24', '12-25', '12-31', '01-01', '01-06'], historial: {}, anioHistorial: null });
+// El ciclo sigue de un año a otro: la semana 1 del ciclo empieza el lunes 28-12-2026 (la del 1 de enero de 2027).
+export const CICLO = () => ({ continuo: true, inicio: '2026-12-28' });
 
 // Nivel de cada regla (como Quinyx y Skello): «bloquea» (el ajuste nunca la incumple y no se deja romper a mano),
 // «avisa» (el ajuste la respeta si puede; a mano se permite con aviso) o «informe» (el ajuste no la tiene en cuenta).
@@ -58,6 +77,7 @@ export const NIVEL_DEFECTO = {
   descanso: 'bloquea', maxSeguidos: 'bloquea', maxNoches: 'bloquea', maxNochesSeguidas: 'bloquea', descansoTrasNoche: 'bloquea',
   bloquesNoche: 'bloquea', tope: 'bloquea', ratio: 'bloquea',
   maxFines: 'avisa', maxFinesSeguidos: 'avisa', minFinesLibresMes: 'avisa', minFinesLibresEntre: 'avisa', finesCoherentes: 'avisa',
+  finCompleto: 'avisa', maxEntradas: 'avisa',
 };
 export const nivelRegla = (k, r) => (r && r.nivel) || NIVEL_DEFECTO[k] || 'avisa';
 
@@ -82,6 +102,8 @@ export const REGLAS_CATALOGO = [
   { k: 'tardeCada', texto: 'Semanas de tarde: una de cada N semanas de día (las demás, de mañana)', unidad: 'semanas', defecto: 3, normas: ['rotacion3M1T', 'rotacionIrregular'], decision: 'Decisión de la sección (24-11-2026): «se trabaja una semana de tarde cada 3, las demás son mañanas» (2 + 1, como el R2 de Málaga). El rotatorio de partida tiene 8 de tarde y 15 de mañana en 27 semanas.' },
   { k: 'minFinesLibresEntre', texto: 'Fines de semana libres entre dos trabajados (patrón 2 de descanso y 1 de trabajo)', unidad: 'fines de semana', defecto: 2, normas: ['finesUnoDeTres'], decision: 'Decisión de la sección (24-11-2026): patrón de 2 fines de semana de descanso y 1 de trabajo. Sustituye a «un fin de semana libre al mes» y a «máximo 2 fines seguidos», que con este patrón se cumplen solas. Como mucho 1 de cada 3: unos 16-17 al año.' },
   { k: 'minFinesLibresMes', texto: 'Fines de semana libres completos (sábado y domingo sin turno) como mínimo cada mes', unidad: 'fines de semana', defecto: 1, normas: ['finLibreCadaMes'], decision: 'Decisión de la sección (20-11-2026): «un fin de semana al mes como el horario que tenemos ahora». En el horario de 2027 lo cumple el 99 % en Sevilla y el 100 % en Málaga.' },
+  { k: 'finCompleto', texto: 'Fin de semana completo: si se trabaja, sábado y domingo (no uno suelto)', unidad: '', defecto: true, sinValor: true, normas: ['finesUnoDeTres'], decision: 'Petición de CGT: el fin de semana trabajado es completo. El rotatorio de partida ya los tiene completos; la regla impide que el ajuste los parta (no quita solo el sábado o solo el domingo, ni llama a alguien para uno solo). Si el otro día no está disponible (vacaciones, baja, AJ) no cuenta como partido.' },
+  { k: 'maxEntradas', texto: 'Máximo de horas de entrada distintas en el año por persona', unidad: 'horas de entrada', defecto: 4, normas: ['rotacionIrregular'], sinFuente: true, decision: 'Petición de CGT al nuevo modelo de la consultora: limitar las horas de entrada distintas. 4 = mañana, tarde, noche y un solape.' },
   { k: 'descanso',          texto: 'Descanso mínimo entre el fin de un turno y el inicio del siguiente', unidad: 'horas', defecto: 12, normas: ['descansoEntreJornadas'] },
   { k: 'maxSeguidos',       texto: 'Máximo de días de trabajo seguidos', unidad: 'días', defecto: 5, decision: 'Decisión de la sección (20-11-2026): 5 días. Coincide con el máximo del patrón de la consultora y con la petición de CGT de «sin semanas de 6 días».', normas: ['maxDiasSeguidos'] },
   { k: 'tope',              texto: 'Horas por encima del objetivo que se admiten sin aviso (bolsa)', unidad: 'horas', defecto: 0, decision: 'Decisión de la sección (20-11-2026): 0 h, cualquier exceso sobre la jornada se avisa. En el cuadrante de 2027 lo más común son 3,5 h a bolsa.', normas: ['horasBolsaPlanificadas'] },
@@ -109,6 +131,8 @@ export const REGLAS = () => ({
   minFinesLibresEntre: { activo: true, valor: 2 },   // patrón 2 de descanso y 1 de trabajo (sección, 24-11-2026)
   maxFinesSeguidos: { activo: false, valor: 2 },     // se cumple sola con el patrón 2 + 1
   minFinesLibresMes: { activo: false, valor: 1 },    // se cumple sola con el patrón 2 + 1
+  finCompleto: { activo: true, valor: true },      // fin de semana trabajado: sábado y domingo (CGT)
+  maxEntradas: { activo: true, valor: 4 },          // horas de entrada distintas (CGT)
   descanso:    { activo: true, valor: 12 },
   maxSeguidos: { activo: true, valor: 5 },
   tope:        { activo: true, valor: 0 },   // horas por encima del objetivo que se admiten sin aviso (bolsa): decisión de la sección
@@ -172,6 +196,7 @@ const SEVILLA = {
     { codigo: 'T2',  nombre: 'Tarde 2',          inicio: '16:00', fin: '23:00', franja: 'tarde',  color: '#F6B89A' },
     { codigo: 'N',   nombre: 'Noche',            inicio: '22:00', fin: '08:00', franja: 'noche',  color: '#2E4A86' },
     { codigo: 'S1',  nombre: 'Solape mañana-tarde', inicio: '11:00', fin: '18:00', franja: 'manana', color: '#B7D3F2' },
+    PARTIDO(),
     ...LIBRES(),
   ],
   // Un solo turno rotatorio. Plantilla de 2027: 256 teleasistentes (antes rotatorio 117, fijos
@@ -206,6 +231,7 @@ const SEVILLA = {
   contratos: CONTRATOS(),   // perfiles de jornada (Parámetros › Contratos y casos especiales)
   // Cobertura y bolsa (Parámetros › Cobertura y bolsa). Con 16 noches de tope para quien ceda, Sevilla cubre todas las noches (3 noches cedidas en total).
   cobertura: COBERTURA(16),
+  aj: AJ_BASE(), minimosFecha: MINIMOS_FECHA(), repartoFestivos: REPARTO_FESTIVOS(), ciclo: CICLO(),
   especiales: {},           // casos especiales por código de persona: { "TA 017": { contrato, franjas, sinFindes, diasLibres, alta, baja, semanaInicio } }   // cambios a mano en el cuadrante: { "TA-R 001|2027-03-02": "L" }
 };
 
@@ -228,6 +254,7 @@ const MALAGA = {
     { codigo: 'T2',  nombre: 'Tarde 2',          inicio: '16:00', fin: '23:00', franja: 'tarde',  color: '#F6B89A' },
     { codigo: 'N',   nombre: 'Noche',            inicio: '22:00', fin: '08:00', franja: 'noche',  color: '#2E4A86' },
     { codigo: 'S1',  nombre: 'Solape mañana-tarde', inicio: '11:00', fin: '18:00', franja: 'manana', color: '#B7D3F2' },
+    PARTIDO(),
     ...LIBRES(),
   ],
   // Un solo turno rotatorio. Plantilla de 2027: 242 teleasistentes (antes R1 e iR1 98, fijos discontinuos 22,
@@ -262,6 +289,7 @@ const MALAGA = {
   contratos: CONTRATOS(),   // perfiles de jornada (Parámetros › Contratos y casos especiales)
   // Cobertura y bolsa (Parámetros › Cobertura y bolsa). Con 18 de tope Málaga pasa de 58 personas-noche sin cubrir a 3 (unas 39 noches cedidas); el bloque que queda se cubre con un refuerzo de verano.
   cobertura: COBERTURA(18),
+  aj: AJ_BASE(), minimosFecha: MINIMOS_FECHA(), repartoFestivos: REPARTO_FESTIVOS(), ciclo: CICLO(),
   especiales: {},           // casos especiales por código de persona: { "TA 017": { contrato, franjas, sinFindes, diasLibres, alta, baja, semanaInicio } }
 };
 

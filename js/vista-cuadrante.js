@@ -1,6 +1,6 @@
 // Vista Cuadrante: el horario de cada persona, con filtros, orden, cobertura y cambios a mano.
 import { estado, esc, $, $$, MESES, DIAS_CORTOS, fmtNum, fmtFecha, estiloTurno, modal, cambiado, avisar } from './nucleo.js';
-import { ORIGEN, fmtH } from './motor.js';
+import { ORIGEN, fmtH, horarioTurno } from './motor.js';
 import { pdfCuadrante } from './pdf.js';
 import { COLECTIVOS, FRANJA_NOMBRE } from './datos-base.js';
 import { infracciones, puntuacion, mapaCasillas } from './puntuacion.js';
@@ -177,7 +177,7 @@ function leyenda() {
   const sinUsar = estado.cfg.turnos.filter(c => !turnos.some(t => t.codigo === c.codigo)).length;
   return `<div class="leyenda" role="group" aria-label="Resaltar un turno">${turnos.map(t =>
     `<button type="button" data-resaltar="${esc(t.codigo)}" aria-pressed="${u.resaltar === t.codigo}" title="Resalta ${esc(t.nombre)}">
-      <span class="muestra" style="${estiloTurno(t)}">${esc(t.codigo)}</span>${esc(t.nombre)}${t.trabaja ? ` <span class="tenue">${esc(t.inicio)}–${esc(t.fin)}</span>` : ''}</button>`).join('')}
+      <span class="muestra" style="${estiloTurno(t)}">${esc(t.codigo)}</span>${esc(t.nombre)}${t.trabaja ? ` <span class="tenue">${esc(horarioTurno(t))}</span>` : ''}</button>`).join('')}
       ${sinUsar ? `<a class="tenue leyenda-mas" href="#parametros/turnos" title="Turnos configurados que no salen en este cuadrante">+${sinUsar} turnos configurados sin usar</a>` : ''}</div>
     <div class="marcas-leyenda">
       <span><i class="aj"></i> Turno puesto por el ajuste</span>

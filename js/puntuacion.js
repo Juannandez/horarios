@@ -26,6 +26,8 @@ const TITULOS = {
   minFinesLibresMes: (v) => `Mes con menos de ${v} fin${Number(v) === 1 ? '' : 'es'} de semana libre${Number(v) === 1 ? '' : 's'}`,
   minFinesLibresEntre: (v) => `Menos de ${v} fines de semana libres entre dos trabajados`,
   finesCoherentes: () => 'Fin de semana en otro turno que su semana',
+  finCompleto: () => 'Fin de semana partido (solo el sábado o solo el domingo)',
+  maxEntradas: (v) => `Más de ${v} horas de entrada distintas en el año`,
   tope: (v) => `Más de ${v} h por encima de la jornada`,
 };
 
@@ -123,6 +125,19 @@ export function infracciones(res, cfg) {
         const malos = f.dias.filter(d => trab(d) && ((m > ta && t(d).franja === 'tarde') || (ta > m && t(d).franja === 'manana')));
         if (malos.length) caso('finesCoherentes', malos, m > ta ? 'tarde en semana de mañana' : 'mañana en semana de tarde');
       }
+    }
+    if (salida.finCompleto && !p.exentoFines) {
+      // El otro día sin turno y disponible (no vacaciones, baja, AJ…): fin de semana partido.
+      for (const f of finde) {
+        if (f.dias.length < 2) continue;
+        const [a, b] = f.dias;
+        if (trab(a) !== trab(b) && t(trab(a) ? b : a).disponible !== false) caso('finCompleto', [trab(a) ? a : b], trab(a) ? 'solo el sábado' : 'solo el domingo');
+      }
+    }
+    if (salida.maxEntradas) {
+      const max = val('maxEntradas'), vistas = new Map();
+      for (let d = 0; d < D; d++) if (trab(d)) { const h = t(d).inicio; if (!vistas.has(h)) vistas.set(h, d); }
+      if (vistas.size > max) caso('maxEntradas', [...vistas.values()].slice(max), `${vistas.size} horas de entrada: ${[...vistas.keys()].sort().join(', ')}`);
     }
     if (salida.tope) {
       const exceso = p.horas - p.objetivo;

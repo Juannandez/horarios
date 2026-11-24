@@ -1,7 +1,7 @@
 // PDF del cuadrante (por colectivo) y de los informes por persona, generados en el navegador con jsPDF
 // (js/vendor/jspdf-4.2.1.umd.min.js, licencia MIT). Nada sale del navegador: el PDF se descarga.
 // Las fuentes estándar del PDF solo tienen letras latinas: se evitan símbolos como ≥ o −.
-import { ORIGEN } from './motor.js';
+import { ORIGEN, horarioTurno } from './motor.js';
 import { analizarPersona } from './informe.js';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -128,7 +128,7 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
       doc.setFontSize(6);
       res.turnos.forEach((t, ti) => {
         if (!usados.has(ti)) return;
-        const etiqueta = `${t.codigo} ${t.nombre}${t.trabaja ? ` ${t.inicio}-${t.fin}` : ''}`;
+        const etiqueta = `${t.codigo} ${t.nombre}${t.trabaja ? ` ${horarioTurno(t)}` : ''}`;
         const ancho = doc.getTextWidth(etiqueta) + 7;
         if (lx + ancho > W - M) { lx = M; ly += 3.5; }
         doc.setFillColor(...colores[ti]); doc.setDrawColor(...LINEA); doc.rect(lx, ly - 2.3, 3.5, 2.8, 'FD');

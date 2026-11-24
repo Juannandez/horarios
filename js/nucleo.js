@@ -1,5 +1,5 @@
 // Estado compartido, servidor, modales y utilidades de la app.
-import { CONFIG_BASE, SEDES_BASE } from './datos-base.js';
+import { CONFIG_BASE, SEDES_BASE, AJ_BASE, REPARTO_FESTIVOS, CICLO } from './datos-base.js';
 import { generar } from './motor.js';
 import { calcularFestivos, claveFuente } from './festivos.js';
 import { EN_GITHUB, leerPublicada, versionesGithub, versionGithub, tokenSesion, entrarConContrasena, cerrarSesionGithub, guardarGithub } from './github.js';
@@ -261,8 +261,16 @@ export function completarSede(cfg, base) {
     c.cobertura.bolsa.inicial = dicc(c.cobertura.bolsa.inicial);
     c.cobertura.bolsa.consumida = dicc(c.cobertura.bolsa.consumida);
   }
+  // Navidad y festivos, ciclo continuo y mínimos por fecha (lo que falte, con los valores de partida).
+  c.aj = { ...AJ_BASE(), ...dicc(base.aj), ...dicc(cfg.aj) }; c.aj.elegidos = dicc(c.aj.elegidos);
+  if (!Array.isArray(c.aj.fechas)) c.aj.fechas = AJ_BASE().fechas;
+  if (!Array.isArray(c.minimosFecha)) c.minimosFecha = Array.isArray(base.minimosFecha) ? clonar(base.minimosFecha) : [];
+  c.repartoFestivos = { ...REPARTO_FESTIVOS(), ...dicc(base.repartoFestivos), ...dicc(cfg.repartoFestivos) };
+  c.repartoFestivos.historial = dicc(c.repartoFestivos.historial);
+  if (!Array.isArray(c.repartoFestivos.especiales)) c.repartoFestivos.especiales = REPARTO_FESTIVOS().especiales;
+  c.ciclo = { ...CICLO(), ...dicc(base.ciclo), ...dicc(cfg.ciclo) };
   if (!c.vacaciones || typeof c.vacaciones !== 'object') c.vacaciones = base.vacaciones ? JSON.parse(JSON.stringify(base.vacaciones)) : { modo: 'escalonado' };
-  c.vacaciones = { modo: 'escalonado', diasHabiles: 17, diasSueltos: 5, horasDia: 7, semilla: 'sorteo', periodos: [], solicitudes: {}, sueltosEnJornada: false, ...c.vacaciones };
+  c.vacaciones = { modo: 'escalonado', diasHabiles: 17, diasSueltos: 5, horasDia: 7, semilla: 'sorteo', periodos: [], solicitudes: {}, sueltosEnJornada: false, sueltosOctDic: 1, ...c.vacaciones };
   c.vacaciones.solicitudes = dicc(c.vacaciones.solicitudes);
   for (const x of c.contratos) x.turnos = { manana: '', tarde: '', noche: '', ...dicc(x.turnos) };
   for (const g of c.grupos) {

@@ -57,5 +57,9 @@ export function casoEspecial(cfgEsp = {}, real = null) {
     baja: /^\d{4}-\d{2}-\d{2}$/.test(e.baja || '') ? e.baja : '',
     semanaInicio: Number(e.semanaInicio) > 0 ? Math.floor(Number(e.semanaInicio)) : 0,
     cedeNoches: !!e.cedeNoches,                                   // acepta ceder noches (cesión voluntaria)
+    // Reducción temporal: otro contrato entre dos fechas (lactancia, cuidado de un familiar, tratamiento…).
+    reduccion: e.reduccion && e.reduccion.contrato && /^\d{4}-\d{2}-\d{2}$/.test(e.reduccion.desde || '')
+      ? { contrato: String(e.reduccion.contrato), desde: e.reduccion.desde, hasta: /^\d{4}-\d{2}-\d{2}$/.test(e.reduccion.hasta || '') ? e.reduccion.hasta : '' }
+      : { contrato: (e.reduccion && e.reduccion.contrato) || '', desde: (e.reduccion && e.reduccion.desde) || '', hasta: (e.reduccion && e.reduccion.hasta) || '' },
   };
 }

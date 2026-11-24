@@ -37,6 +37,7 @@ export function pintarVacaciones(raiz) {
       ${vac.modo === 'periodos' ? `<div class="campos">
         <label class="campo"><span>Días hábiles del periodo</span><input type="number" min="1" max="30" data-vac-campo="diasHabiles" data-tipo="num" value="${esc(vac.diasHabiles)}"></label>
         <label class="campo"><span>Días sueltos fuera del cuadrante</span><input type="number" min="0" max="15" data-vac-campo="diasSueltos" data-tipo="num" value="${esc(vac.diasSueltos)}"></label>
+        <label class="campo" title="Protocolo de vacaciones: 1. Los sindicatos piden más. Sale en el informe de cada persona."><span>Días sueltos como mucho entre el 1-oct y el 22-dic</span><input type="number" min="0" max="15" data-vac-campo="sueltosOctDic" data-tipo="num" value="${esc(vac.sueltosOctDic ?? 1)}"></label>
         <label class="campo"><span>Semilla del sorteo</span><input type="text" data-vac-campo="semilla" value="${esc(vac.semilla)}" style="width:160px"></label>
         <button type="button" class="btn mini" data-vac="nuevo-sorteo">Sortear de nuevo</button>
       </div>

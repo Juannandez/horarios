@@ -36,12 +36,18 @@ export function calendarioICS(res, pi, { titulo = '', nombre = '', ahora = new D
   for (let d = 0; d < D; d++) {
     const t = T[res.grid[pi * D + d]], dia = res.dias[d];
     if (t.trabaja) {
-      const fin = t.fm >= 1440 ? masDias(dia.fecha, 1) : dia.fecha;
-      l.push('BEGIN:VEVENT', `UID:${uidBase}-${fecha(dia.fecha)}@sat-horarios`, `DTSTAMP:${sello}`,
-        `DTSTART;TZID=Europe/Madrid:${fecha(dia.fecha)}T${hora(t.ini)}`, `DTEND;TZID=Europe/Madrid:${fecha(fin)}T${hora(t.fm % 1440)}`,
-        `SUMMARY:${escTexto(`${t.codigo} · ${t.nombre}`)}`,
-        `DESCRIPTION:${escTexto(`${titulo ? `${titulo}. ` : ''}${dia.festivo ? `Festivo: ${dia.festivo}. ` : ''}Turno de ${t.inicio} a ${t.fin}.`)}`,
-        'TRANSP:OPAQUE', 'END:VEVENT');
+      // Turno partido: un evento por tramo.
+      const min = (x) => { const [h, m] = String(x).split(':').map(Number); return h * 60 + m; };
+      const tramos = t.partido ? [[t.ini, min(t.fin), ''], [min(t.inicio2), t.fm, '-2']] : [[t.ini, t.fm, '']];
+      const texto = t.partido ? `Turno partido de ${t.inicio} a ${t.fin} y de ${t.inicio2} a ${t.fin2}.` : `Turno de ${t.inicio} a ${t.fin}.`;
+      for (const [a, b, suf] of tramos) {
+        const fin = b >= 1440 ? masDias(dia.fecha, 1) : dia.fecha;
+        l.push('BEGIN:VEVENT', `UID:${uidBase}-${fecha(dia.fecha)}${suf}@sat-horarios`, `DTSTAMP:${sello}`,
+          `DTSTART;TZID=Europe/Madrid:${fecha(dia.fecha)}T${hora(a)}`, `DTEND;TZID=Europe/Madrid:${fecha(fin)}T${hora(b % 1440)}`,
+          `SUMMARY:${escTexto(`${t.codigo} · ${t.nombre}`)}`,
+          `DESCRIPTION:${escTexto(`${titulo ? `${titulo}. ` : ''}${dia.festivo ? `Festivo: ${dia.festivo}. ` : ''}${texto}`)}`,
+          'TRANSP:OPAQUE', 'END:VEVENT');
+      }
     } else if (t.codigo === 'V' && !(d > 0 && T[res.grid[pi * D + d - 1]].codigo === 'V')) {
       // Vacaciones: un evento de día completo por tramo seguido.
       let n = 1; while (d + n < D && T[res.grid[pi * D + d + n]].codigo === 'V') n++;

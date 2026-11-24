@@ -28,7 +28,6 @@ export function analizarPersona(res, pi, cfg) {
     if (t.trabaja) {
       c.trabajados++; c.horas += t.horas;
       if (t.franja === 'manana') c.mananas++; else if (t.franja === 'tarde') c.tardes++; else c.noches++;
-      if (dias[d].festivo) c.festivosTrabajados.push(dias[d]);
     } else {
       if (t.codigo === 'V') c.vacaciones++; else if (t.codigo === 'D') c.descansoExceso++; else if (t.codigo === 'SN') c.salientes++; else c.libres++;
       if (dias[d].festivo) c.festivosLibres.push(dias[d]);
@@ -36,6 +35,8 @@ export function analizarPersona(res, pi, cfg) {
     if (org(d) === ORIGEN.CUBRE || org(d) === ORIGEN.RECORTE) c.ajustes++;
     if (org(d) === ORIGEN.MANUAL) c.manuales++;
   }
+  // Festivos trabajados: el de noche cuenta en el día en que acaba si el festivo cuenta para quien sale (convenio).
+  c.festivosTrabajados = (p.festivosCuentan || []).map(x => ({ fecha: x.fecha, festivo: x.festivo, codigo: x.codigo }));
   const semanas = new Map(); // semana → { finde: bool, franjasLV: {}, franjasFinde: {} }
   for (let d = 0; d < D; d++) {
     const w = dias[d].semana, t = celda(d);
@@ -60,7 +61,7 @@ export function analizarPersona(res, pi, cfg) {
     const ok = dif >= 0 && (tope == null || dif <= Number(tope) || inevitable);
     add({ id: 'horas', titulo: 'Horas del año frente a la jornada anual', ok,
       resumen: `${h1(p.horas)} h planificadas para ${h1(p.objetivo)} h${p.horasSueltas && p.sueltosEnJornada ? ` (jornada de ${h1(p.objetivoBase)} h + ${h1(p.horasSueltas)} h de los días sueltos de vacaciones, que se piden durante el año)` : ` de jornada${p.horasSueltas ? ` (los días sueltos de vacaciones, ${h1(p.horasSueltas)} h, no se planifican: se restan cuando se piden)` : ''}`}: ${dif >= 0 ? '+' : '-'}${h1(Math.abs(dif))} h${inevitable ? ', que van a bolsa (menos de un turno: no se pueden quitar sin bajar de la jornada)' : ''}${tope != null ? `. Bolsa admitida: ${h1(tope)} h` : ''}.${dif < 0 && (p.diasLibres || []).length ? ' Por su día libre fijo: con el máximo de días seguidos y el tope de fines de semana no caben más turnos. La sección lo revisa caso a caso.' : ''}`,
-      fechas: [], norma: 'Jornada anual del grupo (Parámetros → Grupos)', normas: ['jornadaAnualTurnos6', 'sin6TurnoC', 'jornadaMalagaConAJ', 'noPlanificarBajoObligacion', 'horasBolsaPlanificadas'] });
+      fechas: p.tramo ? [`Reducción temporal (${p.tramo.contratoNombre}, ${String(p.tramo.horasSemana).replace('.', ',')} h a la semana) del ${fechaTxt(p.tramo.desde)}${p.tramo.hasta ? ` al ${fechaTxt(p.tramo.hasta)}` : ' en adelante'}: su jornada se calcula con esas horas esos días.`] : [], norma: 'Jornada anual del grupo (Parámetros → Grupos)', normas: ['jornadaAnualTurnos6', 'sin6TurnoC', 'jornadaMalagaConAJ', 'noPlanificarBajoObligacion', 'horasBolsaPlanificadas'] });
   }
   // Noches al año
   if (reg('maxNoches') != null) {
@@ -132,6 +133,25 @@ export function analizarPersona(res, pi, cfg) {
     add({ id: 'coherenciaFinde', titulo: 'Fin de semana en el mismo turno que la semana', reivindicacion: true, ok: !malos.length,
       resumen: malos.length ? `${malos.length} fines de semana en turno distinto al de su semana.` : 'Todos los fines de semana van en el turno de su semana.', fechas: malos, norma: 'Reivindicación CGT (queja de 2024 sobre el rotatorio)', normas: ['finesCoherentesSemana', 'finesAlternosMT'] });
   }
+  // Fin de semana completo: sábado y domingo, no uno suelto (salvo que el otro día sea vacaciones, baja, AJ…)
+  if (!p.exentoFines) {
+    const malos = [];
+    for (const d of dias) {
+      if (d.dow !== 5 || d.i + 1 >= D) continue;
+      const a = trabaja(d.i), b = trabaja(d.i + 1);
+      if (a !== b && celda(a ? d.i + 1 : d.i).disponible !== false) malos.push(`${fechaTxt(d.fecha)}: solo el ${a ? 'sábado' : 'domingo'}`);
+    }
+    add({ id: 'finCompleto', titulo: 'Fin de semana trabajado completo (sábado y domingo)', reivindicacion: reg('finCompleto') == null, ok: !malos.length,
+      resumen: malos.length ? `${malos.length} fines de semana con solo un día de trabajo.` : 'Ningún fin de semana partido.', fechas: malos,
+      norma: reg('finCompleto') != null ? 'Regla «Fin de semana completo»' : 'Reivindicación de CGT', normas: ['finesUnoDeTres'] });
+  }
+  // Horas de entrada distintas
+  {
+    const max = reg('maxEntradas'), hs = p.horasEntrada || [];
+    add({ id: 'maxEntradas', titulo: 'Horas de entrada distintas en el año', reivindicacion: max == null, ok: max == null ? null : hs.length <= Number(max),
+      resumen: `${hs.length} ${hs.length === 1 ? 'hora' : 'horas'} de entrada: ${hs.join(', ') || 'ninguna'}${max != null ? `; tope ${max}` : ''}.`, fechas: [],
+      norma: max != null ? 'Regla «Máximo de horas de entrada distintas»' : 'Petición de CGT al nuevo modelo', normas: ['rotacionIrregular'] });
+  }
   // Descanso entre jornadas
   if (reg('descanso') != null) {
     const h = Number(reg('descanso')), malos = [];
@@ -164,7 +184,30 @@ export function analizarPersona(res, pi, cfg) {
   if (c.festivosTrabajados.length) {
     add({ id: 'festivos', titulo: 'Festivos trabajados (a devolver)', ok: null,
       resumen: `${c.festivosTrabajados.length} festivos con turno: deben compensarse con un día de descanso (FM/FT).`,
-      fechas: c.festivosTrabajados.map(d => `${fechaTxt(d.fecha)}: ${d.festivo}`), norma: 'Devolución de festivos (FM/FT)', normas: ['festivosAjusteAnual', 'festivosSabadoNoCuentan'] });
+      fechas: c.festivosTrabajados.map(d => `${fechaTxt(d.fecha)}: ${d.festivo}${d.codigo && (res.turnosMap.get(d.codigo) || {}).franja === 'noche' ? ' (noche que acaba ese día)' : ''}`),
+      norma: res.repartoFestivos && res.repartoFestivos.noche === 'salida' ? 'Devolución de festivos (FM/FT). El festivo de noche cuenta para quien sale del turno.' : 'Devolución de festivos (FM/FT). El festivo de noche cuenta para quien entra.', normas: ['festivosAjusteAnual', 'festivosSabadoNoCuentan'] });
+  }
+  // Festivos especiales (Nochebuena, Navidad, Nochevieja, Año Nuevo, Reyes…), con los de años anteriores.
+  if (res.repartoFestivos && (res.repartoFestivos.especiales || []).length) {
+    const n = (p.especialesTrab || []).length, h = p.historialEspeciales || 0;
+    const grupo = res.personas.filter(x => x.grupo === p.grupo);
+    const media = grupo.reduce((s2, x) => s2 + (x.especialesTrab || []).length + (x.historialEspeciales || 0), 0) / Math.max(1, grupo.length);
+    add({ id: 'festivosEspeciales', titulo: 'Festivos especiales trabajados (reparto con equidad, también entre años)', ok: n + h <= Math.ceil(media) + 1,
+      resumen: `${n} este año${h ? ` y ${h} en años anteriores` : ''}; la media de su grupo es ${h1(media)}.${n + h > Math.ceil(media) + 1 ? ' Le tocan más que a la media: «Mejorar reparto» los reparte.' : ''}`,
+      fechas: (p.especialesTrab || []).map(fechaTxt), norma: 'Reivindicación de CGT: festivos especiales repartidos con equidad, sin repetir cada año (Parámetros › Navidad y festivos)', normas: ['festivosAjusteAnual'], reivindicacion: true });
+  }
+  // Días AJ (24 y 31 de diciembre)
+  if (res.aj && res.aj.activo) {
+    const puestos = p.diasAJ || [], n = (res.aj.fechas || []).length;
+    if (p.hasta > p.desde && res.dias[p.hasta - 1].mes === 11) {
+      add({ id: 'diasAJ', titulo: `${n} días AJ (permiso del 24 y el 31 de diciembre)`, ok: !p.ajFaltan,
+        resumen: `${puestos.length ? `AJ el ${puestos.map(fechaTxt).join(' y el ')}` : 'Sin días AJ en el cuadrante'}${p.ajFaltan ? `; faltan ${p.ajFaltan}: en diciembre no tiene días de turno de mañana o de tarde donde ponerlos (las noches van en bloque): los disfruta cuando el servicio lo permita` : ''}.${res.aj.enJornada && p.horasAJ ? ` Cuentan como jornada: ${h1(p.horasAJ)} h.` : ''}`,
+        fechas: [], norma: 'Convenio art. 36.3: el 24 y el 31 de diciembre son permiso retribuido; quien trabaja a turnos esos días lo disfruta cuando el servicio lo permita', normas: ['permiso24y31', 'ajDosDias', 'ajFechasReparto'] });
+      if (res.aj.modo !== 'reparto' && (p.ajQuiere || []).length) {
+        add({ id: 'ajEnFecha', titulo: res.aj.modo === 'elegido' ? 'AJ en las fechas que ha elegido' : 'AJ el 24 y el 31 de diciembre', reivindicacion: true, ok: p.ajEnFecha >= Math.min(n, (p.ajQuiere || []).length),
+          resumen: `${p.ajEnFecha} de ${Math.min(n, (p.ajQuiere || []).length)} en ${(p.ajQuiere || []).map(fechaTxt).join(' y ')}.`, fechas: [], norma: 'Reivindicación de CGT: AJ el 24 y el 31 o cuando elija cada persona', normas: ['ajEl24y31OElegir'] });
+      }
+    }
   }
   // Vacaciones
   const asig = res.vacaciones && res.vacaciones.porPersona.get(p.id);
@@ -221,7 +264,8 @@ export function analizarPersona(res, pi, cfg) {
       if (celda(d).codigo !== 'V' || dias[d].fecha < `${anioTxt}-10-01` || dias[d].fecha > `${anioTxt}-12-22`) continue;
       if (!(d > 0 && celda(d - 1).codigo === 'V') && !(d + 1 < D && celda(d + 1).codigo === 'V')) sueltas++;
     }
-    add({ id: 'vacacionesOctDic', titulo: 'Como mucho 1 día suelto de vacaciones entre el 1 de octubre y el 22 de diciembre', ok: sueltas <= 1, resumen: `${sueltas} días sueltos en ese periodo.`, fechas: [], norma: 'Protocolo de vacaciones', normas: ['vacacionesOctDic'] });
+    const vOD = Number(cfg.vacaciones && cfg.vacaciones.sueltosOctDic), topeOD = Number.isFinite(vOD) ? Math.max(0, Math.floor(vOD)) : 1;
+    add({ id: 'vacacionesOctDic', titulo: `Como mucho ${topeOD} ${topeOD === 1 ? 'día suelto' : 'días sueltos'} de vacaciones entre el 1 de octubre y el 22 de diciembre`, ok: sueltas <= topeOD, resumen: `${sueltas} días sueltos en ese periodo.`, fechas: [], norma: topeOD === 1 ? 'Protocolo de vacaciones (los sindicatos piden más de 1: Parámetros › Vacaciones)' : 'Tope de Parámetros › Vacaciones (el protocolo dice 1)', normas: ['vacacionesOctDic'] });
   }
   // Rotatorio: 3 semanas de mañana y 1 de tarde, y 70 % de turnos rotatorios por semestre (plus)
   const patron = (cfg.grupos || []).length ? (() => {

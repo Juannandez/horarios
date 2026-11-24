@@ -35,8 +35,15 @@ export function prepararTurno(t) {
   let ini = minutos(t.inicio), fm = minutos(t.fin);
   if (!trabaja || ini == null || fm == null) return { ...t, trabaja, ini: 0, fm: 0, horas: 0 };
   if (fm <= ini) fm += 1440;
-  return { ...t, trabaja, ini, fm, horas: (fm - ini) / 60 };
+  let horas = (fm - ini) / 60, partido = false;
+  // Turno partido: un segundo tramo el mismo día, después del primero (p. ej. 09:45-14:30 y 16:15-19:30). Cuenta las
+  // horas de los dos tramos y, para el descanso entre jornadas, acaba al final del segundo.
+  const i2 = minutos(t.inicio2), f2 = minutos(t.fin2);
+  if (i2 != null && f2 != null && i2 >= fm && f2 > i2) { horas += (f2 - i2) / 60; fm = f2; partido = true; }
+  return { ...t, trabaja, ini, fm, horas, partido };
 }
+// Texto de las horas de un turno: «08:15-15:15» o, si es partido, «09:45-14:30 y 16:15-19:30».
+export const horarioTurno = (t) => (!t || !t.inicio ? '' : `${t.inicio}-${t.fin}${t.inicio2 && t.fin2 ? ` y ${t.inicio2}-${t.fin2}` : ''}`);
 
 const pad = (n, w) => String(n).padStart(w, '0');
 export const isoFecha = (dt) => `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1, 2)}-${pad(dt.getUTCDate(), 2)}`;
@@ -135,6 +142,8 @@ export function generar(cfgEntrada, opciones = {}) {
   const minFinesLibresEntre = reg('minFinesLibresEntre', 2);   // patrón «2 de descanso y 1 de trabajo»
   const bloques = usa('bloquesNoche') ? parseBloques(R.bloquesNoche.valor) : null;
   const finesCoherentes = !!usa('finesCoherentes');
+  const finCompleto = !!usa('finCompleto');             // fin de semana trabajado = sábado y domingo
+  const maxEntradas = reg('maxEntradas', 4);             // horas de entrada distintas en el año
   const descansoTrasNoche = reg('descansoTrasNoche', 3) || 0;
   const ajusteActivo = !R.ajuste || R.ajuste.activo !== false;
   // Cobertura y bolsa (Parámetros › Cobertura y bolsa): cesión de noches, bolsa de horas, margen, ausencias y aguante.
@@ -156,17 +165,37 @@ export function generar(cfgEntrada, opciones = {}) {
   asegura('BO', 'Día de bolsa de horas', '#D9E7C6', false);
   asegura('AP', 'Asunto propio', '#E6D8F0', false);
   asegura('VS', 'Día suelto de vacaciones', '#B9DDB6', false);
+  asegura('AJ', 'Día AJ (permiso del 24 y el 31 de diciembre)', '#F4D9A8', false);
   const idx = new Map(lista.map((t, i) => [t.codigo, i]));
   const turnosMap = new Map(lista.map(t => [t.codigo, t]));
   const T = lista;
   const iV = idx.get('V'), iD = idx.get(CODIGO_RECORTE), iSN = idx.get('SN'), iB = idx.get('B');
   const franjaIdx = T.map(t => FR.indexOf(t.franja)); // -1 = libre
+  // Horas de entrada distintas (para «máximo de horas de entrada»): índice de la hora de inicio de cada turno.
+  const horasEntrada = [...new Set(T.filter(t => t.trabaja).map(t => t.ini))];
+  const entradaIdx = T.map(t => (t.trabaja ? horasEntrada.indexOf(t.ini) : -1)), NE = Math.max(1, horasEntrada.length);
 
   // Festivos: la lista ya calculada, o se calcula aquí con la copia guardada de la fuente.
   const anio = Number(cfg.anio) || new Date().getFullYear();
   const listaFestivos = Array.isArray(cfg.festivos) ? cfg.festivos : calcularFestivos(cfg.festivos || {}, anio).lista;
   const dias = calendario(anio, listaFestivos);
   const D = dias.length, W = dias[D - 1].semana + 1;
+  // Ciclo que sigue de un año a otro: la semana del ciclo se cuenta desde el lunes de inicio (cfg.ciclo.inicio), no
+  // desde el 1 de enero, para que el año siguiente empiece donde acabó este.
+  const semanaCiclo0 = (() => {
+    const c = cfg.ciclo || {};
+    if (!c.continuo || !/^\d{4}-\d{2}-\d{2}$/.test(c.inicio || '')) return 0;
+    const ref = Date.parse(`${c.inicio}T00:00:00Z`), dowRef = (new Date(ref).getUTCDay() + 6) % 7;
+    const lunesAnio = Date.UTC(anio, 0, 1) - dias[0].dow * 864e5;
+    return Math.round((lunesAnio - (ref - dowRef * 864e5)) / (7 * 864e5));
+  })();
+  // ¿En qué festivo cuenta un turno? El de noche, en el día en que acaba si cfg.repartoFestivos.noche es «salida»
+  // (convenio: el festivo de noche cuenta para quien sale del turno).
+  const RF = { noche: 'salida', especiales: ['12-24', '12-25', '12-31', '01-01', '01-06'], historial: {}, ...(cfg.repartoFestivos || {}) };
+  const festivoSiguiente = (d) => (d + 1 < D ? dias[d + 1].festivo : dias[d].fecha.endsWith('12-31') ? 'Año Nuevo' : '');
+  const fechaSiguiente = (d) => (d + 1 < D ? dias[d + 1].fecha : `${anio + 1}-01-01`);
+  const cuentaEn = (d, t) => (t.franja === 'noche' && RF.noche === 'salida' ? { festivo: festivoSiguiente(d), fecha: fechaSiguiente(d) } : { festivo: dias[d].festivo, fecha: dias[d].fecha });
+  const especiales = new Set((RF.especiales || []).map(x => String(x).slice(-5)));
   // Mes de cada fin de semana (el del sábado) y fines de semana de cada mes, para «al menos N fines libres al mes».
   const mesFinde = new Int8Array(W).fill(-1);
   for (const x of dias) if (x.dow === 5) mesFinde[x.semana] = x.mes;
@@ -211,6 +240,22 @@ export function generar(cfgEntrada, opciones = {}) {
       for (const f of FR) { const c = contrato && contrato.turnos && contrato.turnos[f]; if (c && idx.has(c) && turnosMap.get(c).franja === f) turnoContrato[f] = c; }
       const prefP = {};
       for (const f of FR) prefP[f] = pref[f] && franjas.includes(f) ? (turnoContrato[f] || pref[f]) : null;
+      // Reducción temporal (lactancia, cuidado de un familiar, tratamiento…): otro contrato entre dos fechas.
+      let tramo = null;
+      const red = esp.reduccion, cRed = red && red.contrato ? (cfg.contratos || []).find(c => c.id === red.contrato) : null;
+      if (cRed && /^\d{4}-\d{2}-\d{2}$/.test(red.desde || "")) {
+        const a = dias.findIndex(x => x.fecha >= red.desde), b = red.hasta ? dias.findIndex(x => x.fecha > red.hasta) : -1;
+        const d0 = a < 0 ? D : a, d1 = b < 0 ? D : b;
+        if (d1 > d0) {
+          const sinN = exentoNoches || !!cRed.sinNoches;
+          const fT = franjas.filter(f => !(f === 'noche' && sinN));
+          const tcT = {};
+          for (const f of FR) { const c = cRed.turnos && cRed.turnos[f]; if (c && idx.has(c) && turnosMap.get(c).franja === f) tcT[f] = c; }
+          const prT = {};
+          for (const f of FR) prT[f] = pref[f] && fT.includes(f) ? (tcT[f] || pref[f]) : null;
+          tramo = { d0, d1, contrato: cRed.id, contratoNombre: cRed.nombre, horasSemana: Number(cRed.horasSemana) || 35, franjas: fT, turnoContrato: tcT, pref: prT, desde: red.desde, hasta: red.hasta || '' };
+        }
+      }
       // Días de alta: fuera de ellos, la persona no está (y su jornada anual se prorratea).
       // Refuerzos: el grupo puede tener fechas (p. ej. sustituciones de verano); manda la más restrictiva.
       const alta = [esp.alta, g.desde].filter(Boolean).sort().pop() || '';
@@ -219,11 +264,13 @@ export function generar(cfgEntrada, opciones = {}) {
       const dFinB = baja ? dias.findIndex(x => x.fecha > baja) : -1;
       const desde = dIni < 0 ? D : dIni, hasta = dFinB < 0 ? D : dFinB;
       const activos = Math.max(0, hasta - desde);
+      // Días de alta con la jornada de cada día (la reducción temporal cuenta con sus horas).
+      const diasJornada = tramo ? activos - Math.max(0, Math.min(hasta, tramo.d1) - Math.max(desde, tramo.d0)) * (1 - tramo.horasSemana / horasSemana) : activos;
       personas.push({
         id, grupo: g.id, grupoNombre: g.nombre, colectivo: COL.includes(g.colectivo) ? g.colectivo : 'TA',
         orden: i, desfase: esp.semanaInicio ? (esp.semanaInicio - 1) % semanas : i % semanas, flexible: g.flexible !== false,
         // Jornada reducida: la anual en proporción a las horas semanales (35 h = jornada completa) y a los días de alta.
-        objetivo: Math.round(base * horasSemana / 35 * (activos / D) * 10) / 10, soloLaborables: !!g.soloLaborables,
+        objetivo: Math.round(base * horasSemana / 35 * (diasJornada / D) * 10) / 10, soloLaborables: !!g.soloLaborables, tramo,
         pref: prefP,
         nombre: real ? real.nombre : '', turnoActual: real ? real.turnoActual || '' : '', exentoNoches, horasSemana,
         contrato: contrato ? contrato.id : '', contratoNombre: contrato ? contrato.nombre : '', franjas, turnoContrato,
@@ -233,10 +280,15 @@ export function generar(cfgEntrada, opciones = {}) {
         // Noches que puede hacer por encima de las de oficio (cesión): «todos», o «voluntaria» si lo ha aceptado.
         extraNoches: maxNoches == null || exentoNoches ? 0 : (cesion.modo === 'todos' || (cesion.modo === 'voluntaria' && esp.cedeNoches))
           ? Math.max(0, Number(cesion.tope) - maxNoches) : 0,
-        especial: !!(contrato && contrato.id !== 'completa') || esp.franjas.length > 0 || esp.sinFindes || esp.diasLibres.length > 0 || desde > 0 || hasta < D || esp.semanaInicio > 0,
+        especial: !!(contrato && contrato.id !== 'completa') || !!tramo || esp.franjas.length > 0 || esp.sinFindes || esp.diasLibres.length > 0 || desde > 0 || hasta < D || esp.semanaInicio > 0,
       });
     }
   }
+  // Franjas, turno del contrato y turno preferido de una persona un día (con la reducción temporal, si la tiene).
+  const enTramo = (p, d) => p.tramo && d >= p.tramo.d0 && d < p.tramo.d1;
+  const franjasDe = (p, d) => (enTramo(p, d) ? p.tramo.franjas : p.franjas);
+  const contratoDe = (p, d) => (enTramo(p, d) ? p.tramo.turnoContrato : p.turnoContrato);
+  const prefDe = (pi, d, f) => { const p = personas[pi], c = (enTramo(p, d) ? p.tramo.pref : p.pref)[f]; return c == null ? null : idx.get(c); };
   // Días en que una persona puede trabajar: de alta, sin fin de semana si lo tiene libre y fuera de sus días libres fijos.
   function permitidoDia(p, d) {
     if (d < p.desde || d >= p.hasta) return false;
@@ -248,6 +300,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const grid = new Int16Array(P * D);
   const origen = new Uint8Array(P * D);
   const horas = new Float64Array(P), noches = new Int16Array(P), fines = new Int16Array(P);
+  const entradaCuenta = new Int16Array(P * NE), nEntradas = new Int16Array(P);
   const finSem = new Uint8Array(P * W);
   const cob = COL.map(() => FR.map(() => new Int32Array(D)));
   const colIdx = personas.map(p => COL.indexOf(p.colectivo));
@@ -257,14 +310,14 @@ export function generar(cfgEntrada, opciones = {}) {
     const patron = patrones.get(p.grupo);
     const semanas = patron.length / 7;
     for (let d = 0; d < D; d++) {
-      const w = (dias[d].semana + p.desfase) % semanas;
+      const w = (((dias[d].semana + semanaCiclo0 + p.desfase) % semanas) + semanas) % semanas;
       // Los grupos de lunes a viernes (C, partido, línea 900) no trabajan los festivos.
       let codigo = p.soloLaborables && dias[d].festivo ? 'L' : patron[w * 7 + dias[d].dow];
       const f = turnosMap.get(codigo).franja;
       // Exención de noches y casos especiales: lo que la persona no hace pasa a libre (el ajuste lo cubre con otras).
-      if (!permitidoDia(p, d) || (f !== 'libre' && !p.franjas.includes(f))) codigo = 'L';
+      if (!permitidoDia(p, d) || (f !== 'libre' && !franjasDe(p, d).includes(f))) codigo = 'L';
       // Contrato: el turno del patrón se cambia por el del contrato (p. ej. RM1 → MR5 en una reducida de 25 h).
-      else if (p.turnoContrato[f]) codigo = p.turnoContrato[f];
+      else if (contratoDe(p, d)[f]) codigo = contratoDe(p, d)[f];
       grid[pi * D + d] = idx.get(codigo);
     }
   });
@@ -359,6 +412,7 @@ export function generar(cfgEntrada, opciones = {}) {
     if (!t.trabaja) return;
     horas[pi] += s * t.horas;
     if (t.franja === 'noche') noches[pi] += s;
+    { const k = pi * NE + entradaIdx[ti], antes = entradaCuenta[k]; entradaCuenta[k] += s; if (antes === 0 && s > 0) nEntradas[pi]++; else if (antes === 1 && s < 0) nEntradas[pi]--; }
     cob[colIdx[pi]][franjaIdx[ti]][d] += s;
     if (dias[d].finde) {
       const k = pi * W + dias[d].semana;
@@ -387,6 +441,17 @@ export function generar(cfgEntrada, opciones = {}) {
     const c = COL.indexOf(m.colectivo), f = FR.indexOf(m.franja);
     if (c < 0 || f < 0) continue;
     for (const d of dias) tablaDia[c][f][d.i] = Math.max(tablaDia[c][f][d.i], minimoDia(m, d));
+  }
+  // Mínimos de un día concreto (p. ej. un teleasistente más en Nochebuena y Nochevieja): «suma» al del día o lo «fija».
+  // fecha: 'MM-DD' (todos los años) o 'AAAA-MM-DD'.
+  for (const m of Array.isArray(cfg.minimosFecha) ? cfg.minimosFecha : []) {
+    const c = COL.indexOf(m && m.colectivo), f = FR.indexOf(m && m.franja);
+    if (c < 0 || f < 0 || m.activo === false) continue;
+    const fecha = /^\d{2}-\d{2}$/.test(m.fecha || '') ? `${anio}-${m.fecha}` : m.fecha;
+    const d = posDia.get(fecha);
+    if (d == null) continue;
+    const v = Math.floor(Number(m.valor) || 0);
+    tablaDia[c][f][d] = m.modo === 'fija' ? Math.max(0, v) : Math.max(0, tablaDia[c][f][d] + v);
   }
   // «real»: el mínimo (y, en supervisión, la ratio). «necesidad»: lo que se planifica = mínimo + margen para imprevistos.
   // Los huecos se miden frente al mínimo real; el margen solo hace que el ajuste ponga gente de más si puede.
@@ -418,8 +483,19 @@ export function generar(cfgEntrada, opciones = {}) {
     const nuevo = T[ti], viejo = T[grid[pi * D + d]];
     if (!nuevo.trabaja) return true;
     if (personas[pi].soloLaborables && dias[d].tipo !== 'laborable') return false;
-    if (!permitidoDia(personas[pi], d) || !personas[pi].franjas.includes(nuevo.franja)) return false;
-    if (personas[pi].turnoContrato[nuevo.franja] && personas[pi].turnoContrato[nuevo.franja] !== nuevo.codigo) return false;
+    if (!permitidoDia(personas[pi], d) || !franjasDe(personas[pi], d).includes(nuevo.franja)) return false;
+    { const tc = contratoDe(personas[pi], d)[nuevo.franja]; if (tc && tc !== nuevo.codigo) return false; }
+    // Máximo de horas de entrada distintas en el año.
+    if (maxEntradas != null && entradaCuenta[pi * NE + entradaIdx[ti]] === 0) {
+      const sale = viejo.trabaja && entradaCuenta[pi * NE + entradaIdx[grid[pi * D + d]]] === 1 ? 1 : 0;
+      if (nEntradas[pi] - sale + 1 > maxEntradas) return false;
+    }
+    // Fin de semana completo: no se trabaja solo el sábado o solo el domingo (salvo que el otro día no esté disponible:
+    // vacaciones, baja, AJ…).
+    if (finCompleto && !personas[pi].exentoFines && dias[d].finde && !viejo.trabaja && finSem[pi * W + dias[d].semana] === 0) {
+      const o = dias[d].dow === 5 ? d + 1 : d - 1;
+      if (o >= 0 && o < D && T[grid[pi * D + o]].disponible !== false) return false;
+    }
     if (descanso != null) {
       if (d > 0) { const a = T[grid[pi * D + d - 1]]; if (a.trabaja && nuevo.ini + 1440 - a.fm < descanso * 60) return false; }
       if (d < D - 1) { const b = T[grid[pi * D + d + 1]]; if (b.trabaja && b.ini + 1440 - nuevo.fm < descanso * 60) return false; }
@@ -494,8 +570,10 @@ export function generar(cfgEntrada, opciones = {}) {
     for (let x = a; x <= b; x++) {
       if (trabajaEn(pi, x)) {
         const tx = T[grid[pi * D + x]], p = personas[pi];
-        if (!permitidoDia(p, x) || !p.franjas.includes(tx.franja) || (p.turnoContrato[tx.franja] && p.turnoContrato[tx.franja] !== tx.codigo)) return false;
+        if (!permitidoDia(p, x) || !franjasDe(p, x).includes(tx.franja) || (contratoDe(p, x)[tx.franja] && contratoDe(p, x)[tx.franja] !== tx.codigo)) return false;
+        if (finCompleto && !p.exentoFines && dias[x].finde && medioFinde(pi, x)) return false;
       }
+      if (finCompleto && !personas[pi].exentoFines && dias[x].finde && !trabajaEn(pi, x) && medioFinde(pi, x)) return false;
       if (maxSeguidos != null && trabajaEn(pi, x) && racha(x, y => trabajaEn(pi, y)) > maxSeguidos) return false;
       if (maxNochesSeguidas != null && esNoche(pi, x) && racha(x, y => esNoche(pi, y)) > maxNochesSeguidas) return false;
       // Un bloque de noches que empieza en x necesita los días de descanso del bloque anterior ya cumplidos.
@@ -513,7 +591,15 @@ export function generar(cfgEntrada, opciones = {}) {
     }
     if (maxNoches != null && noches[pi] > topeNoches(pi)) return false;
     if (maxFines != null && !personas[pi].exentoFines && fines[pi] > maxFines) return false;
+    if (maxEntradas != null && nEntradas[pi] > maxEntradas) return false;
     return true;
+  };
+  // Medio fin de semana: un día del fin de semana trabajado y el otro libre y disponible (no vacaciones, baja, AJ…).
+  const medioFinde = (pi, x) => {
+    const sab = dias[x].dow === 5 ? x : x - 1, dom = sab + 1;
+    if (sab < 0 || dom >= D) return false;
+    const a = T[grid[pi * D + sab]], b = T[grid[pi * D + dom]];
+    return (a.trabaja && !b.trabaja && b.disponible !== false) || (b.trabaja && !a.trabaja && a.disponible !== false);
   };
   const libre = (pi, d) => {
     const t = T[grid[pi * D + d]];
@@ -537,6 +623,7 @@ export function generar(cfgEntrada, opciones = {}) {
           if (horas[pi] - t.horas < p.objetivo + (bolsaCfg.modo === 'acumular' ? Number(bolsaCfg.tope) || 0 : 0)) continue;
           const f = franjaIdx[ti];
           if (bloques && f === 2) continue; // las noches van en bloque: no se quita una suelta
+          if (finCompleto && dias[d].finde && !p.exentoFines) { const o = dias[d].dow === 5 ? d + 1 : d - 1; if (o >= 0 && o < D && T[grid[pi * D + o]].trabaja) continue; }
           const sobra = cob[c][f][d] - necesidad[c][f][d];
           if (sobra < 1) continue;
           const nota = (dias[d].festivo ? 1000 : 0) + (dias[d].finde ? 500 : 0) + sobra / Math.max(1, necesidad[c][f][d]) * 100;
@@ -704,7 +791,7 @@ export function generar(cfgEntrada, opciones = {}) {
           if (g < 0 || g === f || !movible(pi, d)) continue;
           if (bloques && g === 2) continue; // una noche no se mueve: rompería su bloque
           if (cob[c][g][d] - 1 < necesidad[c][g][d]) continue;
-          const ti = personas[pi].pref[FR[f]] == null ? null : idx.get(personas[pi].pref[FR[f]]);
+          const ti = prefDe(pi, d, FR[f]);
           if (ti == null) continue;
           const nota = horas[pi] / personas[pi].objetivo + (f === 2 ? noches[pi] / 14 : 0);
           if (nota >= mejorNota) continue;
@@ -716,7 +803,7 @@ export function generar(cfgEntrada, opciones = {}) {
           // b) llamar a alguien que libra ese día
           for (const pi of porColectivo[c]) {
             if (!libre(pi, d)) continue;
-            const ti = personas[pi].pref[FR[f]] == null ? null : idx.get(personas[pi].pref[FR[f]]);
+            const ti = prefDe(pi, d, FR[f]);
             if (ti == null) continue;
             const nota = horas[pi] / personas[pi].objetivo + (f === 2 ? noches[pi] / 14 : 0) + (dias[d].finde ? fines[pi] / 17 : 0);
             if (nota >= mejorNota) continue;
@@ -741,7 +828,7 @@ export function generar(cfgEntrada, opciones = {}) {
           if (!libre(pi, d)) continue;
           for (let f = 0; f < FR.length; f++) {
             if (bloques && f === 2) continue; // no se añaden noches sueltas
-            const ti = personas[pi].pref[FR[f]] == null ? null : idx.get(personas[pi].pref[FR[f]]);
+            const ti = prefDe(pi, d, FR[f]);
             if (ti == null) continue;
             const nota = (cob[c][f][d] + 1) / Math.max(1, necesidad[c][f][d]);
             if (nota >= mejorNota || !puede(pi, d, ti)) continue;
@@ -753,6 +840,44 @@ export function generar(cfgEntrada, opciones = {}) {
       }
     }
   };
+
+  // Días AJ (permiso retribuido del 24 y el 31 de diciembre, convenio art. 36.3): cada persona libra esos días y le
+  // cuentan como jornada (las horas del turno que no hace). Modos (cfg.aj.modo):
+  //   «fijo»: el 24 y el 31 a quien trabaja de día esas fechas, mientras sobre gente en su franja (servicio 24 h: si
+  //           libran todos, el día se queda vacío); a los demás, otro día de su turno entre «desde» y «hasta».
+  //   «reparto»: entre «desde» y «hasta», donde más gente sobre (práctica de la empresa: del 20 al 31 de diciembre).
+  //   «elegido»: en las fechas que elige cada persona (cfg.aj.elegidos[código]), aunque falte gente (el ajuste cubre
+  //              el hueco); si no ha elegido, como «fijo».
+  // Las noches no se tocan (van en bloque): quien hace noche el 24 o el 31 tiene su AJ otro día.
+  const AJ = { activo: false, modo: 'fijo', fechas: ['12-24', '12-31'], desde: '12-20', hasta: '12-31', enJornada: true, elegidos: {}, ...(cfg.aj || {}) };
+  if (AJ.activo && (AJ.fechas || []).length) {
+    const iAJ = idx.get('AJ'), enAnio = (x) => posDia.get(/^\d{2}-\d{2}$/.test(x || '') ? `${anio}-${x}` : x);
+    const d0 = enAnio(AJ.desde) ?? Math.max(0, D - 12), d1 = enAnio(AJ.hasta) ?? D - 1;
+    const fijas = AJ.fechas.map(enAnio).filter(d => d != null), n = AJ.fechas.length;
+    personas.forEach((p, pi) => {
+      const apto = (d) => d >= p.desde && d < p.hasta && origen[pi * D + d] === ORIGEN.CICLO && T[grid[pi * D + d]].trabaja && franjaIdx[grid[pi * D + d]] !== 2;
+      const sobra = (d) => { const f = franjaIdx[grid[pi * D + d]]; return cob[colIdx[pi]][f][d] - necesidad[colIdx[pi]][f][d]; };
+      let quiere = AJ.modo === 'reparto' ? [] : fijas, siempre = false;
+      const elegidos = AJ.modo === 'elegido' ? (AJ.elegidos || {})[p.id] : null;
+      const listaE = (Array.isArray(elegidos) ? elegidos : elegidos && typeof elegidos === 'object' ? Object.values(elegidos) : []).filter(Boolean);
+      if (listaE.length) { quiere = listaE.map(enAnio).filter(d => d != null); siempre = true; }
+      const puestos = [];
+      let horasAJ = 0;
+      const pon = (d) => { horasAJ += T[grid[pi * D + d]].horas; poner(pi, d, iAJ, ORIGEN.VACACIONES); puestos.push(d); };
+      for (const d of quiere) if (puestos.length < n && apto(d) && (siempre || sobra(d) >= 1)) pon(d);
+      // El resto, en la ventana donde más gente sobre; si en la ventana solo tiene noches o libres, antes en diciembre.
+      const dic = posDia.get(`${anio}-12-01`) ?? d0;
+      for (const [a, b] of [[d0, d1], [Math.min(dic, d0), d1]]) while (puestos.length < n) {
+        let mejor = -1, nota = -Infinity;
+        for (let d = a; d <= b; d++) { if (!apto(d)) continue; const x = sobra(d); if (x > nota) { nota = x; mejor = d; } }
+        if (mejor < 0) break;
+        pon(mejor);
+      }
+      p.diasAJ = puestos.sort((a, b) => a - b).map(d => dias[d].fecha); p.ajFaltan = n - puestos.length;
+      p.ajEnFecha = puestos.filter(d => quiere.includes(d)).length; p.ajQuiere = quiere.map(d => dias[d].fecha);
+      if (AJ.enJornada) { p.horasAJ = Math.round(horasAJ * 10) / 10; p.objetivo = Math.round((p.objetivo - horasAJ) * 10) / 10; }
+    });
+  }
 
   if (ajusteActivo) {
     // Las noches cedidas (por encima de las de oficio) solo se usan cuando con las de oficio no se llega.
@@ -771,11 +896,19 @@ export function generar(cfgEntrada, opciones = {}) {
   // cfg.mejora.intercambios: [{ a, b, d, n }] (códigos de persona, primer día y número de días). Se aplican en orden;
   // los que ya no valen (porque ha cambiado otra cosa) se saltan.
   const mejora = { aplicados: [], saltados: 0, buscados: 0, coste0: 0, coste: 0 };
-  const festivoTrab = new Int16Array(P), domingoTrab = new Int16Array(P);
+  const festivoTrab = new Int16Array(P), domingoTrab = new Int16Array(P), especialTrab = new Float64Array(P);
+  const historialEsp = (pi) => Number((RF.historial || {})[personas[pi].id]) || 0;
   const recontarEquidad = (pi) => {
-    let f = 0, dm = 0;
-    for (let d = 0; d < D; d++) if (T[grid[pi * D + d]].trabaja) { if (dias[d].festivo) f++; if (dias[d].dow === 6) dm++; }
-    festivoTrab[pi] = f; domingoTrab[pi] = dm;
+    let f = 0, dm = 0, e = 0;
+    for (let d = 0; d < D; d++) {
+      const t = T[grid[pi * D + d]];
+      if (!t.trabaja) continue;
+      const x = cuentaEn(d, t);
+      if (x.festivo) f++;
+      if (especiales.has(x.fecha.slice(5))) e++;
+      if (dias[d].dow === 6) dm++;
+    }
+    festivoTrab[pi] = f; domingoTrab[pi] = dm; especialTrab[pi] = e + historialEsp(pi);
   };
   for (let pi = 0; pi < P; pi++) recontarEquidad(pi);
   const movibleSemana = (pi, d0, n) => {
@@ -797,8 +930,8 @@ export function generar(cfgEntrada, opciones = {}) {
     for (let d = a; d <= b; d++) {
       const x = t(d);
       if (!x.trabaja) continue;
-      if (!permitidoDia(p, d) || !p.franjas.includes(x.franja)) return false;
-      if (p.turnoContrato[x.franja] && p.turnoContrato[x.franja] !== x.codigo) return false;
+      if (!permitidoDia(p, d) || !franjasDe(p, d).includes(x.franja)) return false;
+      if (contratoDe(p, d)[x.franja] && contratoDe(p, d)[x.franja] !== x.codigo) return false;
     }
     for (let d = Math.max(0, a - 10); d <= Math.min(D - 1, b + 1); d++) {
       if (!esNoche(pi, d)) continue;
@@ -837,6 +970,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const probarIntercambio = (pa, pb, d0, n) => {
     if (pa === pb || pa < 0 || pb < 0 || d0 < 0 || d0 + n > D) return false;
     if (personas[pa].grupo !== personas[pb].grupo || personas[pa].horasSemana !== personas[pb].horasSemana) return false;
+    if (personas[pa].tramo || personas[pb].tramo) return false;   // con reducción temporal, sus semanas no se cambian
     if (!movibleSemana(pa, d0, n) || !movibleSemana(pb, d0, n) || iguales(pa, pb, d0, n)) return false;
     if (Math.abs(horasTramo(pa, d0, n) - horasTramo(pb, d0, n)) > 1e-9) return false;
     const origA = origen.slice(pa * D + d0, pa * D + d0 + n), origB = origen.slice(pb * D + d0, pb * D + d0 + n);
@@ -856,9 +990,11 @@ export function generar(cfgEntrada, opciones = {}) {
   const porGrupo = new Map();
   personas.forEach((p, pi) => { if (!porGrupo.has(p.grupo)) porGrupo.set(p.grupo, []); porGrupo.get(p.grupo).push(pi); });
   const medias = new Map();
-  for (const [g, lista] of porGrupo) medias.set(g, [fines, festivoTrab, domingoTrab].map(v => lista.reduce((s, pi) => s + v[pi], 0) / lista.length));
-  const PESOS = [1, 1, 0.5];
-  const costePersona = (pi) => { const m = medias.get(personas[pi].grupo); return PESOS[0] * (fines[pi] - m[0]) ** 2 + PESOS[1] * (festivoTrab[pi] - m[1]) ** 2 + PESOS[2] * (domingoTrab[pi] - m[2]) ** 2; };
+  for (const [g, lista] of porGrupo) medias.set(g, [fines, festivoTrab, domingoTrab, especialTrab].map(v => lista.reduce((s, pi) => s + v[pi], 0) / lista.length));
+  // Festivos especiales (Nochebuena, Navidad, Nochevieja, Año Nuevo, Reyes…), sumando los de años anteriores
+  // (cfg.repartoFestivos.historial): quien los trabajó el año pasado tiende a librarlos este.
+  const PESOS = [1, 1, 0.5, 1];
+  const costePersona = (pi) => { const m = medias.get(personas[pi].grupo); return PESOS[0] * (fines[pi] - m[0]) ** 2 + PESOS[1] * (festivoTrab[pi] - m[1]) ** 2 + PESOS[2] * (domingoTrab[pi] - m[2]) ** 2 + PESOS[3] * (especialTrab[pi] - m[3]) ** 2; };
   const costeTotal = () => { let c = 0; for (let pi = 0; pi < P; pi++) c += costePersona(pi); return c; };
   mejora.coste0 = mejora.coste = costeTotal();
   // Búsqueda (solo si se pide, desde el botón «Mejorar reparto»): Late Acceptance (Burke y Bykov, 2017), con semilla
@@ -907,6 +1043,7 @@ export function generar(cfgEntrada, opciones = {}) {
   // Resultado por persona
   const filas = personas.map((p, pi) => {
     let man = 0, tar = 0, tra = 0, ajustes = 0, manuales = 0, malDescanso = 0, racha = 0, rachaMax = 0, rn = 0, rnMax = 0, sueltas = 0;
+    const festivosCuentan = [], especialesTrab = [], entradas = new Set();
     for (let d = 0; d < D; d++) {
       const k = pi * D + d, t = T[grid[k]];
       if (origen[k] === ORIGEN.CUBRE || origen[k] === ORIGEN.RECORTE) ajustes++;
@@ -914,6 +1051,10 @@ export function generar(cfgEntrada, opciones = {}) {
       if (t.franja === 'noche') { rn++; rnMax = Math.max(rnMax, rn); }
       else { if (rn === 1) sueltas++; rn = 0; }
       if (t.trabaja) {
+        const x = cuentaEn(d, t);
+        if (x.festivo) festivosCuentan.push({ fecha: x.fecha, festivo: x.festivo, d, codigo: t.codigo });
+        if (especiales.has(x.fecha.slice(5))) especialesTrab.push(x.fecha);
+        entradas.add(t.inicio);
         tra++; racha++; rachaMax = Math.max(rachaMax, racha);
         if (t.franja === 'manana') man++; else if (t.franja === 'tarde') tar++;
         if (descanso != null && d > 0) { const a = T[grid[k - 1]]; if (a.trabaja && t.ini + 1440 - a.fm < descanso * 60) malDescanso++; }
@@ -930,12 +1071,13 @@ export function generar(cfgEntrada, opciones = {}) {
     if (malDescanso) alertas.push(`${malDescanso} cambios de turno sin ${descanso} h de descanso`);
     if (maxSeguidos != null && rachaMax > maxSeguidos) alertas.push(`${rachaMax} días seguidos (tope ${maxSeguidos})`);
     if (maxNochesSeguidas != null && rnMax > maxNochesSeguidas) alertas.push(`${rnMax} noches seguidas (tope ${maxNochesSeguidas})`);
+    if (maxEntradas != null && entradas.size > maxEntradas) alertas.push(`${entradas.size} horas de entrada distintas (tope ${maxEntradas})`);
     // Bolsa de horas: saldo de partida + lo que queda a su favor en el cuadrante − lo que ya ha cogido (solicitudes).
     const inicial = Number((bolsaCfg.inicial || {})[p.id]) || 0, consumida = Number((bolsaCfg.consumida || {})[p.id]) || 0;
     let devueltas = 0; for (let d = 0; d < D; d++) if (grid[pi * D + d] === iD) devueltas++;
     const aFavor = Math.max(0, horas[pi] - p.objetivo);
     const bolsa = { inicial, aFavor: Math.round(aFavor * 10) / 10, consumida, saldo: Math.round((inicial + aFavor - consumida) * 10) / 10, diasDevueltos: devueltas };
-    return { ...p, pi, topeNoches: maxNoches == null ? null : topeNoches(pi), nochesCedidas: maxNoches == null ? 0 : Math.max(0, noches[pi] - maxNoches), bolsa, nochesSueltas: sueltas, horas: horas[pi], noches: noches[pi], fines: fines[pi], mananas: man, tardes: tar, trabajados: tra, ajustes, manuales, diferencia: horas[pi] - p.objetivo, alertas };
+    return { ...p, pi, festivosCuentan, especialesTrab, historialEspeciales: Number((RF.historial || {})[p.id]) || 0, horasEntrada: [...entradas].sort(), topeNoches: maxNoches == null ? null : topeNoches(pi), nochesCedidas: maxNoches == null ? 0 : Math.max(0, noches[pi] - maxNoches), bolsa, nochesSueltas: sueltas, horas: horas[pi], noches: noches[pi], fines: fines[pi], mananas: man, tardes: tar, trabajados: tra, ajustes, manuales, diferencia: horas[pi] - p.objetivo, alertas };
   });
 
   const huecos = [];
@@ -949,7 +1091,7 @@ export function generar(cfgEntrada, opciones = {}) {
   return {
     dias, personas: filas, turnos: T, turnosMap, idx, grid, origen, D, P,
     cobertura: cob, necesidad: real, necesidadPlan: necesidad, aguante, margen, cesion, bolsa: bolsaCfg, colectivos: COL, franjas: FR, huecos, stats, vacaciones, mejora,
-    patrones, ms: Date.now() - t0,
+    patrones, ms: Date.now() - t0, semanaCiclo0, repartoFestivos: RF, aj: AJ,
     codigo: (pi, d) => T[grid[pi * D + d]].codigo,
   };
 }
