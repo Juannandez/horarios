@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-24T13:50:27.579Z",
- "nota": "Sevilla: título",
+ "guardado": "2026-11-24T13:51:14.268Z",
+ "nota": "Sevilla: contratos",
  "config": {
   "version": 2,
   "tema": "day",
@@ -940,8 +940,19 @@
       "horasSemana": 35,
       "sinNoches": false,
       "turnos": {
-       "manana": "",
-       "tarde": "",
+       "manana": "RM1",
+       "tarde": "RT1",
+       "noche": ""
+      }
+     },
+     {
+      "id": "c1",
+      "nombre": "Fijos discontinuos",
+      "horasSemana": 35,
+      "sinNoches": false,
+      "turnos": {
+       "manana": "RM1",
+       "tarde": "RT1",
        "noche": ""
       }
      }
