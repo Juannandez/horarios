@@ -1,7 +1,8 @@
 // Vista Parámetros: todo lo que define el cuadrante, en listas donde se añade y se quita.
 import { estado, esc, $, $$, DIAS_CORTOS, MESES, fmtNum, estiloTurno, confirmar, modal, cambiado, leerRuta, ponerRuta, nuevoId, tinta, sedeBase, clonar, avisar, pedirFestivos } from './nucleo.js';
 import { estimarPatron, prepararTurno, resolverPatron, aplicarSolapes, fmtH } from './motor.js';
-import { COLECTIVOS, FRANJAS, FRANJA_NOMBRE, REGLAS_CATALOGO, TIPOS_FUENTE, nivelRegla } from './datos-base.js';
+import { COLECTIVOS, FRANJAS, FRANJA_NOMBRE, REGLAS_CATALOGO, TIPOS_FUENTE, nivelRegla, ROTATORIOS } from './datos-base.js';
+import { aplicarRotatorio } from './escenarios-plantilla.js';
 import { NIVELES } from './puntuacion.js';
 import { turnosAMedida, casoEspecial } from './contratos.js';
 import { fechaLocal, diaSemana } from './festivos.js';
@@ -170,6 +171,9 @@ function editorPatron(g, gi, cfg, turnosMap) {
   const origen = `<div class="campos">${campo('Patrón', `<select data-ruta="grupos.${gi}.patronDe" data-estructura="1">
       <option value="">Propio de este grupo</option>${otros.map(o => `<option value="${esc(o.id)}" ${g.patronDe === o.id ? 'selected' : ''}>El mismo que «${esc(o.nombre)}»</option>`).join('')}</select>`)}</div>`;
   if (g.patronDe) return origen + resumen;
+  const rotatorios = g.colectivo === 'TA' && !g.desde && !g.hasta && !g.soloLaborables ? `<div class="herramientas"><div class="grupo"><label for="rot-${gi}">Poner un rotatorio de ejemplo</label>
+    <select id="rot-${gi}">${ROTATORIOS.map(r => `<option value="${r.id}">${esc(r.nombre)}</option>`).join('')}</select>
+    <button type="button" class="btn mini" data-accion="aplicar-rotatorio" data-g="${gi}">Poner</button></div></div>` : '';
   const semanas = patron.length / 7;
   const opciones = cfg.turnos.map(t => t.codigo);
   const filas = Array.from({ length: semanas }, (_, w) => `<tr><th scope="row" class="tenue">S${w + 1}</th>${DIAS_CORTOS.map((_, d) => {
@@ -177,7 +181,7 @@ function editorPatron(g, gi, cfg, turnosMap) {
     return `<td><select data-patron="${gi}" data-pos="${w * 7 + d}" style="${estiloTurno(t)}" aria-label="Semana ${w + 1}, ${DIAS_CORTOS[d]}">${opciones.map(o => `<option ${o === c ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></td>`;
   }).join('')}<td><button type="button" class="btn mini" data-accion="semana-duplicar" data-g="${gi}" data-w="${w}" title="Duplica la semana ${w + 1}">Duplicar</button>
     <button type="button" class="btn mini peligro" data-accion="semana-quitar" data-g="${gi}" data-w="${w}" ${semanas <= 1 ? 'disabled' : ''}>Quitar</button></td></tr>`).join('');
-  return `${origen}<div class="patron"><table><thead><tr><th></th>${DIAS_CORTOS.map(d => `<th scope="col">${d}</th>`).join('')}<th></th></tr></thead><tbody>${filas}</tbody></table></div>
+  return `${origen}${rotatorios}<div class="patron"><table><thead><tr><th></th>${DIAS_CORTOS.map(d => `<th scope="col">${d}</th>`).join('')}<th></th></tr></thead><tbody>${filas}</tbody></table></div>
     <div class="fila-acciones"><button type="button" class="btn mini" data-accion="semana-anadir" data-g="${gi}">Añadir semana libre</button></div>${resumen}`;
 }
 
@@ -730,6 +734,13 @@ export function eventosParametros(raiz, repintar) {
       if (!id) return;
       cfg.especiales[id] = { contrato: '', franjas: '', sinFindes: false, diasLibres: [], alta: '', baja: '', semanaInicio: 0 };
       cambiado({ inmediato: true }); return repintar();
+    }
+    if (a === 'aplicar-rotatorio') {
+      const id = $(`#rot-${b.dataset.g}`, raiz).value, rot = ROTATORIOS.find(r => r.id === id);
+      if (!(await confirmar(`¿Poner «${esc(rot.nombre)}»?`, 'Sustituye el patrón de semanas del grupo (los cambios hechos a mano en el patrón se pierden; Ctrl+Z lo deshace). Pone también «una semana de tarde cada N» y «un fin de semana de cada 3».', 'Poner'))) return;
+      aplicarRotatorio(cfg, id);
+      cambiado({ inmediato: true }); repintar();
+      return avisar(`Rotatorio «${esc(rot.nombre)}» puesto.`, 'bien');
     }
     if (a === 'aj-anadir') {
       const id = $('#aj-nueva', raiz) && $('#aj-nueva', raiz).value;

@@ -3,7 +3,8 @@
 // Dirección: #nuevo/<paso>.
 import { estado, esc, fmtNum, cambiado, avisar, ponerSede, confirmar, clonar, nombresPrueba, ponerNombresPrueba } from './nucleo.js';
 import { seccionContratos, seccionReglas, seccionMinimos, seccionCobertura } from './vista-parametros.js';
-import { CONJUNTOS_REGLAS } from './datos-base.js';
+import { CONJUNTOS_REGLAS, ROTATORIOS } from './datos-base.js';
+import { aplicarRotatorio } from './escenarios-plantilla.js';
 import { infracciones, puntuacion } from './puntuacion.js';
 import { equidad } from './equidad.js';
 import { mejorarReparto } from './mejorar.js';
@@ -53,7 +54,12 @@ function pasoPersonas(cfg) {
 }
 
 function pasoReglas(cfg) {
-  return `<section class="panel"><h2>Punto de partida</h2>
+  const g = cfg.grupos.find(x => x.colectivo === 'TA' && !x.patronDe && !x.desde && !x.hasta && !x.soloLaborables);
+  return `<section class="panel"><h2>Rotatorio</h2>
+    <p class="tenue">El patrón de semanas que repite cada persona${g ? ` (grupo «${esc(g.nombre)}»; supervisión y refuerzos lo siguen)` : ''}. Al elegir uno se ponen también las reglas «una semana de tarde cada N» y «un fin de semana de cada 3». Luego se puede retocar semana a semana en Parámetros › Grupos y patrones.</p>
+    <div class="apariencias">${ROTATORIOS.map(r => `<div class="apariencia" style="flex-direction:column"><b>${esc(r.nombre)}</b><small>${esc(r.texto)}</small>
+      <button type="button" class="btn mini" data-nv-rotatorio="${r.id}" style="margin-top:8px;align-self:flex-start">Usar este rotatorio</button></div>`).join('')}</div></section>
+  <section class="panel"><h2>Punto de partida</h2>
     <p class="tenue">Elige un conjunto de reglas para empezar (como los conjuntos por convenio de Quinyx) y ajústalo abajo.</p>
     <div class="apariencias">${CONJUNTOS_REGLAS.map(c => `<div class="apariencia" style="flex-direction:column"><b>${esc(c.nombre)}</b><small>${esc(c.texto)}</small>
       <button type="button" class="btn mini" data-nv-conjunto="${c.id}" style="margin-top:8px;align-self:flex-start">Usar este conjunto</button></div>`).join('')}</div></section>
@@ -105,6 +111,13 @@ export function eventosNuevo(raiz, repintar) {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.nvIr) { location.hash = `#nuevo/${b.dataset.nvIr}`; return; }
     if (b.dataset.nvSede) { ponerSede(b.dataset.nvSede); return repintar(); }
+    if (b.dataset.nvRotatorio) {
+      try {
+        const { grupo } = aplicarRotatorio(estado.cfg, b.dataset.nvRotatorio);
+        cambiado({ inmediato: true }); repintar();
+        return avisar(`Rotatorio «${esc(ROTATORIOS.find(r => r.id === b.dataset.nvRotatorio).nombre)}» puesto en «${esc(grupo.nombre)}». Mira cómo queda en «Generar y revisar».`, 'bien');
+      } catch (e) { return avisar(esc(e.message), 'mal'); }
+    }
     if (b.dataset.nvConjunto) {
       const c = CONJUNTOS_REGLAS.find(x => x.id === b.dataset.nvConjunto);
       if (!(await confirmar(`¿Usar «${c.nombre}»?`, 'Sustituye las reglas de esta sede por las del conjunto. Se puede deshacer con Ctrl+Z.', 'Usar'))) return;

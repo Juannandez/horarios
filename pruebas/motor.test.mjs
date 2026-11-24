@@ -488,3 +488,24 @@ import { minimosConsultora } from '../js/escenarios-plantilla.js';
   assert.ok(ana(r9, i9, s9).comprobaciones.find(x => x.id === 'horas').fechas.some(f => /Reducción temporal/.test(f)));
   console.log(`OK bloque A: AJ (${en24} el 24), +1 de noche el 24 y el 31, festivo de noche para quien sale, fin de semana completo, horas de entrada, ciclo continuo (2028 en la semana 53), reducción temporal (${obj} h), turno partido`);
 }
+
+// ── Rotatorio 3 + 1 (3 semanas de mañana y 1 de tarde, un fin de semana de cada 3) ──
+{
+  const { aplicarRotatorio } = await import('../js/escenarios-plantilla.js');
+  const { infracciones: inf, puntuacion: pun } = await import('../js/puntuacion.js');
+  for (const s0 of CONFIG_BASE.sedes) {
+    const s = structuredClone(s0);
+    aplicarRotatorio(s, '3m1t');
+    const p = s.grupos.find(g => g.id === 'ta').patron, sem = p.length / 7;
+    const franja = new Map(s.turnos.map(t => [t.codigo, t.franja]));
+    const tipo = Array.from({ length: sem }, (_, w) => { const n = { manana: 0, tarde: 0, noche: 0 }; for (let d = 0; d < 7; d++) { const f = franja.get(p[w * 7 + d]); if (n[f] != null) n[f]++; } return n.noche ? 'N' : n.manana > n.tarde ? 'M' : n.tarde ? 'T' : '-'; });
+    assert.equal(tipo.filter(x => x === 'M').length, 17); assert.equal(tipo.filter(x => x === 'T').length, 6);
+    const findes = Array.from({ length: sem }, (_, w) => w).filter(w => franja.get(p[w * 7 + 5]) !== 'libre' || franja.get(p[w * 7 + 6]) !== 'libre');
+    assert.deepEqual(findes, [2, 5, 8, 11, 14, 17, 20, 23, 26], 'un fin de semana de cada 3');
+    assert.equal(s.reglas.tardeCada.valor, 4); assert.equal(s.reglas.minFinesLibresEntre.valor, 2);
+    const r = generar(s), pt = pun(r, s, inf(r, s));
+    assert.equal(pt.duro, 0);
+    console.log(`${s.nombre} con 3 + 1: puntuación ${pt.duro} · ${pt.medio} · ${pt.blando}`);
+  }
+  console.log('OK rotatorio 3 + 1');
+}

@@ -1,6 +1,7 @@
 // Escenarios de ejemplo que se crean con un botón en «Escenarios y versiones». No tocan el cuadrante: se añaden a la
 // lista y se abren o se comparan como cualquier otro.
 import { resolverPatron } from './motor.js';
+import { ROTATORIOS } from './datos-base.js';
 
 const copia = (o) => JSON.parse(JSON.stringify(o));
 
@@ -75,6 +76,28 @@ export function minimosConsultora(sede) {
     fila.dias = dias; fila.festivo = dias[6];
   }
   return c;
+}
+
+// Pone uno de los rotatorios de ejemplo (datos-base.js, ROTATORIOS) en el grupo de teleasistencia con patrón propio,
+// con los turnos de mañana, tarde y noche que ya use el grupo, y ajusta las reglas que lo acompañan: «una semana de
+// tarde cada N» y «2 fines de semana libres entre dos trabajados» (un fin de semana de cada 3). Cambia cfg en su sitio.
+export function aplicarRotatorio(cfg, id) {
+  const rot = ROTATORIOS.find(r => r.id === id);
+  if (!rot) throw new Error('Rotatorio desconocido.');
+  const g = cfg.grupos.find(x => x.colectivo === 'TA' && !x.patronDe && !x.desde && !x.hasta && !x.soloLaborables) || cfg.grupos.find(x => !x.patronDe);
+  if (!g) throw new Error('No hay un grupo con patrón propio.');
+  const franja = new Map(cfg.turnos.map(t => [t.codigo, t.franja]));
+  const actual = resolverPatron(g, cfg.grupos);
+  const masUsado = (f, def) => {
+    const n = new Map(); for (const x of actual) if (franja.get(x) === f) n.set(x, (n.get(x) || 0) + 1);
+    return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] || (franja.get(def) === f ? def : (cfg.turnos.find(t => t.franja === f) || {}).codigo) || def;
+  };
+  const cambio = { RM1: masUsado('manana', 'RM1'), RT1: masUsado('tarde', 'RT1'), N: masUsado('noche', 'N') };
+  g.patron = rot.patron().map(c => cambio[c] || c);
+  const R = cfg.reglas || (cfg.reglas = {});
+  R.tardeCada = { ...(R.tardeCada || { nivel: 'informe' }), activo: true, valor: rot.tardeCada };
+  R.minFinesLibresEntre = { ...(R.minFinesLibresEntre || {}), activo: true, valor: 2 };
+  return { grupo: g, turnos: cambio };
 }
 
 export const PLANTILLAS_ESCENARIO = [

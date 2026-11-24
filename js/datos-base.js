@@ -21,8 +21,18 @@ const SEMANA = {
   Mw: 'L L RM1 RM1 RM1 RM1 RM1',  Tw: 'L L RT1 RT1 RT1 RT1 RT1',
   NA: 'N N L L L L L',            NB: 'L L N N L L L',            NC: 'L L L L N N N',  OFF: 'L L L L L L L',
 };
-const ROTATORIO_COMUN = 'M4 M5 Tw  T4 M5 Mw  M4 NA Tw  T4 M5 Mw  M4 M5 NC  OFF T5 Mw  M4 M5 Tw  T4 NB Mw  T4 M5 Mw'
-  .split(/\s+/).flatMap(w => S(SEMANA[w]));
+const SEMANAS_2M1T = 'M4 M5 Tw  T4 M5 Mw  M4 NA Tw  T4 M5 Mw  M4 M5 NC  OFF T5 Mw  M4 M5 Tw  T4 NB Mw  T4 M5 Mw';
+const ROTATORIO_COMUN = SEMANAS_2M1T.split(/\s+/).flatMap(w => S(SEMANA[w]));
+// 3 semanas de mañana y 1 de tarde, con un fin de semana de cada 3 (27 semanas): 17 de mañana, 6 de tarde, 3 de
+// noche (bloques 2-2-3) y 1 de descanso tras las noches de fin de semana. Fines de semana en las semanas 3, 6, 9… 27:
+// 5 de mañana, 3 de tarde y 1 de noche (el reparto que mejor cubre los mínimos de fin de semana: probado con el motor).
+const SEMANAS_3M1T = 'M4 M5 Tw  M4 M5 Mw  T4 NA Mw  M4 M5 Mw  T4 M5 NC  OFF M5 Tw  M4 M5 Mw  T4 NB Mw  M4 M5 Tw';
+// Rotatorios de ejemplo que se aplican con un botón (Nuevo horario › Reglas y Parámetros › Grupos y patrones).
+// Usan RM1 (mañana), RT1 (tarde) y N (noche); al aplicarlos se cambian por los turnos que use el grupo.
+export const ROTATORIOS = [
+  { id: '2m1t', nombre: 'Una semana de tarde cada 3 (2 + 1)', tardeCada: 3, texto: '27 semanas: 15 de mañana, 8 de tarde y 3 de noche. Un fin de semana de cada 3 (unos 17 al año), unas 13-14 noches.', patron: () => SEMANAS_2M1T.split(/\s+/).flatMap(w => S(SEMANA[w])) },
+  { id: '3m1t', nombre: '3 semanas de mañana y 1 de tarde (3 + 1)', tardeCada: 4, texto: '27 semanas: 17 de mañana, 6 de tarde (una de cada 4 semanas de día) y 3 de noche. Un fin de semana de cada 3 (unos 17 al año), unas 13-14 noches.', patron: () => SEMANAS_3M1T.split(/\s+/).flatMap(w => S(SEMANA[w])) },
+];
 
 const VAC = () => ({ activo: true, dias: 30, desde: '06-01', hasta: '09-30' });
 
