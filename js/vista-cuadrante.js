@@ -241,7 +241,7 @@ function tablaMes(lista) {
   const pieFijo = pie.slice(0, 3).join(''), pieResto = pie.slice(3).join('');
   return `${hojaColores}<div class="tabla-caja"><table class="cuadrante">
     <caption class="oculto">Cuadrante de ${MESES[u.mesDesde].toLowerCase()}${u.mesHasta !== u.mesDesde ? ` a ${MESES[u.mesHasta].toLowerCase()}` : ''} de ${estado.cfg.anio}</caption>
-    <thead><tr><th scope="col" class="fija">Persona</th><th scope="col" class="fija2">${estado.plantilla ? 'Nombre' : 'Grupo'}</th>${cab}
+    <thead><tr><th scope="col" class="fija">Persona</th><th scope="col" class="fija2">${estado.plantilla || (estado.res && estado.res.personas.some(x => x.nombrePrueba)) ? 'Nombre' : 'Grupo'}</th>${cab}
       <th scope="col" class="num" title="Horas en el año">Horas</th><th scope="col" class="num" title="Noches en el año">Noch.</th><th scope="col" class="num" title="Fines de semana trabajados en el año">FS</th></tr></thead>
     <tbody>${filas || `<tr><td colspan="${dias.length + 5}" style="padding:16px">No hay personas con estos filtros. Quita alguno o añade un grupo en Parámetros.</td></tr>`}</tbody>
     <tfoot>${pieFijo}${pieResto}</tfoot></table></div>`;

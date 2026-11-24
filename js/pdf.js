@@ -73,7 +73,7 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
       doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...TITULO);
       doc.text(`Cuadrante ${cfg.anio} · ${cfg.nombre} · ${nombreCol} · ${MESES[mes]}`, M, M + 4);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...GRIS);
-      doc.text(`${cfg.titulo || ''} · ${lista.some(p => p.nombre) ? 'CONFIDENCIAL: con nombres' : 'Personas anónimas por código'} · ${paginas > 1 ? `hoja ${pg + 1} de ${paginas} del mes` : ''}`, M, M + 7.5);
+      doc.text(`${cfg.titulo || ''} · ${lista.some(p => p.nombrePrueba) ? 'Nombres de prueba (inventados)' : lista.some(p => p.nombre) ? 'CONFIDENCIAL: con nombres' : 'Personas anónimas por código'} · ${paginas > 1 ? `hoja ${pg + 1} de ${paginas} del mes` : ''}`, M, M + 7.5);
       // Cabecera de días
       doc.setFontSize(6); doc.setFont('helvetica', 'bold');
       doc.setTextColor(...GRIS); doc.text('PERSONA', xNom + 1, yCab + 4.5); doc.text(lista.some(p => p.nombre) ? 'NOMBRE' : 'GRUPO', xGr + 1, yCab + 4.5);

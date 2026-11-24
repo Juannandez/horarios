@@ -678,17 +678,22 @@ export function eventosParametros(raiz, repintar) {
       estado.todo.sedes[i2] = sedeBase(cfg.id);
     } else if (a === 'copiar-sede') {
       const otras = estado.todo.sedes.filter(x => x.id !== cfg.id);
-      const partes = [['turnos', 'Turnos'], ['grupos', 'Grupos y patrones'], ['minimos', 'Mínimos'], ['reglas', 'Reglas'], ['festivos', 'Festivos']];
+      const partes = [['turnos', 'Turnos'], ['solapes', 'Solapes y horas de entrada que rotan'], ['grupos', 'Grupos y patrones (personas por grupo incluidas)'], ['contratos', 'Contratos y turnos a medida'], ['minimos', 'Mínimos'], ['reglas', 'Reglas'], ['cobertura', 'Cobertura y bolsa (sin las bajas de personas)'], ['vacaciones', 'Vacaciones (periodos y plazas, sin las peticiones)'], ['festivos', 'Festivos (ojo: las fiestas locales son de cada ciudad)']];
       const elegido = await modal({
-        titulo: `Copiar a ${cfg.nombre} desde otra sede`,
-        html: `<p>Elige de dónde y qué copiar. Lo copiado sustituye lo que tiene ${esc(cfg.nombre)} en esas listas; lo demás no cambia.</p>
+        titulo: `Copiar a ${cfg.nombre} lo de otra sede`,
+        html: `<p>Cada sede tiene su propio horario. Para no repetir el trabajo, copia a <b>${esc(cfg.nombre)}</b> lo que ya tengas hecho en la otra. Lo copiado sustituye lo que tiene ${esc(cfg.nombre)} en esas partes; lo demás no cambia y se puede deshacer con Ctrl+Z.</p>
           <label class="campo"><span>Desde</span><select id="copiar-desde">${otras.map(o => `<option value="${esc(o.id)}">${esc(o.nombre)}</option>`).join('')}</select></label>
           <div class="opciones" style="margin-top:12px">${partes.map(([k, t]) => `<label class="casilla"><input type="checkbox" value="${k}" data-copiar ${k === 'reglas' ? 'checked' : ''}> ${t}</label>`).join('')}</div>`,
         botones: [{ texto: 'Cancelar', valor: null }, { texto: 'Copiar', tipo: 'primario', valor: (velo) => ({ desde: $('#copiar-desde', velo).value, que: $$('[data-copiar]:checked', velo).map(x => x.value) }) }],
       });
       if (!elegido || !elegido.que.length) return;
       const origen = estado.todo.sedes.find(x => x.id === elegido.desde);
-      for (const k of elegido.que) cfg[k] = clonar(origen[k]);
+      for (const k of elegido.que) {
+        cfg[k] = clonar(origen[k]);
+        // Lo que es de cada persona o de cada ciudad no se copia: las bajas, las peticiones de vacaciones.
+        if (k === 'cobertura' && cfg.cobertura) cfg.cobertura.ausencias = [];
+        if (k === 'vacaciones' && cfg.vacaciones) cfg.vacaciones.solicitudes = {};
+      }
       if (elegido.que.includes('turnos') && !elegido.que.includes('grupos')) {
         const codigos = new Set(cfg.turnos.map(t => t.codigo));
         cfg.grupos.forEach(g => { g.patron = g.patron.map(c => (codigos.has(c) ? c : 'L')); });

@@ -1,7 +1,7 @@
 // Asistente «Nuevo horario»: de un listado de nombres a un cuadrante revisado, paso a paso (como el alta de cuadrante
 // de Quinyx o Planday). Cada paso reutiliza los controles de Parámetros: lo que se cambia aquí es lo mismo que allí.
 // Dirección: #nuevo/<paso>.
-import { estado, esc, fmtNum, cambiado, avisar, ponerSede, confirmar, clonar } from './nucleo.js';
+import { estado, esc, fmtNum, cambiado, avisar, ponerSede, confirmar, clonar, nombresPrueba, ponerNombresPrueba } from './nucleo.js';
 import { seccionContratos, seccionReglas, seccionMinimos, seccionCobertura } from './vista-parametros.js';
 import { CONJUNTOS_REGLAS } from './datos-base.js';
 import { infracciones, puntuacion } from './puntuacion.js';
@@ -27,6 +27,8 @@ function pasoSede(cfg) {
       <label class="campo"><span>Año</span><input type="number" data-ruta="anio" data-tipo="num" value="${esc(cfg.anio)}" min="2020" max="2100" style="width:110px"></label>
       <label class="campo"><span>Título del cuadrante</span><input type="text" data-ruta="titulo" value="${esc(cfg.titulo || '')}" style="width:320px"></label>
     </div>
+    <div class="banda" style="margin-top:14px">Estás preparando <b>${esc(cfg.nombre)} ${esc(cfg.anio)}</b>. Cada sede tiene su horario propio: cuando acabes esta, elige la otra arriba y repite los pasos. Para no hacerlo dos veces, copia lo que ya tengas de la otra sede:
+      <div class="fila-acciones" style="margin-top:8px"><button type="button" class="btn" data-accion="copiar-sede">Copiar a ${esc(cfg.nombre)} lo de ${esc(estado.todo.sedes.filter(s => s.id !== cfg.id).map(s => s.nombre).join(' o ') || 'otra sede')}…</button></div></div>
     <p class="tenue" style="margin-top:12px">¿Quieres empezar de cero? <button type="button" class="enlace" data-accion="partida-sede">Volver a los valores de partida de ${esc(cfg.nombre)}</button> (se puede deshacer con Ctrl+Z).</p>
   </section>`;
 }
@@ -38,7 +40,9 @@ function pasoPersonas(cfg) {
     ${reales ? `<p>Plantilla real abierta: <b>${fmtNum(cuenta('TA'))}</b> teleasistentes y <b>${fmtNum(cuenta('SUP'))}</b> supervisores en ${esc(cfg.nombre)}. Mandan sobre el número de personas de cada grupo.
         ${reales.filter(p => p.horasSemana < 35 || p.contrato).length ? `${fmtNum(reales.filter(p => p.horasSemana < 35 || p.contrato).length)} con jornada reducida o contrato propio.` : ''}</p>`
       : '<p>Sin plantilla real abierta: el cuadrante sale con personas anónimas (TA 001, SUP 01…), tantas como digas en cada grupo.</p>'}
-    <div class="fila-acciones"><button type="button" class="btn ${reales ? '' : 'primario'}" data-ir="plantilla">${reales ? 'Ver o cambiar la plantilla' : 'Importar el listado de nombres'}</button></div>
+    <div class="fila-acciones"><button type="button" class="btn ${reales ? '' : 'primario'}" data-ir="plantilla">${reales ? 'Ver o cambiar la plantilla' : 'Importar el listado de nombres'}</button>
+      ${reales ? '' : nombresPrueba() ? '<button type="button" class="btn" data-nv="sin-prueba">Quitar los nombres de prueba</button>' : '<button type="button" class="btn" data-nv="prueba">Usar nombres de prueba</button>'}</div>
+    ${!reales && nombresPrueba() ? '<p class="banda">Nombres de prueba activos: al lado de cada código sale un nombre genérico («Teleasistente 001», «Supervisor/a 01»…) en el cuadrante, los informes, Mi horario y los PDF. No son personas reales y no cambian el reparto. Se recuerdan en este navegador.</p>' : ''}
     <p class="tenue">El listado es un CSV con <b>nombre; colectivo; sede</b> y, si hace falta, turno actual, exención de noches, horas a la semana y casos especiales: <b>contrato</b> (p. ej. «Reducida 25 h»), <b>franjas</b> (mañana, tarde, noche), <b>sin_findes</b>, <b>dias_libres</b> (L,M,X,J,V,S,D), <b>alta</b> y <b>baja</b> (AAAA-MM-DD). Los nombres se cifran en tu navegador; el servidor no los ve. Solo administración.</p>
     <h3 style="margin-top:14px">Personas por grupo</h3>
     <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Grupo</th><th scope="col">Colectivo</th><th scope="col" class="num">Personas</th></tr></thead><tbody>
@@ -109,5 +113,9 @@ export function eventosNuevo(raiz, repintar) {
       return avisar(`Reglas de «${esc(c.nombre)}» puestas en ${esc(estado.cfg.nombre)}.`, 'bien');
     }
     if (b.dataset.nv === 'mejorar') { if (await mejorarReparto()) repintar(); }
+    if (b.dataset.nv === 'prueba' || b.dataset.nv === 'sin-prueba') {
+      ponerNombresPrueba(b.dataset.nv === 'prueba'); repintar();
+      return avisar(b.dataset.nv === 'prueba' ? 'Nombres de prueba puestos: verás «Teleasistente 001», «Supervisor/a 01»… al lado de cada código.' : 'Nombres de prueba quitados: vuelven los códigos.', 'bien');
+    }
   });
 }

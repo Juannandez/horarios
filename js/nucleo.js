@@ -289,11 +289,30 @@ let temporizador = 0;
 const oyentes = new Set();
 export const alRegenerar = (fn) => oyentes.add(fn);
 
+// Nombres de prueba: una etiqueta genérica al lado del código («Teleasistente 001», «Supervisor/a 01»…) para
+// enseñar la app como si tuviera plantilla, sin datos reales. No cambia el reparto. Se recuerda en este navegador.
+const CLAVE_PRUEBA = 'horarios.nombresPrueba';
+const ETIQUETA_PRUEBA = { TA: 'Teleasistente', SUP: 'Supervisor/a', RV: 'Refuerzo de verano', TB: 'Teleasistente línea B' };
+export const nombresPrueba = () => { try { return localStorage.getItem(CLAVE_PRUEBA) === '1'; } catch (e) { return false; } };
+export function ponerNombresPrueba(si) {
+  try { si ? localStorage.setItem(CLAVE_PRUEBA, '1') : localStorage.removeItem(CLAVE_PRUEBA); } catch (e) { /* sin almacenamiento */ }
+  regenerar();
+}
+function nombrarPrueba(res) {
+  if (!res || estado.plantilla || !nombresPrueba()) return res;
+  for (const p of res.personas) {
+    const m = String(p.id).match(/^(.*?)\s*(\d+)$/), pref = m ? m[1].trim() : '', num = m ? m[2] : p.id;
+    p.nombre = `${ETIQUETA_PRUEBA[pref] || (p.colectivo === 'SUP' ? 'Supervisor/a' : p.grupoNombre || 'Persona')} ${num}`;
+    p.nombrePrueba = true;
+  }
+  return res;
+}
+
 export function regenerar() {
   const cfg = estado.cfg, anio = Number(cfg.anio);
   estado.festivos = calcularFestivos(cfg.festivos, anio, estado.descargas[`${claveFuente(cfg.festivos.fuente)}|${anio}`]);
   const reales = estado.plantilla ? estado.plantilla.personas.filter(p => p.sede === cfg.id) : null;
-  estado.res = generar({ ...cfg, festivos: estado.festivos.lista }, { plantilla: reales });
+  estado.res = nombrarPrueba(generar({ ...cfg, festivos: estado.festivos.lista }, { plantilla: reales }));
   pedirFestivos(cfg);
   oyentes.forEach(fn => fn());
 }
@@ -385,7 +404,7 @@ export function resultadoDe(cfgSede) {
   const anio = Number(cfgSede.anio);
   const fest = calcularFestivos(cfgSede.festivos, anio, estado.descargas[`${claveFuente(cfgSede.festivos.fuente)}|${anio}`] || cfgSede.festivos.cache);
   const reales = estado.plantilla ? estado.plantilla.personas.filter(p => p.sede === cfgSede.id) : null;
-  return generar({ ...cfgSede, festivos: fest.lista }, { plantilla: reales });
+  return nombrarPrueba(generar({ ...cfgSede, festivos: fest.lista }, { plantilla: reales }));
 }
 
 export async function guardarEnServidor() {
