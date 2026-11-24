@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-24T13:37:11.516Z",
- "nota": "Sevilla: año, título, contratos, grupos y patrones, reglas",
+ "guardado": "2026-11-24T13:46:21.476Z",
+ "nota": "Sevilla: turnos, contratos, grupos y patrones, mínimos, reglas",
  "config": {
   "version": 2,
   "tema": "day",
@@ -170,34 +170,11 @@
      {
       "codigo": "RM1",
       "nombre": "Mañana rotatorio",
-      "inicio": "08:15",
-      "fin": "15:15",
-      "franja": "manana",
-      "color": "#FFD37A"
-     },
-     {
-      "codigo": "M1",
-      "nombre": "Mañana 1",
       "inicio": "07:45",
       "fin": "14:45",
       "franja": "manana",
-      "color": "#F7BF4F"
-     },
-     {
-      "codigo": "M2",
-      "nombre": "Mañana 2",
-      "inicio": "08:00",
-      "fin": "15:00",
-      "franja": "manana",
-      "color": "#F2D9A0"
-     },
-     {
-      "codigo": "C1",
-      "nombre": "Continuo",
-      "inicio": "09:00",
-      "fin": "16:00",
-      "franja": "manana",
-      "color": "#C9E4C5"
+      "color": "#FFD37A",
+      "fin2": "15:00"
      },
      {
       "codigo": "RT1",
@@ -205,23 +182,8 @@
       "inicio": "15:00",
       "fin": "22:00",
       "franja": "tarde",
-      "color": "#F39A5E"
-     },
-     {
-      "codigo": "T1",
-      "nombre": "Tarde 1",
-      "inicio": "15:00",
-      "fin": "22:00",
-      "franja": "tarde",
-      "color": "#E8794A"
-     },
-     {
-      "codigo": "T2",
-      "nombre": "Tarde 2",
-      "inicio": "16:00",
-      "fin": "23:00",
-      "franja": "tarde",
-      "color": "#F6B89A"
+      "color": "#F39A5E",
+      "inicio2": "16:00"
      },
      {
       "codigo": "N",
@@ -232,21 +194,13 @@
       "color": "#2E4A86"
      },
      {
-      "codigo": "S1",
-      "nombre": "Solape mañana-tarde",
-      "inicio": "11:00",
-      "fin": "18:00",
-      "franja": "manana",
-      "color": "#B7D3F2"
-     },
-     {
       "codigo": "L",
       "nombre": "Libre",
       "inicio": "",
       "fin": "",
       "franja": "libre",
       "color": "#FFFFFF",
-      "disponible": true,
+      "disponible": false,
       "fijo": true
      },
      {
@@ -350,31 +304,31 @@
        "RT1",
        "RT1",
        "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "RT1",
        "RT1",
        "RT1",
        "RT1",
-       "RT1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "L",
-       "L",
-       "L",
-       "L",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "L",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
        "L",
        "L",
        "N",
@@ -386,27 +340,6 @@
        "L",
        "L",
        "L",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "L",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "L",
-       "L",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "L",
-       "L",
-       "L",
-       "L",
        "RM1",
        "RM1",
        "RM1",
@@ -417,6 +350,27 @@
        "RM1",
        "RM1",
        "RM1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
        "L",
        "L",
        "RM1",
@@ -440,27 +394,6 @@
        "L",
        "L",
        "L",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "L",
-       "L",
-       "L",
-       "L",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "L",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "L",
-       "L",
        "RM1",
        "RM1",
        "RM1",
@@ -475,6 +408,27 @@
        "RT1",
        "RT1",
        "RT1",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "RT1",
        "RT1",
@@ -497,26 +451,26 @@
        "RM1",
        "RM1",
        "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "L",
+       "L",
+       "L",
+       "L",
        "RT1",
        "RT1",
        "RT1",
        "RT1",
-       "L",
-       "L",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "L",
-       "L",
-       "L",
-       "L",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1"
+       "RT1"
       ],
       "patronDe": "",
       "flexible": true,
@@ -605,15 +559,15 @@
       "sabado": 39,
       "domingo": 29,
       "dias": [
-       47,
-       47,
-       47,
-       47,
-       47,
-       39,
-       29
+       75,
+       75,
+       75,
+       75,
+       75,
+       35,
+       35
       ],
-      "festivo": 29
+      "festivo": 35
      },
      {
       "colectivo": "TA",
@@ -622,15 +576,15 @@
       "sabado": 29,
       "domingo": 28,
       "dias": [
-       37,
-       37,
-       37,
-       37,
-       37,
-       29,
-       28
+       46,
+       46,
+       46,
+       46,
+       46,
+       33,
+       33
       ],
-      "festivo": 28
+      "festivo": 33
      },
      {
       "colectivo": "TA",
@@ -639,15 +593,15 @@
       "sabado": 8,
       "domingo": 8,
       "dias": [
-       8,
-       8,
-       8,
-       8,
-       8,
-       8,
-       8
+       10,
+       10,
+       10,
+       10,
+       10,
+       10,
+       10
       ],
-      "festivo": 8
+      "festivo": 10
      },
      {
       "colectivo": "SUP",
@@ -656,15 +610,15 @@
       "sabado": 2,
       "domingo": 2,
       "dias": [
-       2,
-       2,
-       2,
-       2,
-       2,
-       2,
-       2
+       5,
+       5,
+       5,
+       5,
+       5,
+       3,
+       3
       ],
-      "festivo": 2
+      "festivo": 3
      },
      {
       "colectivo": "SUP",
@@ -673,11 +627,11 @@
       "sabado": 2,
       "domingo": 2,
       "dias": [
-       2,
-       2,
-       2,
-       2,
-       2,
+       3,
+       3,
+       3,
+       3,
+       3,
        2,
        2
       ],
@@ -726,17 +680,30 @@
       "activo": true,
       "valor": 17
      },
+     "tardeCada": {
+      "activo": true,
+      "valor": 3,
+      "nivel": "informe"
+     },
      "minFinesLibresEntre": {
       "activo": true,
       "valor": 2
      },
      "maxFinesSeguidos": {
-      "activo": true,
-      "valor": 1
+      "activo": false,
+      "valor": 2
      },
      "minFinesLibresMes": {
-      "activo": true,
+      "activo": false,
       "valor": 1
+     },
+     "finCompleto": {
+      "activo": true,
+      "valor": true
+     },
+     "maxEntradas": {
+      "activo": true,
+      "valor": 4
      },
      "descanso": {
       "activo": true,
@@ -756,11 +723,6 @@
      },
      "ajuste": {
       "activo": true
-     },
-     "tardeCada": {
-      "activo": true,
-      "valor": 3,
-      "nivel": "informe"
      }
     },
     "vacaciones": {
@@ -982,39 +944,6 @@
        "tarde": "",
        "noche": ""
       }
-     },
-     {
-      "id": "r30",
-      "nombre": "Mayores de 50",
-      "horasSemana": 35,
-      "sinNoches": true,
-      "turnos": {
-       "manana": "RM1",
-       "tarde": "",
-       "noche": ""
-      }
-     },
-     {
-      "id": "r25",
-      "nombre": "Reducida 25 h",
-      "horasSemana": 25,
-      "sinNoches": false,
-      "turnos": {
-       "manana": "",
-       "tarde": "",
-       "noche": ""
-      }
-     },
-     {
-      "id": "r20",
-      "nombre": "Reducida 20 h",
-      "horasSemana": 20,
-      "sinNoches": false,
-      "turnos": {
-       "manana": "",
-       "tarde": "",
-       "noche": ""
-      }
      }
     ],
     "cobertura": {
@@ -1057,7 +986,7 @@
       "franja": "noche",
       "fecha": "12-24",
       "modo": "suma",
-      "valor": 1,
+      "valor": 11,
       "nota": "Nochebuena"
      },
      {
@@ -1066,7 +995,7 @@
       "franja": "noche",
       "fecha": "12-31",
       "modo": "suma",
-      "valor": 1,
+      "valor": 11,
       "nota": "Nochevieja"
      }
     ],
