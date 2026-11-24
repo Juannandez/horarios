@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-24T13:46:23.132Z",
- "nota": "Sevilla: turnos, contratos, grupos y patrones, mínimos, reglas",
+ "guardado": "2026-11-24T13:50:26.516Z",
+ "nota": "Sevilla: título",
  "config": {
   "version": 2,
   "tema": "day",
@@ -164,7 +164,7 @@
    {
     "id": "sevilla",
     "nombre": "Sevilla",
-    "titulo": "SAT Sevilla · Pruebas",
+    "titulo": "SAT Sevilla · prueba 2",
     "anio": 2029,
     "turnos": [
      {
