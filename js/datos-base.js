@@ -77,7 +77,8 @@ export const MINIMOS_FECHA = () => [
 ];
 // El festivo de noche cuenta para quien sale del turno (convenio). Festivos especiales que se reparten con equidad,
 // también entre años (historial: los trabajados en años anteriores, por código de persona).
-export const REPARTO_FESTIVOS = () => ({ noche: 'salida', especiales: ['12-24', '12-25', '12-31', '01-01', '01-06'], historial: {}, anioHistorial: null });
+// fechasRotan: días que nadie repite hasta que los haya trabajado toda la plantilla (rotan: quién ya los trabajó).
+export const REPARTO_FESTIVOS = () => ({ noche: 'salida', especiales: ['12-24', '12-25', '12-31', '01-01', '01-06'], historial: {}, anioHistorial: null, fechasRotan: ['12-24', '12-31', '01-06'], rotan: {} });
 // El ciclo sigue de un año a otro: la semana 1 del ciclo empieza el lunes 28-12-2026 (la del 1 de enero de 2027).
 export const CICLO = () => ({ continuo: true, inicio: '2026-12-28' });
 
@@ -189,6 +190,24 @@ const grupo = (id, colectivo, nombre, prefijo, personas, patron, extra = {}) => 
   franjasAjuste: TODAS, vacaciones: VAC(), ...extra,
 });
 
+// Fijos discontinuos (24 en cada sede): periodos de alta. Navidad del 1 de diciembre al 15 de enero, Semana Santa del
+// Viernes de Dolores (Pascua − 9) al Domingo de Resurrección, Feria del viernes antes al domingo del final y verano del
+// 1 de junio al 30 de septiembre. La Feria de Sevilla: el miércoles es Pascua + 17 (fiesta local), así que del viernes
+// antes (Pascua + 12) al domingo del final (Pascua + 21). La de Málaga es en agosto: cae dentro del verano.
+const PERIODOS_FD_SEVILLA = () => [
+  { nombre: 'Navidad', regla: 'fijo', desde: '12-01', hasta: '01-15' },
+  { nombre: 'Semana Santa', regla: 'pascua', desde: -9, hasta: 0 },
+  { nombre: 'Feria de abril', regla: 'pascua', desde: 12, hasta: 21 },
+  { nombre: 'Verano', regla: 'fijo', desde: '06-01', hasta: '09-30' },
+];
+const PERIODOS_FD_MALAGA = () => [
+  { nombre: 'Navidad', regla: 'fijo', desde: '12-01', hasta: '01-15' },
+  { nombre: 'Semana Santa', regla: 'pascua', desde: -9, hasta: 0 },
+  { nombre: 'Verano (incluye la Feria de agosto)', regla: 'fijo', desde: '06-01', hasta: '09-30' },
+];
+const grupoFD = (periodos, extra = {}) => grupo('fd', 'TA', 'Fijos discontinuos', 'FD', 24, ['L', 'L', 'L', 'L', 'L', 'L', 'L'],
+  { periodos, horarioLibre: true, condiciones: { libreFines: true, sinVacaciones: true }, vacaciones: { activo: false, dias: 0, desde: '06-01', hasta: '09-30' }, ...extra });
+
 // ── Sevilla: cuadrantes de 2027 (horarios-sevilla-2027.md y horarios-supervisores-sevilla-2027.md),
 //    mínimos del Anexo 2 de 2013.
 const SEVILLA = {
@@ -214,10 +233,10 @@ const SEVILLA = {
   grupos: [
     grupo('ta', 'TA', 'Turno rotatorio común', 'TA', 256, ROTATORIO_COMUN),
     grupo('sup', 'SUP', 'Turno rotatorio común (supervisión)', 'SUP', 29, [], { patronDe: 'ta' }),
-    // Refuerzo de verano: con el patrón de fines de semana 2 + 1 no llega la plantilla para los fines de semana de
-    // julio a septiembre (vacaciones). 35 personas del 21-jun al 30-sep dejan casi cubiertos los mínimos.
-    // Condiciones propias, más flexibles: sin el patrón de fines de semana ni sus topes, y sin vacaciones.
-    grupo('rv', 'TA', 'Refuerzo de verano', 'RV', 35, [], { patronDe: 'ta', desde: '2027-06-21', hasta: '2027-09-30', condiciones: { libreFines: true, sinVacaciones: true }, vacaciones: { activo: false, dias: 0, desde: '06-01', hasta: '09-30' } }),
+    // Fijos discontinuos: el refuerzo actual (24). Están de alta en sus periodos y van sin patrón: el ajuste les pone
+    // turno donde falta gente (horario libre). Su jornada, en proporción a los días de alta (en el horario real de 2027
+    // de Málaga, R1.FD: unas 757 h, la jornada completa en proporción a sus periodos). Sin vacaciones en el cuadrante.
+    grupoFD(PERIODOS_FD_SEVILLA()),
   ],
   // Mínimos por franja y tipo de día. "domingo" vale también para festivos.
   // Solapes y horas de entrada que rotan (Parámetros › Turnos). De ejemplo, desactivada: los miércoles de una de
@@ -275,7 +294,7 @@ const MALAGA = {
     // Refuerzo de verano: con el patrón de fines de semana 2 + 1 no llega la plantilla para los fines de semana de
     // julio a septiembre (vacaciones). 35 personas del 21-jun al 30-sep dejan casi cubiertos los mínimos.
     // Condiciones propias, más flexibles: sin el patrón de fines de semana ni sus topes, y sin vacaciones.
-    grupo('rv', 'TA', 'Refuerzo de verano', 'RV', 35, [], { patronDe: 'ta', desde: '2027-06-21', hasta: '2027-09-30', condiciones: { libreFines: true, sinVacaciones: true }, vacaciones: { activo: false, dias: 0, desde: '06-01', hasta: '09-30' }, horasObjetivo: 1494.5 }),
+    grupoFD(PERIODOS_FD_MALAGA(), { horasObjetivo: 1494.5 }),
   ],
   // Mínimos de Málaga desde el 15-10-2026: punta 09:45-14:30, tarde 16:45-19:45 y noche.
   // Solapes y horas de entrada que rotan (Parámetros › Turnos). De ejemplo, desactivada: los miércoles de una de

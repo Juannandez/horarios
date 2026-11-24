@@ -264,9 +264,12 @@ export function completarSede(cfg, base) {
   // Navidad y festivos, ciclo continuo y mínimos por fecha (lo que falte, con los valores de partida).
   c.aj = { ...AJ_BASE(), ...dicc(base.aj), ...dicc(cfg.aj) }; c.aj.elegidos = dicc(c.aj.elegidos);
   if (!Array.isArray(c.aj.fechas)) c.aj.fechas = AJ_BASE().fechas;
+  c.minimosHora = { activo: false, ...dicc(c.minimosHora) };
   if (!Array.isArray(c.minimosFecha)) c.minimosFecha = Array.isArray(base.minimosFecha) ? clonar(base.minimosFecha) : [];
   c.repartoFestivos = { ...REPARTO_FESTIVOS(), ...dicc(base.repartoFestivos), ...dicc(cfg.repartoFestivos) };
   c.repartoFestivos.historial = dicc(c.repartoFestivos.historial);
+  c.repartoFestivos.rotan = dicc(c.repartoFestivos.rotan);
+  if (!Array.isArray(c.repartoFestivos.fechasRotan)) c.repartoFestivos.fechasRotan = REPARTO_FESTIVOS().fechasRotan;
   if (!Array.isArray(c.repartoFestivos.especiales)) c.repartoFestivos.especiales = REPARTO_FESTIVOS().especiales;
   c.ciclo = { ...CICLO(), ...dicc(base.ciclo), ...dicc(cfg.ciclo) };
   if (!c.vacaciones || typeof c.vacaciones !== 'object') c.vacaciones = base.vacaciones ? JSON.parse(JSON.stringify(base.vacaciones)) : { modo: 'escalonado' };
@@ -316,11 +319,26 @@ function nombrarPrueba(res) {
   return res;
 }
 
+// Festivos de todos los días del cuadrante. Con el año de 15 a 15 de enero hacen falta también los del 1 al 14 de enero
+// del año siguiente: los de la fuente si ya están; si no, Año Nuevo y Reyes (pasados al lunes si caen en domingo).
+function festivosCuadrante(cfgSede, delAnio) {
+  const anio = Number(cfgSede.anio);
+  if (!/^\d{2}-\d{2}$/.test(cfgSede.inicioCuadrante || '') || cfgSede.inicioCuadrante === '01-01') return delAnio;
+  const sig = calcularFestivos(cfgSede.festivos, anio + 1, estado.descargas[`${claveFuente(cfgSede.festivos.fuente)}|${anio + 1}`]).lista;
+  const fijos = [['01-01', 'Año Nuevo'], ['01-06', 'Epifanía del Señor']].map(([md, nombre]) => {
+    let f = `${anio + 1}-${md}`;
+    if (cfgSede.festivos.fuente && cfgSede.festivos.fuente.trasladarDomingos && new Date(`${f}T12:00:00Z`).getUTCDay() === 0) f = `${anio + 1}-${md.slice(0, 3)}${String(Number(md.slice(3)) + 1).padStart(2, '0')}`;
+    return { fecha: f, nombre, origen: 'fuente', nota: 'del año siguiente' };
+  });
+  const enero = sig.filter(h => h.fecha < `${anio + 1}-02-01`);
+  return [...delAnio, ...(enero.length ? enero : fijos)];
+}
+
 export function regenerar() {
   const cfg = estado.cfg, anio = Number(cfg.anio);
   estado.festivos = calcularFestivos(cfg.festivos, anio, estado.descargas[`${claveFuente(cfg.festivos.fuente)}|${anio}`]);
   const reales = estado.plantilla ? estado.plantilla.personas.filter(p => p.sede === cfg.id) : null;
-  estado.res = nombrarPrueba(generar({ ...cfg, festivos: estado.festivos.lista }, { plantilla: reales }));
+  estado.res = nombrarPrueba(generar({ ...cfg, festivos: festivosCuadrante(cfg, estado.festivos.lista) }, { plantilla: reales }));
   pedirFestivos(cfg);
   oyentes.forEach(fn => fn());
 }
@@ -384,6 +402,8 @@ export async function pedirFestivos(cfg, refrescar = false) {
     estado.descargas[k] = { error: e.message };
   }
   if (cfg === estado.cfg) regenerar();
+  // Con el año de 15 a 15 de enero, también los del año siguiente (del 1 al 14 de enero).
+  if (cfg.inicioCuadrante && cfg.inicioCuadrante !== '01-01') pedirFestivos({ ...cfg, anio: anio + 1, inicioCuadrante: '01-01' }, refrescar).then(() => { if (cfg === estado.cfg) regenerar(); });
 }
 
 // Qué ha cambiado frente a la versión publicada, en una línea (va como nota de la versión en el servidor).
@@ -412,7 +432,7 @@ export function resultadoDe(cfgSede) {
   const anio = Number(cfgSede.anio);
   const fest = calcularFestivos(cfgSede.festivos, anio, estado.descargas[`${claveFuente(cfgSede.festivos.fuente)}|${anio}`] || cfgSede.festivos.cache);
   const reales = estado.plantilla ? estado.plantilla.personas.filter(p => p.sede === cfgSede.id) : null;
-  return nombrarPrueba(generar({ ...cfgSede, festivos: fest.lista }, { plantilla: reales }));
+  return nombrarPrueba(generar({ ...cfgSede, festivos: festivosCuadrante(cfgSede, fest.lista) }, { plantilla: reales }));
 }
 
 export async function guardarEnServidor() {

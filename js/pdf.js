@@ -47,6 +47,9 @@ function pie(doc, texto) {
 }
 
 // ── Cuadrante de un colectivo, mes a mes, A4 apaisado ─────────────────────────
+// Nombre del mes «k» del cuadrante (con el año de 15 a 15 de enero hay dos eneros: se añade el año).
+const nomMes = (res, k) => { const m = (res.meses || []).find(x => x.mc === k); return m ? `${MESES[m.mes]}${res.meses.length > 12 ? ` ${m.anio}` : ''}` : MESES[k]; };
+
 export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta = 11, personas }) {
   const jsPDF = await cargarJsPDF();
   const doc = conTextoLimpio(new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' }));
@@ -59,7 +62,7 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
   let primera = true;
 
   for (let mes = mesDesde; mes <= mesHasta; mes++) {
-    const dias = res.dias.filter(d => d.mes === mes);
+    const dias = res.dias.filter(d => (d.mc ?? d.mes) === mes);
     const xNom = M, wNom = 20, xGr = xNom + wNom, wGr = lista.some(p => p.nombre) ? 40 : 26, wRes = 9;
     const x0 = xGr + wGr, wDia = (W - M - x0 - 3 * wRes) / dias.length;
     const altoFila = 4.3, yCab = M + 9, yFilas = yCab + 7;
@@ -71,7 +74,7 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
       if (!primera) doc.addPage(); primera = false;
       // Título
       doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...TITULO);
-      doc.text(`Cuadrante ${cfg.anio} · ${cfg.nombre} · ${nombreCol} · ${MESES[mes]}`, M, M + 4);
+      doc.text(`Cuadrante ${cfg.anio} · ${cfg.nombre} · ${nombreCol} · ${nomMes(res, mes)}`, M, M + 4);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...GRIS);
       doc.text(`${cfg.titulo || ''} · ${lista.some(p => p.nombrePrueba) ? 'Nombres de prueba (inventados)' : lista.some(p => p.nombre) ? 'CONFIDENCIAL: con nombres' : 'Personas anónimas por código'} · ${paginas > 1 ? `hoja ${pg + 1} de ${paginas} del mes` : ''}`, M, M + 7.5);
       // Cabecera de días
@@ -188,13 +191,14 @@ export async function pdfInformes({ res, cfg, pis, nombreFichero }) {
     }
     // Calendario del año: 12 meses en 3 columnas (unos 110 mm). Si no cabe, va en la hoja siguiente.
     y += 3;
-    if (y + 112 > H - 10) { doc.addPage(); y = M + 4; }
+    const nMeses = (res.meses || []).length || 12;
+    if (y + 112 + (nMeses > 12 ? 25 : 0) > H - 10) { doc.addPage(); y = M + 4; }
     doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...TITULO); doc.text('Calendario', M, y); y += 3;
     const anchoMes = (W - 2 * M - 8) / 3, celda = anchoMes / 7, altoC = 3.3;
-    for (let mes = 0; mes < 12; mes++) {
+    for (let mes = 0; mes < nMeses; mes++) {
       const cx = M + (mes % 3) * (anchoMes + 4), cy = y + Math.floor(mes / 3) * (altoC * 7 + 3);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...TINTA); doc.text(MESES[mes], cx, cy + 2.5);
-      const dias = res.dias.filter(d => d.mes === mes);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...TINTA); doc.text(nomMes(res, mes), cx, cy + 2.5);
+      const dias = res.dias.filter(d => (d.mc ?? d.mes) === mes);
       const fila0 = dias[0].dow;
       dias.forEach((d) => {
         const pos = fila0 + d.dia - 1, col = pos % 7, fila = Math.floor(pos / 7);

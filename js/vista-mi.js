@@ -14,7 +14,7 @@ const leerYo = () => { try { return localStorage.getItem(claveYo()) || ''; } cat
 const ponerYo = (id) => { try { localStorage.setItem(claveYo(), id); } catch (e) { /* sin almacenamiento */ } };
 
 function mes(res, pi, m) {
-  const D = res.D, dias = res.dias.filter(d => d.mes === m);
+  const D = res.D, dias = res.dias.filter(d => d.mc === m);
   const huecos = (dias[0].dow + 7) % 7;
   return `<div class="mi-mes" role="grid" aria-label="${MESES[m]}">
     ${DIAS_CORTOS.map(x => `<div class="mi-cab" role="columnheader">${x}</div>`).join('')}
@@ -52,7 +52,7 @@ export function pintarMi(raiz) {
   let yo = leerYo(); if (!res.personas.some(p => p.id === yo)) yo = res.personas[0].id;
   const pi = res.personas.findIndex(p => p.id === yo), p = res.personas[pi];
   const s = u.sol;
-  if (!s.desde) { s.desde = res.dias.find(d => d.mes === u.mes)?.fecha || res.dias[0].fecha; }
+  if (!s.desde) { s.desde = res.dias.find(d => d.mc === u.mes)?.fecha || res.dias[0].fecha; }
   const companeros = res.personas.filter(q => q.colectivo === p.colectivo && q.id !== p.id);
   const dSol = res.dias.findIndex(d => d.fecha === s.desde);
   const turnoDe = (q) => (dSol >= 0 ? res.turnos[res.grid[q.pi * res.D + dSol]].codigo : '');
@@ -68,7 +68,7 @@ export function pintarMi(raiz) {
         <div class="cifra"><b>${fmtH(p.bolsa ? p.bolsa.saldo : 0)} h</b><span>saldo de bolsa</span></div>
       </div></section>
     <section class="panel"><div class="mi-nav"><button type="button" class="btn mini" data-mi-mes="-1" ${u.mes <= 0 ? 'disabled' : ''} aria-label="Mes anterior">←</button>
-      <h2>${MESES[u.mes]}</h2><button type="button" class="btn mini" data-mi-mes="1" ${u.mes >= 11 ? 'disabled' : ''} aria-label="Mes siguiente">→</button></div>
+      <h2>${MESES[(res.meses[u.mes] || {}).mes ?? 0]}${res.meses.length > 12 ? ` ${(res.meses[u.mes] || {}).anio}` : ''}</h2><button type="button" class="btn mini" data-mi-mes="1" ${u.mes >= res.meses.length - 1 ? 'disabled' : ''} aria-label="Mes siguiente">→</button></div>
       ${mes(res, pi, u.mes)}</section>
     <section class="panel"><h2>Comprobar antes de pedir</h2>
       <div class="campos">
@@ -102,7 +102,7 @@ export function eventosMi(raiz, repintar) {
     if (estado.vista !== 'mi') return;
     const b = e.target.closest('button'); if (!b) return;
     const u = ui(), { res, cfg } = estado;
-    if (b.dataset.miMes) { u.mes = Math.min(11, Math.max(0, u.mes + Number(b.dataset.miMes))); return repintar(); }
+    if (b.dataset.miMes) { u.mes = Math.min(estado.res.meses.length - 1, Math.max(0, u.mes + Number(b.dataset.miMes))); return repintar(); }
     const yo = $('#mi-yo', raiz).value;
     if (b.dataset.mi === 'ics') {
       const pi = res.personas.findIndex(p => p.id === yo);

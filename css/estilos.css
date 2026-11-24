@@ -365,3 +365,55 @@ body:has(#barra-guardar:not(:empty)) #avisos, body:has(#barra-sel:not([hidden]))
 }
 .tabla-lista tr.apagada td { opacity: .55; }
 a.tb2-empresa { text-decoration: none; color: inherit; }
+
+/* ── Ajustes de diseño (24-11-2026): sin barra horizontal en Parámetros y pie del cuadrante legible ── */
+/* Parámetros: hasta 1700 px de ancho, el submenú va arriba en fichas que bajan de línea (no se come el ancho). */
+@media (max-width: 1700px) {
+  .param-rejilla { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .param-nav { position: static; flex-direction: row; flex-wrap: wrap; gap: 6px; padding: 8px; }
+  .param-nav a { flex: 0 1 auto; padding: 6px 10px; gap: 8px; }
+  .param-nav a.activa { box-shadow: inset 0 -3px 0 var(--v2-activo-tinta, var(--gl-marca)); }
+  .pn-texto small { display: none; }
+}
+/* Tablas de Parámetros: cabeceras y celdas que bajan de línea, controles más estrechos. */
+.param-cuerpo .tabla-caja thead th, #principal .asis .tabla-caja thead th { white-space: normal; }
+.param-cuerpo .tabla-lista td, .param-cuerpo .tabla-lista th { vertical-align: top; }
+.param-cuerpo .tabla-lista input[type="time"], .tabla-lista.tabla-turnos input[type="time"] { min-width: 0; width: 104px; }
+.param-cuerpo .tabla-lista input[type="date"] { width: 142px; }
+.param-cuerpo .tabla-lista input[type="text"] { min-width: 0; max-width: 190px; }
+.tabla-lista.tabla-turnos td:nth-child(4) input { min-width: 0; width: 160px; }
+.tabla-lista.tabla-turnos td:nth-child(7) > span { flex-direction: column; }
+.param-cuerpo .tabla-lista select { max-width: 230px; }
+.tabla-horas input[type=number] { width: 54px !important; }
+/* Pie del cuadrante: las 6 filas de personas en sala, siempre a la vista (no solo al final de la lista). */
+.cuadrante tfoot td, .cuadrante tfoot th { height: 22px; line-height: 1; }
+.cuadrante tfoot tr { position: static; }
+.cuadrante tfoot tr td, .cuadrante tfoot tr th { position: sticky; }
+.cuadrante tfoot tr:nth-last-child(1) > * { bottom: 0; }
+.cuadrante tfoot tr:nth-last-child(2) > * { bottom: 22px; }
+.cuadrante tfoot tr:nth-last-child(3) > * { bottom: 44px; }
+.cuadrante tfoot tr:nth-last-child(4) > * { bottom: 66px; }
+.cuadrante tfoot tr:nth-last-child(5) > * { bottom: 88px; }
+.cuadrante tfoot tr:nth-last-child(6) > * { bottom: 110px; }
+.cuadrante tfoot tr:first-child > * { border-top: 2px solid var(--line2); }
+.cuadrante tfoot th.fija { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 11px; color: var(--ink); }
+.cuadrante tfoot th.fija, .cuadrante tfoot td.fija2 { z-index: 2; }
+.cuadrante tfoot tr.inicio-col > * { border-top: 2px solid var(--line2); }
+/* Tablas de edición más compactas, para que quepan sin barra horizontal en pantallas de portátil. */
+.tabla-lista th, .tabla-lista td { padding-left: 6px; padding-right: 6px; }
+.tabla-lista select { max-width: 170px; }
+.tabla-lista input[type="date"] { width: 138px; }
+.tabla-lista input[type=number]:not([type=checkbox]):not([type=radio]) { width: 70px; }
+#sec-minimos .tabla-lista input[type=number], #sec-minimos-fecha .tabla-lista input[type=number] { width: 54px !important; }
+#sec-minimos td.num .btn.mini, #sec-turnos td .btn.mini { margin: 1px 0; }
+#sec-minimos td.num:last-child { white-space: normal; min-width: 0; }
+.tabla-lista select { max-width: 150px !important; }
+.tabla-lista input[type="time"] { width: 92px !important; min-width: 0 !important; }
+.tabla-lista input[type="text"] { max-width: 150px !important; min-width: 0 !important; }
+.tabla-lista input[type="date"] { width: 130px !important; }
+.tabla-lista .casilla { white-space: normal; }
+.tabla-lista.tabla-turnos th:nth-child(2), .tabla-lista.tabla-turnos td:nth-child(2) { display: none; }
+#sec-solapes .tabla-lista select, #sec-contratos .tabla-lista select { max-width: 130px !important; }
+.tabla-caja .tabla-lista thead th { white-space: normal; }
+.tabla-lista.tabla-turnos td:nth-child(4) input { width: 130px !important; }
+.tabla-lista.tabla-turnos select { max-width: 120px !important; }

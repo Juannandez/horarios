@@ -29,8 +29,9 @@ const resumenEstado = (a) => (a.revisar || a.propuestas
 
 function calendario(pi) {
   const { res } = estado;
-  return `<div class="cal-anio">${MESES.map((m, mes) => {
-    const dias = res.dias.filter(d => d.mes === mes);
+  return `<div class="cal-anio">${res.meses.map(({ mc: mes, mes: mm, anio }) => {
+    const m = `${MESES[mm]}${res.meses.length > 12 ? ` ${anio}` : ''}`;
+    const dias = res.dias.filter(d => d.mc === mes);
     const vacias = Array.from({ length: dias[0].dow }, () => '<span></span>').join('');
     return `<div class="cal-mes"><b>${m}</b><div class="cal-rejilla">${DIAS_CORTOS.map(d => `<i>${d}</i>`).join('')}${vacias}${dias.map(d => {
       const t = res.turnos[res.grid[pi * res.D + d.i]];

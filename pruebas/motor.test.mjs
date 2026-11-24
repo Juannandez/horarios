@@ -23,7 +23,7 @@ for (const sede of CONFIG_BASE.sedes) {
   // Nadie por debajo de su objetivo y ningún patrón de partida con más días seguidos de los permitidos.
   for (const p of r.personas) {
     // Los refuerzos temporales (grupo con fechas) solo cubren huecos: pueden quedar por debajo de su jornada prorrateada.
-    if (p.grupo !== 'rv') assert.ok(p.horas >= p.objetivo - 7, `${p.id} con ${p.horas} h`);
+    if (p.grupo !== 'rv' && p.grupo !== 'fd') assert.ok(p.horas >= p.objetivo - 7, `${p.id} con ${p.horas} h`);
     assert.ok(!p.alertas.some(a => a.includes('días seguidos')), `${p.id}: ${p.alertas}`);
   }
 }
@@ -291,7 +291,8 @@ import { calendarioICS } from '../js/ics.js';
   assert.equal(refs.length, 4);
   for (const p of refs) for (let d = 0; d < rr.D; d++) if (rr.turnos[rr.grid[p.pi * rr.D + d]].trabaja) assert.ok(rr.dias[d].fecha >= '2027-07-01' && rr.dias[d].fecha <= '2027-09-15', 'el refuerzo solo trabaja en sus fechas');
   // El ajuste es voraz: 4 personas más no garantizan menos huecos de noche en concreto, pero sí en total (con holgura).
-  const total = (r) => r.huecos.reduce((x, h) => x + h.falta, 0);
+  // Solo teleasistencia: más teleasistentes suben el mínimo de supervisión (ratio 1:16).
+  const total = (r) => r.huecos.filter(h => h.colectivo === 'TA').reduce((x, h) => x + h.falta, 0);
   assert.ok(total(rr) <= total(r1) + 3, `huecos totales ${total(r1)} → ${total(rr)} con el refuerzo`);
   // Margen: más días con gente de sobra de noche, y los huecos se siguen midiendo frente al mínimo real.
   const mar = structuredClone(CONFIG_BASE.sedes[0]); mar.cobertura.margen = { noche: 1, dia: 0, tipo: 'personas' };
@@ -363,7 +364,7 @@ import { dosLineas } from '../js/escenarios-plantilla.js';
     const a = s.grupos.find(g => g.id === 'ta'), b = s.grupos.find(g => g.id === 'tb');
     assert.equal(a.personas + b.personas, sede.grupos.find(g => g.id === 'ta').personas, 'mitad y mitad');
     assert.equal(p.duro, 0, `${sede.nombre}: dos líneas sin reglas que bloquean incumplidas`);
-    assert.ok(r.personas.filter(x => x.grupo !== 'rv').every(x => x.horas >= x.objetivo - 1e-9), 'nadie por debajo de su jornada');
+    assert.ok(r.personas.filter(x => x.grupo !== 'rv' && x.grupo !== 'fd').every(x => x.horas >= x.objetivo - 1e-9), 'nadie por debajo de su jornada');
     const h = {}; for (const x of r.huecos) h[`${x.colectivo} ${x.franja}`] = (h[`${x.colectivo} ${x.franja}`] || 0) + x.falta;
     console.log(`${sede.nombre} con dos líneas: puntuación ${p.duro} · ${p.medio} · ${p.blando}`, JSON.stringify(h));
   }
@@ -508,4 +509,39 @@ import { minimosConsultora } from '../js/escenarios-plantilla.js';
     console.log(`${s.nombre} con 3 + 1: puntuación ${pt.duro} · ${pt.medio} · ${pt.blando}`);
   }
   console.log('OK rotatorio 3 + 1');
+}
+
+// ── Año de 15 a 15 de enero, fijos discontinuos, mínimos por horas y festivos que rotan ──
+{
+  const E = await import('../js/escenarios-plantilla.js');
+  const { calcularFestivos } = await import('../js/festivos.js');
+  const base = structuredClone(CONFIG_BASE.sedes[0]);
+  // Año de 15 a 15 de enero: 365 días, 13 meses y la Navidad entera (24-dic y 6-ene) dentro.
+  const s1 = structuredClone(base); s1.inicioCuadrante = '01-15';
+  s1.festivos = [...calcularFestivos(base.festivos, 2027).lista, { fecha: '2028-01-01', nombre: 'Año Nuevo' }, { fecha: '2028-01-06', nombre: 'Reyes' }];
+  const r1 = generar(s1);
+  assert.equal(r1.dias[0].fecha, '2027-01-15'); assert.equal(r1.dias.at(-1).fecha, '2028-01-14'); assert.equal(r1.meses.length, 13);
+  assert.ok(r1.dias.find(d => d.fecha === '2028-01-06').festivo, 'Reyes del año siguiente es festivo');
+  // Fijos discontinuos: alta solo en sus periodos, jornada en proporción.
+  const r = generar(structuredClone(base)), fd = r.personas.filter(p => p.grupo === 'fd');
+  assert.equal(fd.length, 24);
+  const fuera = fd.some(p => r.dias.some(d => r.turnos[r.grid[p.pi * r.D + d.i]].trabaja && !p.altaDias[d.i]));
+  assert.ok(!fuera, 'los fijos discontinuos solo trabajan en sus periodos');
+  const pascua = r.dias.find(d => d.fecha === '2027-03-28').i;
+  assert.ok(fd[0].altaDias[pascua - 9] && fd[0].altaDias[pascua] && !fd[0].altaDias[pascua - 10], 'Semana Santa del Viernes de Dolores al Domingo de Resurrección');
+  assert.ok(fd[0].objetivo + (fd[0].horasAJ || 0) > 700 && fd[0].objetivo + (fd[0].horasAJ || 0) < 800, `jornada en proporción (${fd[0].objetivo})`);
+  // Mínimos por horas: con la tabla sacada de las franjas, los mismos huecos; con la de la consultora, huecos por hora.
+  const s2 = structuredClone(base); s2.minimosHora = { activo: true, ...E.minimosHoraDesdeFranjas(s2) };
+  const tot = (x) => x.huecos.reduce((a, h) => a + h.falta, 0);
+  assert.equal(tot(generar(s2)), tot(r), 'tabla por horas sacada de las franjas = mismos huecos');
+  const s3 = structuredClone(base); s3.minimosHora = { activo: true, TA: E.tablaHoraConsultora('sevilla') };
+  const r3 = generar(s3);
+  assert.ok(r3.porHoras.colectivos.TA.porHora[7] > 0 && r3.porHoras.colectivos.TA.porHora[22] > 0, 'a las 7 y a las 22 faltan turnos que entren antes o salgan después');
+  // Festivos que rotan: quien trabajó el 24 el año pasado, casi nunca lo repite.
+  const d24 = r.dias.find(d => d.fecha === '2027-12-24').i;
+  const ids = r.personas.filter((p, pi) => !p.altaDias && r.turnos[r.grid[pi * r.D + d24]].trabaja).map(p => p.id);
+  const s4 = structuredClone(base); s4.repartoFestivos.rotan = { '12-24': ids };
+  const rep = generar(s4).repeticiones['12-24'];
+  assert.ok(rep.repiten.length < ids.length / 3, `repiten ${rep.repiten.length} de ${ids.length}`);
+  console.log(`OK año de 15 a 15 de enero, fijos discontinuos (${fd[0].diasAlta} días de alta), mínimos por horas y festivos que rotan (repiten ${rep.repiten.length} de ${ids.length} el 24)`);
 }

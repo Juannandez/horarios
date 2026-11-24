@@ -1,6 +1,6 @@
 // Escenarios de ejemplo que se crean con un botón en «Escenarios y versiones». No tocan el cuadrante: se añaden a la
 // lista y se abren o se comparan como cualquier otro.
-import { resolverPatron } from './motor.js';
+import { resolverPatron, prepararTurno, horasDeTurno } from './motor.js';
 import { ROTATORIOS } from './datos-base.js';
 
 const copia = (o) => JSON.parse(JSON.stringify(o));
@@ -24,7 +24,7 @@ export function dosLineas(sede, opciones = {}) {
   const reparto = Math.min(1, Math.max(0, Number(opciones.reparto ?? 0.5)));
   const horas = opciones.horas || {};
   const c = copia(sede);
-  const g = c.grupos.find(x => x.colectivo === 'TA' && !x.patronDe && !x.desde && !x.hasta && !x.soloLaborables);
+  const g = c.grupos.find(x => x.colectivo === 'TA' && !x.patronDe && !x.desde && !x.hasta && !x.soloLaborables && !(x.periodos || []).length);
   if (!g) throw new Error('No hay un grupo de teleasistencia con patrón propio para partir en dos líneas.');
   // El patrón del grupo con los turnos del rotatorio (los de mañana y tarde más usados) cambiados por los de cada línea.
   const patron = resolverPatron(g, c.grupos);
@@ -84,7 +84,7 @@ export function minimosConsultora(sede) {
 export function aplicarRotatorio(cfg, id) {
   const rot = ROTATORIOS.find(r => r.id === id);
   if (!rot) throw new Error('Rotatorio desconocido.');
-  const g = cfg.grupos.find(x => x.colectivo === 'TA' && !x.patronDe && !x.desde && !x.hasta && !x.soloLaborables) || cfg.grupos.find(x => !x.patronDe);
+  const g = cfg.grupos.find(x => x.colectivo === 'TA' && !x.patronDe && !x.desde && !x.hasta && !x.soloLaborables && !(x.periodos || []).length) || cfg.grupos.find(x => !x.patronDe);
   if (!g) throw new Error('No hay un grupo con patrón propio.');
   const franja = new Map(cfg.turnos.map(t => [t.codigo, t.franja]));
   const actual = resolverPatron(g, cfg.grupos);
@@ -99,6 +99,42 @@ export function aplicarRotatorio(cfg, id) {
   R.minFinesLibresEntre = { ...(R.minFinesLibresEntre || {}), activo: true, valor: 2 };
   return { grupo: g, turnos: cambio };
 }
+
+// Mínimos por horas a partir de los de cada franja: cada hora, el de la franja cuyo turno la cubre (el mayor si hay
+// varias). Devuelve { TA: [8][24], SUP: [8][24] } (filas: lunes … domingo y festivo).
+export function minimosHoraDesdeFranjas(cfg) {
+  const turnos = new Map(cfg.turnos.map(t => [t.codigo, prepararTurno(t)]));
+  const horas = (col, f) => {
+    for (const g of cfg.grupos) { if (g.colectivo !== col) continue; const c = resolverPatron(g, cfg.grupos).find(x => turnos.has(x) && turnos.get(x).franja === f); if (c) return horasDeTurno(turnos.get(c)); }
+    const t = [...turnos.values()].find(x => x.franja === f); return t ? horasDeTurno(t) : [];
+  };
+  const out = {};
+  for (const col of ['TA', 'SUP']) {
+    const tabla = Array.from({ length: 8 }, () => Array(24).fill(0));
+    for (const m of cfg.minimos.filter(x => x.colectivo === col)) {
+      const dias = Array.isArray(m.dias) && m.dias.length === 7 ? m.dias : [m.laborable, m.laborable, m.laborable, m.laborable, m.laborable, m.sabado, m.domingo];
+      const valores = [...dias, m.festivo ?? m.domingo ?? dias[6]];
+      for (const h of horas(col, m.franja)) for (let fila = 0; fila < 8; fila++) {
+        // Las horas de la noche después de medianoche son del día siguiente.
+        const fi = h >= 24 ? (fila === 7 ? 7 : (fila + 1) % 7) : fila;
+        tabla[fi][h % 24] = Math.max(tabla[fi][h % 24], Number(valores[fila]) || 0);
+      }
+    }
+    out[col] = tabla;
+  }
+  return out;
+}
+
+// Demanda por horas que planificó la consultora (Informe Completo, Escenario 3, 09-09-2026; tablas de cobertura por
+// día): teleasistencia, de 0 a 23 h. Lunes a viernes iguales; sábado y domingo iguales; el festivo, como el domingo.
+export const MINIMOS_HORA_CONSULTORA = {
+  sevilla: { lv: [9, 9, 9, 9, 9, 9, 9, 25, 70, 89, 89, 89, 89, 89, 89, 70, 59, 59, 59, 59, 59, 59, 34, 9], fs: [9, 9, 9, 9, 9, 9, 9, 17, 30, 44, 44, 44, 44, 44, 44, 35, 33, 33, 33, 33, 33, 33, 25, 9] },
+  malaga: { lv: [9, 9, 9, 9, 9, 9, 9, 24, 60, 86, 86, 86, 86, 86, 86, 62, 56, 56, 56, 56, 56, 56, 32, 9], fs: [9, 9, 9, 9, 9, 9, 9, 17, 26, 42, 42, 42, 42, 42, 42, 33, 34, 34, 34, 34, 34, 34, 25, 9] },
+};
+export const tablaHoraConsultora = (sede) => {
+  const x = MINIMOS_HORA_CONSULTORA[sede]; if (!x) return null;
+  return [0, 1, 2, 3, 4, 5, 6, 7].map(f => (f < 5 ? x.lv : x.fs).slice());
+};
 
 export const PLANTILLAS_ESCENARIO = [
   { id: 'dos-lineas', nombre: 'Dos líneas de horario fijo', crea: dosLineas,

@@ -151,12 +151,12 @@ function herramientas() {
     ${u.modo === 'mes' ? `<div class="grupo">
       <button type="button" class="btn" data-mes="-1" aria-label="Meses anteriores">Anterior</button>
       <label class="oculto" for="sel-desde">Desde</label>
-      <select id="sel-desde">${MESES.map((m, i) => `<option value="${i}" ${i === u.mesDesde ? 'selected' : ''}>${m}</option>`).join('')}</select>
+      <select id="sel-desde">${estado.res.meses.map(m => `<option value="${m.mc}" ${m.mc === u.mesDesde ? 'selected' : ''}>${MESES[m.mes]}${estado.res.meses.length > 12 ? ` ${m.anio}` : ''}</option>`).join('')}</select>
       <span class="tenue">a</span>
       <label class="oculto" for="sel-hasta">Hasta</label>
-      <select id="sel-hasta">${MESES.map((m, i) => `<option value="${i}" ${i === u.mesHasta ? 'selected' : ''}>${m} ${cfg.anio}</option>`).join('')}</select>
+      <select id="sel-hasta">${estado.res.meses.map(m => `<option value="${m.mc}" ${m.mc === u.mesHasta ? 'selected' : ''}>${MESES[m.mes]} ${m.anio}</option>`).join('')}</select>
       <button type="button" class="btn" data-mes="1" aria-label="Meses siguientes">Siguiente</button>
-      <button type="button" class="btn mini" data-meses="todo" aria-pressed="${u.mesDesde === 0 && u.mesHasta === 11}">Todo el año</button></div>` : ''}
+      <button type="button" class="btn mini" data-meses="todo" aria-pressed="${u.mesDesde === 0 && u.mesHasta === estado.res.meses.length - 1}">Todo el año</button></div>` : ''}
     <div class="grupo">${seg('colectivo', u.colectivo, [['todos', 'Todos'], ...COLECTIVOS.map(c => [c.id, c.nombre])])}</div>
     <div class="grupo"><label class="oculto" for="sel-grupo">Grupo</label>
       <select id="sel-grupo"><option value="todos">Todos los grupos</option>${grupos.map(g => `<option value="${esc(g.id)}" ${u.grupo === g.id ? 'selected' : ''}>${esc(g.nombre)}</option>`).join('')}</select>
@@ -192,7 +192,7 @@ function leyenda() {
 
 function tablaMes(lista) {
   const { res } = estado, u = estado.ui;
-  const dias = res.dias.filter(d => d.mes >= u.mesDesde && d.mes <= u.mesHasta);
+  const dias = res.dias.filter(d => d.mc >= u.mesDesde && d.mc <= u.mesHasta);
   const D = res.D;
   const iRes = u.resaltar ? res.idx.get(u.resaltar) : -1;
   const mapa = datosInfracciones().mapa;
@@ -235,12 +235,12 @@ function tablaMes(lista) {
         const justo = estado.cfg.cobertura.aguante.avisar && n === m && m > 0;
         return n < m ? `<td class="c falta" title="${n} de ${m}: faltan ${m - n}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}" title="${n} (mínimo ${m}): aguanta ${n - m} ${n - m === 1 ? 'baja' : 'bajas'}">${n}</td>`;
       }).join('');
-      pie.push(`<tr><th scope="row" class="fija">${c === 'TA' ? 'Teleasist.' : 'Supervis.'}</th><td class="fija2">${FRANJA_NOMBRE[f]}</td>${celdas}<td></td><td></td><td></td></tr>`);
+      pie.push(`<tr${fi === 0 && c !== cols[0] ? ' class="inicio-col"' : ''}><th scope="row" class="fija" title="Personas en sala; en rojo, las que faltan para el mínimo">${fi === 0 ? (c === 'TA' ? 'Teleasistencia' : 'Supervisión') : ''}</th><td class="fija2">${FRANJA_NOMBRE[f]}</td>${celdas}<td></td><td></td><td></td></tr>`);
     });
   }
   const pieFijo = pie.slice(0, 3).join(''), pieResto = pie.slice(3).join('');
   return `${hojaColores}<div class="tabla-caja"><table class="cuadrante">
-    <caption class="oculto">Cuadrante de ${MESES[u.mesDesde].toLowerCase()}${u.mesHasta !== u.mesDesde ? ` a ${MESES[u.mesHasta].toLowerCase()}` : ''} de ${estado.cfg.anio}</caption>
+    <caption class="oculto">Cuadrante de ${MESES[(res.meses[u.mesDesde] || {}).mes ?? 0].toLowerCase()}${u.mesHasta !== u.mesDesde ? ` a ${MESES[(res.meses[u.mesHasta] || {}).mes ?? 0].toLowerCase()}` : ''} de ${estado.cfg.anio}</caption>
     <thead><tr><th scope="col" class="fija">Persona</th><th scope="col" class="fija2">${estado.plantilla || (estado.res && estado.res.personas.some(x => x.nombrePrueba)) ? 'Nombre' : 'Grupo'}</th>${cab}
       <th scope="col" class="num" title="Horas en el año">Horas</th><th scope="col" class="num" title="Noches en el año">Noch.</th><th scope="col" class="num" title="Fines de semana trabajados en el año">FS</th></tr></thead>
     <tbody>${filas || `<tr><td colspan="${dias.length + 5}" style="padding:16px">No hay personas con estos filtros. Quita alguno o añade un grupo en Parámetros.</td></tr>`}</tbody>
@@ -281,12 +281,12 @@ function tablaAnio(lista) {
   // Huecos por mes
   const filasHuecos = [];
   for (const c of res.colectivos) for (const f of res.franjas) {
-    const meses = Array(12).fill(0);
-    res.huecos.filter(h => h.colectivo === c && h.franja === f).forEach(h => { meses[res.dias[h.d].mes] += h.falta; });
+    const meses = Array(res.meses.length).fill(0);
+    res.huecos.filter(h => h.colectivo === c && h.franja === f).forEach(h => { meses[res.dias[h.d].mc] += h.falta; });
     filasHuecos.push(`<tr><th scope="row">${c === 'TA' ? 'Teleasistencia' : 'Supervisión'} · ${FRANJA_NOMBRE[f]}</th>${meses.map(n => `<td class="num" style="${n ? 'color:var(--bad);font-weight:600' : ''}">${n || '—'}</td>`).join('')}<td class="num"><b>${meses.reduce((a, b) => a + b, 0) || '—'}</b></td></tr>`);
   }
   return `<div class="panel"><h2>Turnos sin cubrir por mes</h2><p class="tenue">Cuántos turnos faltan para llegar al mínimo en cada franja. Para reducirlos, añade personas, cambia patrones o revisa los topes en Parámetros.</p>
-    <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Franja</th>${MESES.map(m => `<th scope="col" class="num">${m.slice(0, 3)}</th>`).join('')}<th scope="col" class="num">Total</th></tr></thead><tbody>${filasHuecos.join('')}</tbody></table></div></div>
+    <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Franja</th>${res.meses.map(m => `<th scope="col" class="num">${MESES[m.mes].slice(0, 3)}${res.meses.length > 12 ? `<br><small>${String(m.anio).slice(2)}</small>` : ''}</th>`).join('')}<th scope="col" class="num">Total</th></tr></thead><tbody>${filasHuecos.join('')}</tbody></table></div></div>
     <div class="tabla-caja"><table class="tabla-lista"><caption class="oculto">Resumen anual por persona</caption><thead><tr>
     ${cabOrden('id', 'Persona', false)}${cabOrden('grupo', 'Grupo', false)}${cabOrden('horas', 'Horas')}<th scope="col" class="num">Objetivo</th>${cabOrden('diferencia', 'Diferencia')}
     <th scope="col" class="num">Mañanas</th><th scope="col" class="num">Tardes</th>${cabOrden('noches', 'Noches')}${cabOrden('fines', 'Fines de semana')}<th scope="col" class="num">Ajustes</th>${cabOrden('avisos', 'Avisos', false)}
@@ -352,11 +352,11 @@ export function eventosCuadrante(raiz, repintar) {
     if (b.dataset.mes) {
       // Mueve el tramo entero: con 3 meses elegidos, «Siguiente» pasa a los 3 siguientes.
       const largo = u.mesHasta - u.mesDesde + 1, paso = Number(b.dataset.mes) * largo;
-      const desde = Math.min(Math.max(0, u.mesDesde + paso), 12 - largo);
+      const desde = Math.min(Math.max(0, u.mesDesde + paso), estado.res.meses.length - largo);
       u.mesDesde = desde; u.mesHasta = desde + largo - 1;
       return repintar();
     }
-    if (b.dataset.meses === 'todo') { u.mesDesde = 0; u.mesHasta = 11; return repintar(); }
+    if (b.dataset.meses === 'todo') { u.mesDesde = 0; u.mesHasta = estado.res.meses.length - 1; return repintar(); }
     if (b.dataset.ordenDir) { u.orden = { ...u.orden, dir: -u.orden.dir }; return repintar(); }
     if (b.dataset.orden) {
       // Cabeceras de la tabla de cifras: mismo campo cambia el sentido; otro campo empieza por «de más a menos» en las cifras.

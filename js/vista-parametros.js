@@ -2,7 +2,7 @@
 import { estado, esc, $, $$, DIAS_CORTOS, MESES, fmtNum, estiloTurno, confirmar, modal, cambiado, leerRuta, ponerRuta, nuevoId, tinta, sedeBase, clonar, avisar, pedirFestivos } from './nucleo.js';
 import { estimarPatron, prepararTurno, resolverPatron, aplicarSolapes, fmtH } from './motor.js';
 import { COLECTIVOS, FRANJAS, FRANJA_NOMBRE, REGLAS_CATALOGO, TIPOS_FUENTE, nivelRegla, ROTATORIOS } from './datos-base.js';
-import { aplicarRotatorio } from './escenarios-plantilla.js';
+import { aplicarRotatorio, minimosHoraDesdeFranjas, tablaHoraConsultora } from './escenarios-plantilla.js';
 import { NIVELES } from './puntuacion.js';
 import { turnosAMedida, casoEspecial } from './contratos.js';
 import { fechaLocal, diaSemana } from './festivos.js';
@@ -68,7 +68,9 @@ export function seccionGeneral(cfg) {
     <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar" data-lista="festivos.enlaces" data-i="${i}">Quitar</button></td></tr>`).join('');
   return `<section class="panel" id="sec-general"><h2>Año y festivos</h2>
     <p class="tenue">Los festivos cuentan como domingo para los mínimos. Se calculan solos para el año que pongas: la fuente automática da los nacionales y autonómicos, y las fiestas locales se repiten cada año con su regla.</p>
-    <div class="campos">${campo('Título del cuadrante', txt('titulo', cfg.titulo, 'style="width:320px"'))}${campo('Año', num('anio', cfg.anio, 'min="2020" max="2100"'))}</div>
+    <div class="campos">${campo('Título del cuadrante', txt('titulo', cfg.titulo, 'style="width:320px"'))}${campo('Año', num('anio', cfg.anio, 'min="2020" max="2100"'))}
+      ${campo('El año del cuadrante va', sel('inicioCuadrante', cfg.inicioCuadrante || '01-01', [['01-01', `Del 1 de enero al 31 de diciembre de ${cfg.anio}`], ['01-15', `Del 15 de enero de ${cfg.anio} al 14 de enero de ${Number(cfg.anio) + 1} (sin cortar la Navidad)`]], 'data-estructura="1"'))}</div>
+    ${cfg.inicioCuadrante === '01-15' ? `<p class="tenue">Del 15 de enero al 14 de enero: la Navidad entera (del 24 de diciembre al 6 de enero) cae en el mismo cuadrante. Los festivos del 1 al 14 de enero de ${Number(cfg.anio) + 1} se toman de la fuente si ya están publicados; si no, Año Nuevo y Reyes.</p>` : ''}
 
     <h3 style="margin:16px 0 8px">Fuente automática (nacionales y autonómicos)</h3>
     <div class="campos" style="margin-top:0">
@@ -252,7 +254,28 @@ export function seccionMinimos(cfg) {
     <p class="tenue">Personas en sala por franja y día: cada día de la semana por separado y los festivos aparte (un festivo usa su columna aunque caiga entre semana). Valores de partida: Anexo 2 «Mínimos SAT 2013» de Sevilla. Si hay dos filas iguales, vale la más alta. En supervisión, el mínimo sube además con la ratio de Reglas. «L → M-V» copia el lunes al resto de la semana.</p>
     <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Colectivo</th><th scope="col">Franja</th>${DIAS_MIN.map((d, k) => `<th scope="col" class="num" title="${DIAS_MIN_LARGO[k]}">${d}</th>`).join('')}<th scope="col" class="num">Festivo</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="minimos">Añadir mínimo</button></div></section>
+  ${seccionMinimosHora(cfg)}
   ${seccionMinimosFecha(cfg)}`;
+}
+
+// Mínimos por horas: una tabla por colectivo (24 horas × lunes … domingo y festivo).
+const FILAS_HORA = ['L', 'M', 'X', 'J', 'V', 'S', 'D', 'Fest.'];
+function seccionMinimosHora(cfg) {
+  const mh = cfg.minimosHora || {}, u = (estado.ui.minHora ||= { col: 'TA' }), col = u.col;
+  const tabla = Array.isArray(mh[col]) ? mh[col] : null, ph = estado.res.porHoras, falta = ph && ph.colectivos[col];
+  const cuerpo = tabla ? Array.from({ length: 24 }, (_, h) => `<tr><th scope="row">${String(h).padStart(2, '0')}:00</th>
+      ${FILAS_HORA.map((_, f) => `<td class="num${f >= 5 ? ' finde' : ''}">${num(`minimosHora.${col}.${f}.${h}`, (tabla[f] || [])[h] ?? 0, `min="0" style="width:54px" aria-label="${FILAS_HORA[f]} a las ${h}"`)}</td>`).join('')}
+      <td class="num" style="${falta && falta.porHora[h] ? 'color:var(--bad);font-weight:600' : ''}">${falta ? fmtNum(Math.round(falta.porHora[h])) || '—' : ''}</td></tr>`).join('') : '';
+  return `<section class="panel" id="sec-minimos-hora"><h2>Mínimos por horas</h2>
+    <p class="tenue">En lugar de un mínimo por franja, uno por cada hora del día (de lunes a domingo y festivos). El ajuste sigue trabajando por franjas: el mínimo de cada franja sale de las horas centrales de su turno (la mañana de 9 a 14, la tarde de 16 a 21, la noche de 23 a 7). Las horas de los extremos (las 8, las 15, las 22…) se cuentan aparte: si ahí falta gente, hace falta otra hora de entrada o un solape. Una persona cuenta en una hora si está al menos 30 minutos.</p>
+    <div class="campos">${chk('minimosHora.activo', mh.activo, 'Usar los mínimos por horas', 'data-estructura="1" data-mh-activar="1"')}</div>
+    ${mh.activo ? `<div class="herramientas"><div class="grupo" role="group" aria-label="Colectivo">${COLECTIVOS.map(c => `<button type="button" class="btn mini" data-accion="mh-col" data-valor="${c.id}" aria-pressed="${col === c.id}">${esc(c.nombre)}</button>`).join('')}</div>
+      <div class="grupo"><button type="button" class="btn mini" data-accion="mh-franjas">Rellenar desde los mínimos por franja</button>
+        ${col === 'TA' && ['sevilla', 'malaga'].includes(cfg.id) ? '<button type="button" class="btn mini" data-accion="mh-consultora" title="Demanda planificada por la consultora en su informe (Escenario 3): media anual del pico + 20 % de absentismo + 40 % de la otra central">Usar la demanda por horas de la consultora</button>' : ''}
+        <button type="button" class="btn mini" data-accion="mh-lv">L → M-V</button></div></div>
+      ${falta ? `<p>${falta.total ? `En el año faltan <b>${fmtNum(Math.round(falta.total))}</b> personas-hora en ${fmtNum(falta.dias)} días (última columna: por hora).` : 'Todas las horas cubiertas.'}</p>` : ''}
+      <div class="tabla-caja" style="max-height:560px"><table class="tabla-lista tabla-horas"><thead><tr><th scope="col">Hora</th>${FILAS_HORA.map(f => `<th scope="col" class="num">${f}</th>`).join('')}<th scope="col" class="num" title="Personas-hora que faltan en el año">Faltan</th></tr></thead><tbody>${cuerpo}</tbody></table></div>` : ''}
+  </section>`;
 }
 
 // Mínimos de un día concreto (convenio: un teleasistente más en Nochebuena y Nochevieja).
@@ -321,6 +344,14 @@ export function seccionNavidad(cfg) {
     <p class="tenue">Los que se reparten aparte, con equidad y sin que toquen siempre a los mismos: «Mejorar reparto» (en el cuadrante) iguala por grupo los de este año más los de años anteriores.</p>
     <div class="campos" role="group" aria-label="Festivos especiales">${opciones.map(([k, n]) => `<label class="casilla"><input type="checkbox" data-especial="${esc(k)}" ${esp.has(k) ? 'checked' : ''}><span>${esc(n)} (${Number(k.slice(3))}-${k.slice(0, 2)})</span></label>`).join('')}</div>
     <p>Teleasistencia (todo el año): de media <b>${fmtNum(media, 1)}</b> festivos especiales por persona${nHist ? ', con los de años anteriores' : ''}; entre <b>${totales[0] ?? 0}</b> y <b>${totales.at(-1) ?? 0}</b>.</p>
+    <h3 style="margin:16px 0 8px">Días que no se repiten hasta que los haya trabajado toda la plantilla</h3>
+    <p class="tenue">Quien trabajó uno de estos días no lo vuelve a trabajar hasta que lo haya trabajado todo el mundo; luego empieza otra vuelta. Cuenta el turno que empieza ese día (la noche del 24 es del 24). Para el 24 y el 31, el AJ se da primero a quien ya lo trabajó; para los demás, el ajuste cambia su semana con alguien que aún no lo ha trabajado, si puede sin tocar la cobertura ni las horas.</p>
+    <div class="campos" role="group" aria-label="Días que rotan">${ESPECIALES_TIPICOS.map(([k, n]) => `<label class="casilla"><input type="checkbox" data-rotan="${esc(k)}" ${(rf.fechasRotan || []).includes(k) ? 'checked' : ''}><span>${esc(n)} (${Number(k.slice(3))}-${k.slice(0, 2)})</span></label>`).join('')}</div>
+    ${(rf.fechasRotan || []).length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Día</th><th scope="col" class="num">Ya lo han trabajado</th><th scope="col" class="num">Lo trabajan este año</th><th scope="col" class="num">Repiten</th></tr></thead><tbody>
+      ${(rf.fechasRotan || []).map(k => { const x = (res.repeticiones || {})[k]; return x ? `<tr><td>${Number(k.slice(3))}-${k.slice(0, 2)}${x.vueltaNueva ? ' <span class="pildora">vuelta nueva</span>' : ''}</td><td class="num">${fmtNum(x.yaTrabajado)} de ${fmtNum(x.plantilla)}</td><td class="num">${fmtNum(x.trabajan)}</td><td class="num" style="${x.repiten.length ? 'color:var(--bad);font-weight:600' : ''}">${fmtNum(x.repiten.length)}</td></tr>` : `<tr><td>${Number(k.slice(3))}-${k.slice(0, 2)}</td><td colspan="3" class="tenue">No cae en este cuadrante.</td></tr>`; }).join('')}
+    </tbody></table></div>
+    <div class="fila-acciones"><button type="button" class="btn" data-accion="rotan-guardar">Apuntar quién los trabaja en ${esc(cfg.anio)}</button>
+      ${Object.keys(rf.rotan || {}).some(k => (rf.rotan[k] || []).length) ? '<button type="button" class="btn peligro" data-accion="rotan-borrar">Borrar quién los ha trabajado</button>' : ''}</div>` : ''}
     <h3 style="margin:16px 0 8px">Años anteriores</h3>
     <p class="tenue">${nHist ? `Hay historial de ${fmtNum(nHist)} personas${rf.anioHistorial ? ` (hasta ${esc(rf.anioHistorial)})` : ''}. Cuenta en el reparto de este año.` : 'Sin historial. Al terminar el año, guarda los de este cuadrante: el año que viene, quien los trabajó tenderá a librarlos.'} Va por código de persona: con el ciclo que sigue de un año a otro, cada código es la misma persona.</p>
     <div class="fila-acciones"><button type="button" class="btn" data-accion="historial-guardar">Sumar los de ${esc(cfg.anio)} al historial</button>
@@ -385,6 +416,7 @@ export function seccionCobertura(cfg) {
     .sort((x, y) => String(x.a.desde).localeCompare(String(y.a.desde)));
   const opcPersonas = personas.map(p => [p.id, `${p.id}${p.nombre ? ` · ${p.nombre}` : ''}`]);
   const refuerzos = cfg.grupos.map((g, i) => ({ g, i })).filter(({ g }) => g.desde || g.hasta);
+  const discontinuos = cfg.grupos.map((g, i) => ({ g, i })).filter(({ g }) => Array.isArray(g.periodos) && g.periodos.length);
   return `<section class="panel" id="sec-cobertura"><h2>Noches cedidas</h2>
     <p class="tenue">Las 14 noches son de oficio. Por encima, son noches cedidas: el ajuste solo las usa si nadie más puede cubrir esa noche, empezando por quien menos lleva, y sus horas van a la bolsa de cada persona. La normativa admite hasta 7 cedidas (21 en total). Ahora: <b>${fmtNum(cedidas)}</b> noches cedidas entre ${fmtNum(quienes)} personas · <b>${fmtNum(huecos('noche'))}</b> personas-noche sin cubrir.</p>
     <div class="campos">
@@ -424,6 +456,29 @@ export function seccionCobertura(cfg) {
           ${chk(`grupos.${i}.condiciones.sinVacaciones`, !!(g.condiciones && g.condiciones.sinVacaciones), 'Sin vacaciones (temporal)', 'data-estructura="1"')}</td></tr>`).join('')}
     </tbody></table></div>` : '<p class="tenue">No hay refuerzos.</p>'}
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir-refuerzo" data-colectivo="TA">Añadir refuerzo de teleasistencia</button><button type="button" class="btn" data-accion="anadir-refuerzo" data-colectivo="SUP">Añadir refuerzo de supervisión</button></div>
+  </section>
+  <section class="panel" id="sec-discontinuos"><h2>Fijos discontinuos</h2>
+    <p class="tenue">Refuerzo con periodos de alta (Navidad, Semana Santa, Feria, verano). Sin patrón: el ajuste les pone mañana, tarde o noche donde falta gente (horario libre). Su jornada sale en proporción a los días de alta, como en el horario real de 2027 (R1.FD de Málaga: unas 757 h). Sin vacaciones en el cuadrante y sin las reglas de fines de semana.</p>
+    ${discontinuos.map(({ g, i }) => {
+      const ps = estado.res.personas.filter(p => p.grupo === g.id), p0 = ps[0];
+      const med = (k) => { const v = ps.map(p => p[k]).sort((a, b) => a - b); return v.length ? v[v.length >> 1] : 0; };
+      const regla = (pe, k) => pe.regla === 'pascua'
+        ? `${num(`grupos.${i}.periodos.${k}.desde`, pe.desde, 'style="width:64px" aria-label="Desde (días desde Pascua)"')} a ${num(`grupos.${i}.periodos.${k}.hasta`, pe.hasta, 'style="width:64px" aria-label="Hasta (días desde Pascua)"')} <span class="tenue">días desde el domingo de Pascua</span>`
+        : pe.regla === 'fechas'
+          ? `<input type="date" data-ruta="grupos.${i}.periodos.${k}.desde" value="${esc(pe.desde)}" aria-label="Desde"> a <input type="date" data-ruta="grupos.${i}.periodos.${k}.hasta" value="${esc(pe.hasta)}" aria-label="Hasta">`
+          : `<input type="date" data-ruta="grupos.${i}.periodos.${k}.desde" data-tipo="mmdd" value="${cfg.anio}-${esc(pe.desde)}" aria-label="Desde"> a <input type="date" data-ruta="grupos.${i}.periodos.${k}.hasta" data-tipo="mmdd" value="${cfg.anio}-${esc(pe.hasta)}" aria-label="Hasta"> <span class="tenue">todos los años</span>`;
+      return `<h3 style="margin:12px 0 8px">${esc(g.nombre)}</h3>
+      <div class="campos">${campo('Personas', num(`grupos.${i}.personas`, g.personas, 'min="0" max="500" style="width:80px"'))}</div>
+      <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Periodo</th><th scope="col">Cómo</th><th scope="col">Fechas</th><th scope="col"></th></tr></thead><tbody>
+        ${g.periodos.map((pe, k) => `<tr><td>${txt(`grupos.${i}.periodos.${k}.nombre`, pe.nombre || '', 'aria-label="Nombre" style="width:170px"')}</td>
+          <td>${sel(`grupos.${i}.periodos.${k}.regla`, pe.regla || 'fijo', [['fijo', 'Mismas fechas cada año'], ['pascua', 'Según la Pascua'], ['fechas', 'Fechas de un año']], 'aria-label="Cómo" data-estructura="1"')}</td>
+          <td>${regla(pe, k)}</td>
+          <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar" data-lista="grupos.${i}.periodos" data-i="${k}">Quitar</button></td></tr>`).join('')}
+      </tbody></table></div>
+      <div class="fila-acciones"><button type="button" class="btn mini" data-accion="periodo-anadir" data-g="${i}">Añadir periodo</button></div>
+      <p>${p0 ? `<b>${fmtNum(p0.diasAlta)}</b> días de alta en el cuadrante · jornada de <b>${fmtH(p0.objetivo + (p0.horasAJ || 0))}</b> h · de mediana ${fmtNum(med('mananas'))} mañanas, ${fmtNum(med('tardes'))} tardes, ${fmtNum(med('noches'))} noches y ${fmtNum(med('fines'))} fines de semana` : 'Sin personas.'}</p>`;
+    }).join('') || '<p class="tenue">No hay ningún grupo de fijos discontinuos.</p>'}
+    ${discontinuos.length ? '' : '<div class="fila-acciones"><button type="button" class="btn" data-accion="anadir-discontinuos">Añadir fijos discontinuos (24 personas)</button></div>'}
   </section>
   <section class="panel"><h2>Margen para imprevistos y aguante</h2>
     <p class="tenue">El margen hace que el ajuste ponga gente de más sobre el mínimo, si puede, para que una baja de última hora no deje la franja descubierta. Se cubre al final, con las noches de oficio y sin dejar a nadie por debajo de su jornada. Los huecos se siguen midiendo frente al mínimo real.</p>
@@ -642,6 +697,11 @@ export function eventosParametros(raiz, repintar) {
       cfg.aj.elegidos[id] = l;
       return cambiado();
     }
+    if (el.dataset.rotan != null) {
+      if (!final) return;
+      cfg.repartoFestivos.fechasRotan = $$('input[data-rotan]:checked', raiz).map(x => x.dataset.rotan);
+      cambiado(); return setTimeout(() => repintar(), 200);
+    }
     if (el.dataset.especial != null) {
       if (!final) return;
       cfg.repartoFestivos.especiales = $$('input[data-especial]:checked', raiz).map(x => x.dataset.especial);
@@ -675,6 +735,7 @@ export function eventosParametros(raiz, repintar) {
       g.patron = resolverPatron(g, cfg.grupos).slice();
     }
     ponerRuta(cfg, ruta, valor);
+    if (ruta === 'minimosHora.activo' && valor) { const t = minimosHoraDesdeFranjas(cfg); for (const c of ['TA', 'SUP']) if (!Array.isArray(cfg.minimosHora[c])) cfg.minimosHora[c] = t[c]; }
     if (ruta.startsWith('reglas.') && ruta.endsWith('.activo')) { const n = el.closest('tr') && $('input[type=number]', el.closest('tr')); if (n) n.disabled = !valor; }
     cambiado();
     if (el.dataset.estructura || ruta.endsWith('.vacaciones.activo') || ruta.endsWith('.color') || ruta === 'anio') {
@@ -735,6 +796,30 @@ export function eventosParametros(raiz, repintar) {
       cfg.especiales[id] = { contrato: '', franjas: '', sinFindes: false, diasLibres: [], alta: '', baja: '', semanaInicio: 0 };
       cambiado({ inmediato: true }); return repintar();
     }
+    if (a === 'mh-col') { (estado.ui.minHora ||= {}).col = b.dataset.valor; return repintar(); }
+    if (a === 'mh-franjas' || a === 'mh-consultora') {
+      const col = (estado.ui.minHora || {}).col || 'TA';
+      const t = a === 'mh-franjas' ? minimosHoraDesdeFranjas(cfg)[col] : tablaHoraConsultora(cfg.id);
+      if (!t) return;
+      cfg.minimosHora = { ...(cfg.minimosHora || {}), activo: true, [col]: t };
+      cambiado({ inmediato: true }); repintar();
+      return avisar(a === 'mh-franjas' ? 'Tabla rellenada con los mínimos de cada franja.' : 'Tabla con la demanda por horas de la consultora (Escenario 3). Mira la columna «Faltan».', 'bien');
+    }
+    if (a === 'mh-lv') {
+      const col = (estado.ui.minHora || {}).col || 'TA', t = cfg.minimosHora && cfg.minimosHora[col];
+      if (!Array.isArray(t)) return;
+      for (let f = 1; f < 5; f++) t[f] = t[0].slice();
+      cambiado({ inmediato: true }); return repintar();
+    }
+    if (a === 'periodo-anadir') {
+      cfg.grupos[Number(b.dataset.g)].periodos.push({ nombre: 'Nuevo periodo', regla: 'fechas', desde: `${cfg.anio}-04-01`, hasta: `${cfg.anio}-04-07` });
+      cambiado({ inmediato: true }); return repintar();
+    }
+    if (a === 'anadir-discontinuos') {
+      const base = sedeBase(cfg.id).grupos.find(g => g.id === 'fd');
+      if (base) cfg.grupos.push(clonar(base));
+      cambiado({ inmediato: true }); return repintar();
+    }
     if (a === 'aplicar-rotatorio') {
       const id = $(`#rot-${b.dataset.g}`, raiz).value, rot = ROTATORIOS.find(r => r.id === id);
       if (!(await confirmar(`¿Poner «${esc(rot.nombre)}»?`, 'Sustituye el patrón de semanas del grupo (los cambios hechos a mano en el patrón se pierden; Ctrl+Z lo deshace). Pone también «una semana de tarde cada N» y «un fin de semana de cada 3».', 'Poner'))) return;
@@ -758,6 +843,23 @@ export function eventosParametros(raiz, repintar) {
       cfg.repartoFestivos.anioHistorial = cfg.anio;
       cambiado({ inmediato: true }); repintar();
       return avisar(`Sumados los festivos especiales de ${cfg.anio} de ${n} personas. Para el año que viene, cambia el año en «Año y festivos».`, 'bien');
+    }
+    if (a === 'rotan-guardar') {
+      // Suma a quien trabaja cada día en este cuadrante; si con eso ya está toda la plantilla, empieza otra vuelta.
+      const res = estado.res, rf = cfg.repartoFestivos;
+      for (const k of rf.fechasRotan || []) {
+        const x = (res.repeticiones || {})[k]; if (!x) continue;
+        const d = res.dias.find(y => y.fecha === x.fecha).i;
+        const hoy = res.personas.filter((p, pi) => !p.altaDias && res.turnos[res.grid[pi * res.D + d]].trabaja).map(p => p.id);
+        const antes = x.vueltaNueva ? [] : (rf.rotan[k] || []);
+        rf.rotan[k] = [...new Set([...antes, ...hoy])];
+      }
+      cambiado({ inmediato: true }); repintar();
+      return avisar(`Apuntado quién trabaja esos días en ${cfg.anio}. Para el año que viene, cambia el año: se intentará que no repitan.`, 'bien');
+    }
+    if (a === 'rotan-borrar') {
+      if (!(await confirmar('¿Borrar quién ha trabajado esos días?', 'Empieza la vuelta desde cero.', 'Borrar'))) return;
+      cfg.repartoFestivos.rotan = {}; cambiado({ inmediato: true }); return repintar();
     }
     if (a === 'historial-borrar') {
       if (!(await confirmar('¿Borrar el historial?', 'Se pierden los festivos especiales de años anteriores de todas las personas.', 'Borrar'))) return;
