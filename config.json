@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-24T13:25:15.524Z",
- "nota": "Sin cambios en el cuadrante.",
+ "guardado": "2026-11-24T13:37:11.516Z",
+ "nota": "Sevilla: año, título, contratos, grupos y patrones, reglas",
  "config": {
   "version": 2,
   "tema": "day",
@@ -164,8 +164,8 @@
    {
     "id": "sevilla",
     "nombre": "Sevilla",
-    "titulo": "SAT Sevilla · propuesta de cuadrante",
-    "anio": 2028,
+    "titulo": "SAT Sevilla · Pruebas",
+    "anio": 2029,
     "turnos": [
      {
       "codigo": "RM1",
@@ -326,7 +326,7 @@
       "colectivo": "TA",
       "nombre": "Turno rotatorio común",
       "prefijo": "TA",
-      "personas": 256,
+      "personas": 309,
       "patron": [
        "L",
        "RM1",
@@ -350,12 +350,12 @@
        "RT1",
        "RT1",
        "L",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
        "L",
-       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
        "RM1",
        "RM1",
        "RM1",
@@ -560,7 +560,7 @@
       "colectivo": "TA",
       "nombre": "Refuerzo de verano",
       "prefijo": "RV",
-      "personas": 35,
+      "personas": 24,
       "patron": [],
       "patronDe": "ta",
       "flexible": true,
@@ -735,7 +735,7 @@
       "valor": 1
      },
      "minFinesLibresMes": {
-      "activo": false,
+      "activo": true,
       "valor": 1
      },
      "descanso": {
@@ -985,11 +985,11 @@
      },
      {
       "id": "r30",
-      "nombre": "Reducida 30 h",
-      "horasSemana": 30,
+      "nombre": "Mayores de 50",
+      "horasSemana": 35,
       "sinNoches": true,
       "turnos": {
-       "manana": "",
+       "manana": "RM1",
        "tarde": "",
        "noche": ""
       }
@@ -998,7 +998,7 @@
       "id": "r25",
       "nombre": "Reducida 25 h",
       "horasSemana": 25,
-      "sinNoches": true,
+      "sinNoches": false,
       "turnos": {
        "manana": "",
        "tarde": "",
@@ -1009,7 +1009,7 @@
       "id": "r20",
       "nombre": "Reducida 20 h",
       "horasSemana": 20,
-      "sinNoches": true,
+      "sinNoches": false,
       "turnos": {
        "manana": "",
        "tarde": "",
