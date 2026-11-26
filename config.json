@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T15:37:12.846Z",
- "nota": "Sevilla: título, turnos, contratos, grupos y patrones, mínimos, reglas, vacaciones, mejora del reparto",
+ "guardado": "2026-11-26T15:37:42.775Z",
+ "nota": "Sevilla: turnos, grupos y patrones, mínimos, mejora del reparto",
  "config": {
   "version": 2,
   "appMin": 3,
@@ -241,38 +241,6 @@
       "color": "#B7D3F2"
      },
      {
-      "codigo": "MA",
-      "nombre": "Mañana línea A",
-      "inicio": "07:45",
-      "fin": "14:45",
-      "franja": "manana",
-      "color": "#FFD37A"
-     },
-     {
-      "codigo": "TA",
-      "nombre": "Tarde línea A",
-      "inicio": "14:45",
-      "fin": "21:45",
-      "franja": "tarde",
-      "color": "#F39A5E"
-     },
-     {
-      "codigo": "MB",
-      "nombre": "Mañana línea B",
-      "inicio": "08:15",
-      "fin": "15:15",
-      "franja": "manana",
-      "color": "#FBE9B7"
-     },
-     {
-      "codigo": "TB",
-      "nombre": "Tarde línea B",
-      "inicio": "15:15",
-      "fin": "22:15",
-      "franja": "tarde",
-      "color": "#F7C3A0"
-     },
-     {
       "codigo": "L",
       "nombre": "Libre",
       "inicio": "",
@@ -357,164 +325,57 @@
      {
       "id": "ta",
       "colectivo": "TA",
-      "nombre": "Línea A (07:45-14:45 / 14:45-21:45)",
+      "nombre": "Turno rotatorio común",
       "prefijo": "TA",
-      "personas": 128,
+      "personas": 256,
       "patron": [
        "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "L",
-       "L",
-       "L",
-       "L",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "L",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "L",
-       "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
        "L",
        "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
        "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "L",
-       "L",
-       "N",
-       "N",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
        "L",
        "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "L",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "L",
-       "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
        "L",
        "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "L",
-       "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "N",
-       "N",
-       "N",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "L",
-       "L",
-       "L",
-       "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "L",
-       "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "L",
-       "L",
-       "L",
-       "L",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "L",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
-       "L",
-       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
        "N",
@@ -524,151 +385,46 @@
        "L",
        "L",
        "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "L",
-       "TA",
-       "TA",
-       "TA",
-       "TA",
        "L",
        "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
        "L",
        "L",
-       "L",
-       "L",
-       "MA",
-       "MA",
-       "MA",
-       "MA",
-       "MA"
-      ],
-      "patronDe": "",
-      "flexible": true,
-      "horasObjetivo": 1480.5,
-      "franjasAjuste": [
-       "manana",
-       "tarde",
-       "noche"
-      ],
-      "vacaciones": {
-       "activo": true,
-       "dias": 30,
-       "desde": "06-01",
-       "hasta": "09-30"
-      }
-     },
-     {
-      "id": "tb",
-      "colectivo": "TA",
-      "nombre": "Línea B (08:15-15:15 / 15:15-22:15)",
-      "prefijo": "TB",
-      "personas": 128,
-      "patron": [
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "L",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
        "L",
        "L",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
-       "L",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
-       "L",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "L",
-       "L",
-       "N",
-       "N",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "L",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
-       "L",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
-       "L",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "L",
-       "L",
-       "L",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "L",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
        "L",
@@ -685,46 +441,46 @@
        "L",
        "L",
        "L",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
        "L",
        "L",
        "L",
        "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "L",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
        "L",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
        "L",
        "L",
        "L",
@@ -736,32 +492,32 @@
        "L",
        "L",
        "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
-       "TB",
-       "TB",
-       "TB",
-       "TB",
-       "L",
-       "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
        "L",
        "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
        "L",
        "L",
-       "MB",
-       "MB",
-       "MB",
-       "MB",
-       "MB"
+       "L",
+       "L",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1",
+       "RM1"
       ],
       "patronDe": "",
       "flexible": true,
@@ -831,7 +587,7 @@
     ],
     "solapes": [
      {
-      "activo": false,
+      "activo": true,
       "grupo": "ta",
       "base": "RM1",
       "turno": "S1",
@@ -850,15 +606,15 @@
       "sabado": 39,
       "domingo": 29,
       "dias": [
-       47,
-       47,
-       47,
-       47,
-       47,
-       39,
-       29
+       89,
+       89,
+       89,
+       89,
+       89,
+       44,
+       44
       ],
-      "festivo": 29
+      "festivo": 44
      },
      {
       "colectivo": "TA",
@@ -867,11 +623,11 @@
       "sabado": 29,
       "domingo": 28,
       "dias": [
-       37,
-       37,
-       37,
-       37,
-       37,
+       59,
+       59,
+       59,
+       59,
+       59,
        29,
        28
       ],
@@ -884,15 +640,15 @@
       "sabado": 8,
       "domingo": 8,
       "dias": [
-       8,
-       8,
-       8,
-       8,
-       8,
-       8,
-       8
+       9,
+       9,
+       9,
+       9,
+       9,
+       9,
+       9
       ],
-      "festivo": 8
+      "festivo": 9
      },
      {
       "colectivo": "SUP",
@@ -1350,183 +1106,519 @@
      "noche": 0,
      "cuenta": "margen"
     },
-    "escenarioAbierto": "esc-tvjxi4",
+    "escenarioAbierto": "esc-mc-sevilla",
     "mejora": {
      "intercambios": [
       {
-       "a": "RV 10",
-       "b": "RV 20",
+       "a": "RV 05",
+       "b": "RV 32",
        "d": 199,
        "n": 7
       },
       {
-       "a": "TB 029",
-       "b": "TB 089",
+       "a": "TA 028",
+       "b": "TA 033",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 064",
+       "b": "TA 021",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 215",
+       "b": "TA 038",
+       "d": 353,
+       "n": 7
+      },
+      {
+       "a": "TA 181",
+       "b": "TA 166",
        "d": 3,
        "n": 14
       },
       {
-       "a": "RV 10",
+       "a": "RV 09",
+       "b": "RV 35",
+       "d": 171,
+       "n": 7
+      },
+      {
+       "a": "RV 33",
+       "b": "RV 04",
+       "d": 241,
+       "n": 7
+      },
+      {
+       "a": "TA 148",
+       "b": "TA 073",
+       "d": 31,
+       "n": 7
+      },
+      {
+       "a": "TA 222",
+       "b": "TA 139",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "RV 08",
        "b": "RV 30",
+       "d": 164,
+       "n": 14
+      },
+      {
+       "a": "RV 04",
+       "b": "RV 22",
+       "d": 213,
+       "n": 7
+      },
+      {
+       "a": "RV 04",
+       "b": "RV 33",
+       "d": 241,
+       "n": 7
+      },
+      {
+       "a": "TA 252",
+       "b": "TA 174",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 230",
+       "b": "TA 038",
+       "d": 129,
+       "n": 7
+      },
+      {
+       "a": "TA 001",
+       "b": "TA 078",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 221",
+       "b": "TA 005",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 197",
+       "b": "TA 104",
+       "d": 17,
+       "n": 14
+      },
+      {
+       "a": "TA 087",
+       "b": "TA 136",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 205",
+       "b": "TA 105",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 232",
+       "b": "TA 198",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 152",
+       "b": "TA 140",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 211",
+       "b": "TA 022",
+       "d": 346,
+       "n": 7
+      },
+      {
+       "a": "RV 21",
+       "b": "RV 13",
        "d": 178,
        "n": 7
       },
       {
-       "a": "RV 15",
-       "b": "RV 31",
-       "d": 220,
-       "n": 7
-      },
-      {
-       "a": "RV 23",
-       "b": "RV 07",
-       "d": 220,
-       "n": 7
-      },
-      {
-       "a": "TB 101",
-       "b": "TB 089",
-       "d": 276,
+       "a": "RV 18",
+       "b": "RV 32",
+       "d": 171,
        "n": 14
       },
       {
-       "a": "RV 02",
-       "b": "RV 31",
-       "d": 185,
+       "a": "TA 091",
+       "b": "TA 112",
+       "d": 143,
        "n": 14
       },
       {
-       "a": "TB 102",
-       "b": "TB 033",
+       "a": "RV 31",
+       "b": "RV 18",
+       "d": 178,
+       "n": 7
+      },
+      {
+       "a": "RV 18",
+       "b": "RV 29",
+       "d": 164,
+       "n": 14
+      },
+      {
+       "a": "TA 205",
+       "b": "TA 046",
+       "d": 3,
+       "n": 14
+      },
+      {
+       "a": "RV 01",
+       "b": "RV 19",
+       "d": 171,
+       "n": 14
+      },
+      {
+       "a": "TA 141",
+       "b": "TA 118",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 194",
+       "b": "TA 245",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "RV 11",
+       "b": "RV 15",
+       "d": 164,
+       "n": 14
+      },
+      {
+       "a": "TA 006",
+       "b": "TA 069",
+       "d": 122,
+       "n": 7
+      },
+      {
+       "a": "TA 085",
+       "b": "TA 235",
        "d": 3,
        "n": 7
       },
       {
        "a": "TA 050",
-       "b": "TA 026",
+       "b": "TA 233",
        "d": 143,
+       "n": 7
+      },
+      {
+       "a": "TA 097",
+       "b": "TA 156",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 198",
+       "b": "TA 138",
+       "d": 52,
        "n": 14
+      },
+      {
+       "a": "TA 072",
+       "b": "TA 078",
+       "d": 143,
+       "n": 7
+      },
+      {
+       "a": "TA 188",
+       "b": "TA 056",
+       "d": 3,
+       "n": 14
+      },
+      {
+       "a": "TA 051",
+       "b": "TA 073",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 168",
+       "b": "TA 087",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 162",
+       "b": "TA 171",
+       "d": 164,
+       "n": 7
       },
       {
        "a": "RV 19",
-       "b": "RV 27",
-       "d": 241,
-       "n": 7
-      },
-      {
-       "a": "RV 05",
-       "b": "RV 35",
-       "d": 192,
+       "b": "RV 10",
+       "d": 234,
        "n": 14
       },
       {
-       "a": "RV 24",
-       "b": "RV 17",
-       "d": 234,
+       "a": "TA 086",
+       "b": "TA 083",
+       "d": 3,
+       "n": 14
+      },
+      {
+       "a": "TA 120",
+       "b": "TA 225",
+       "d": 3,
        "n": 7
       },
       {
-       "a": "RV 24",
-       "b": "RV 16",
-       "d": 220,
+       "a": "TA 004",
+       "b": "TA 121",
+       "d": 325,
+       "n": 14
+      },
+      {
+       "a": "TA 245",
+       "b": "TA 089",
+       "d": 3,
+       "n": 14
+      },
+      {
+       "a": "TA 219",
+       "b": "TA 090",
+       "d": 3,
        "n": 7
       },
       {
-       "a": "RV 24",
+       "a": "SUP 28",
+       "b": "SUP 01",
+       "d": 3,
+       "n": 14
+      },
+      {
+       "a": "TA 163",
+       "b": "TA 087",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 030",
+       "b": "TA 225",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 178",
+       "b": "TA 229",
+       "d": 115,
+       "n": 7
+      },
+      {
+       "a": "RV 32",
        "b": "RV 19",
        "d": 185,
        "n": 7
       },
       {
+       "a": "RV 15",
+       "b": "RV 26",
+       "d": 164,
+       "n": 14
+      },
+      {
+       "a": "RV 32",
+       "b": "RV 20",
+       "d": 185,
+       "n": 7
+      },
+      {
+       "a": "TA 124",
+       "b": "TA 163",
+       "d": 157,
+       "n": 7
+      },
+      {
+       "a": "TA 220",
+       "b": "TA 049",
+       "d": 10,
+       "n": 7
+      },
+      {
+       "a": "TA 102",
+       "b": "TA 123",
+       "d": 17,
+       "n": 14
+      },
+      {
        "a": "TA 115",
-       "b": "TA 124",
+       "b": "TA 016",
        "d": 115,
        "n": 7
       },
       {
-       "a": "TB 010",
-       "b": "TB 099",
+       "a": "TA 022",
+       "b": "TA 196",
        "d": 3,
-       "n": 7
-      },
-      {
-       "a": "TA 110",
-       "b": "TA 101",
-       "d": 59,
-       "n": 14
-      },
-      {
-       "a": "TB 087",
-       "b": "TB 037",
-       "d": 3,
-       "n": 7
-      },
-      {
-       "a": "RV 21",
-       "b": "RV 31",
-       "d": 234,
-       "n": 14
-      },
-      {
-       "a": "TA 114",
-       "b": "TA 003",
-       "d": 3,
-       "n": 7
-      },
-      {
-       "a": "RV 02",
-       "b": "RV 15",
-       "d": 206,
-       "n": 7
-      },
-      {
-       "a": "TA 032",
-       "b": "TA 044",
-       "d": 80,
-       "n": 14
-      },
-      {
-       "a": "RV 28",
-       "b": "RV 05",
-       "d": 213,
        "n": 14
       },
       {
        "a": "SUP 20",
-       "b": "SUP 08",
-       "d": 94,
+       "b": "SUP 26",
+       "d": 80,
        "n": 14
       },
       {
-       "a": "TA 009",
-       "b": "TA 111",
+       "a": "TA 242",
+       "b": "TA 113",
        "d": 3,
        "n": 7
       },
       {
-       "a": "RV 05",
-       "b": "RV 25",
-       "d": 185,
+       "a": "TA 200",
+       "b": "TA 032",
+       "d": 45,
        "n": 14
       },
       {
-       "a": "TB 016",
-       "b": "TB 048",
+       "a": "TA 065",
+       "b": "TA 248",
        "d": 3,
        "n": 7
       },
       {
-       "a": "SUP 23",
-       "b": "SUP 02",
+       "a": "TA 175",
+       "b": "TA 088",
+       "d": 136,
+       "n": 14
+      },
+      {
+       "a": "TA 139",
+       "b": "TA 082",
        "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 097",
+       "b": "TA 244",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 103",
+       "b": "TA 007",
+       "d": 73,
+       "n": 7
+      },
+      {
+       "a": "TA 087",
+       "b": "TA 231",
+       "d": 122,
+       "n": 14
+      },
+      {
+       "a": "TA 244",
+       "b": "TA 055",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 043",
+       "b": "TA 252",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 065",
+       "b": "TA 011",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 168",
+       "b": "TA 189",
+       "d": 269,
+       "n": 14
+      },
+      {
+       "a": "TA 037",
+       "b": "TA 240",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 244",
+       "b": "TA 136",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "SUP 10",
+       "b": "SUP 01",
+       "d": 3,
+       "n": 14
+      },
+      {
+       "a": "TA 178",
+       "b": "TA 237",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 021",
+       "b": "TA 163",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 144",
+       "b": "TA 156",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 118",
+       "b": "TA 040",
+       "d": 3,
+       "n": 7
+      },
+      {
+       "a": "TA 171",
+       "b": "TA 036",
+       "d": 3,
+       "n": 14
+      },
+      {
+       "a": "TA 214",
+       "b": "TA 181",
+       "d": 136,
+       "n": 7
+      },
+      {
+       "a": "TA 170",
+       "b": "TA 089",
+       "d": 3,
+       "n": 14
+      },
+      {
+       "a": "TA 242",
+       "b": "TA 254",
+       "d": 353,
        "n": 7
       }
      ],
      "semilla": 1,
-     "coste0": 622.7658212746311,
-     "coste": 552.7658212746318,
+     "coste0": 742.9262296028327,
+     "coste": 567.9262296028323,
      "fecha": "2026-11-26",
-     "base": "ue5yvo8m3",
+     "base": "n3yy6w7gw",
      "auto": true
     }
    },
@@ -3447,6 +3539,7 @@
       "solicitudes": {},
       "sueltosEnJornada": false,
       "sueltosOctDic": 1,
+      "cuenta": "cuadrante",
       "nota": "Periodos y plazas del correo de Procesos horarios de Sevilla (2027). Supervisión: 3 plazas, orientativo."
      },
      "festivos": {
@@ -3610,7 +3703,10 @@
       "ausencias": [],
       "aguante": {
        "avisar": true
-      }
+      },
+      "findesBolsa": false,
+      "margenCuartos": 0,
+      "nochesExactas": false
      },
      "aj": {
       "activo": true,
@@ -3669,6 +3765,11 @@
      "especiales": {},
      "minimosHora": {
       "activo": false
+     },
+     "absentismo": {
+      "dia": 0,
+      "noche": 0,
+      "cuenta": "margen"
      }
     }
    },
@@ -4389,6 +4490,8 @@
       ],
       "solicitudes": {},
       "sueltosEnJornada": false,
+      "sueltosOctDic": 1,
+      "cuenta": "cuadrante",
       "nota": "Periodos y plazas del correo de Procesos horarios de Sevilla (2027). Supervisión: 3 plazas, orientativo."
      },
      "festivos": {
@@ -4552,9 +4655,74 @@
       "ausencias": [],
       "aguante": {
        "avisar": true
-      }
+      },
+      "findesBolsa": false,
+      "margenCuartos": 0,
+      "nochesExactas": false
      },
-     "especiales": {}
+     "aj": {
+      "activo": true,
+      "modo": "fijo",
+      "fechas": [
+       "12-24",
+       "12-31"
+      ],
+      "desde": "12-20",
+      "hasta": "12-31",
+      "enJornada": true,
+      "elegidos": {}
+     },
+     "minimosFecha": [
+      {
+       "activo": true,
+       "colectivo": "TA",
+       "franja": "noche",
+       "fecha": "12-24",
+       "modo": "suma",
+       "valor": 1,
+       "nota": "Nochebuena"
+      },
+      {
+       "activo": true,
+       "colectivo": "TA",
+       "franja": "noche",
+       "fecha": "12-31",
+       "modo": "suma",
+       "valor": 1,
+       "nota": "Nochevieja"
+      }
+     ],
+     "repartoFestivos": {
+      "noche": "salida",
+      "especiales": [
+       "12-24",
+       "12-25",
+       "12-31",
+       "01-01",
+       "01-06"
+      ],
+      "historial": {},
+      "anioHistorial": null,
+      "fechasRotan": [
+       "12-24",
+       "12-31",
+       "01-06"
+      ],
+      "rotan": {}
+     },
+     "ciclo": {
+      "continuo": true,
+      "inicio": "2026-12-28"
+     },
+     "especiales": {},
+     "minimosHora": {
+      "activo": false
+     },
+     "absentismo": {
+      "dia": 0,
+      "noche": 0,
+      "cuenta": "margen"
+     }
     }
    },
    {
@@ -6592,7 +6760,7 @@
     "sede": "sevilla",
     "nombre": "Antes de la reunion",
     "nota": "",
-    "fecha": "2026-11-26T09:02:33.823Z",
+    "fecha": "2026-11-26T15:37:25.121Z",
     "cfg": {
      "id": "sevilla",
      "nombre": "Sevilla",
@@ -7780,6 +7948,184 @@
       "dia": 0,
       "noche": 0,
       "cuenta": "margen"
+     },
+     "mejora": {
+      "intercambios": [
+       {
+        "a": "RV 10",
+        "b": "RV 20",
+        "d": 199,
+        "n": 7
+       },
+       {
+        "a": "TB 029",
+        "b": "TB 089",
+        "d": 3,
+        "n": 14
+       },
+       {
+        "a": "RV 10",
+        "b": "RV 30",
+        "d": 178,
+        "n": 7
+       },
+       {
+        "a": "RV 15",
+        "b": "RV 31",
+        "d": 220,
+        "n": 7
+       },
+       {
+        "a": "RV 23",
+        "b": "RV 07",
+        "d": 220,
+        "n": 7
+       },
+       {
+        "a": "TB 101",
+        "b": "TB 089",
+        "d": 276,
+        "n": 14
+       },
+       {
+        "a": "RV 02",
+        "b": "RV 31",
+        "d": 185,
+        "n": 14
+       },
+       {
+        "a": "TB 102",
+        "b": "TB 033",
+        "d": 3,
+        "n": 7
+       },
+       {
+        "a": "TA 050",
+        "b": "TA 026",
+        "d": 143,
+        "n": 14
+       },
+       {
+        "a": "RV 19",
+        "b": "RV 27",
+        "d": 241,
+        "n": 7
+       },
+       {
+        "a": "RV 05",
+        "b": "RV 35",
+        "d": 192,
+        "n": 14
+       },
+       {
+        "a": "RV 24",
+        "b": "RV 17",
+        "d": 234,
+        "n": 7
+       },
+       {
+        "a": "RV 24",
+        "b": "RV 16",
+        "d": 220,
+        "n": 7
+       },
+       {
+        "a": "RV 24",
+        "b": "RV 19",
+        "d": 185,
+        "n": 7
+       },
+       {
+        "a": "TA 115",
+        "b": "TA 124",
+        "d": 115,
+        "n": 7
+       },
+       {
+        "a": "TB 010",
+        "b": "TB 099",
+        "d": 3,
+        "n": 7
+       },
+       {
+        "a": "TA 110",
+        "b": "TA 101",
+        "d": 59,
+        "n": 14
+       },
+       {
+        "a": "TB 087",
+        "b": "TB 037",
+        "d": 3,
+        "n": 7
+       },
+       {
+        "a": "RV 21",
+        "b": "RV 31",
+        "d": 234,
+        "n": 14
+       },
+       {
+        "a": "TA 114",
+        "b": "TA 003",
+        "d": 3,
+        "n": 7
+       },
+       {
+        "a": "RV 02",
+        "b": "RV 15",
+        "d": 206,
+        "n": 7
+       },
+       {
+        "a": "TA 032",
+        "b": "TA 044",
+        "d": 80,
+        "n": 14
+       },
+       {
+        "a": "RV 28",
+        "b": "RV 05",
+        "d": 213,
+        "n": 14
+       },
+       {
+        "a": "SUP 20",
+        "b": "SUP 08",
+        "d": 94,
+        "n": 14
+       },
+       {
+        "a": "TA 009",
+        "b": "TA 111",
+        "d": 3,
+        "n": 7
+       },
+       {
+        "a": "RV 05",
+        "b": "RV 25",
+        "d": 185,
+        "n": 14
+       },
+       {
+        "a": "TB 016",
+        "b": "TB 048",
+        "d": 3,
+        "n": 7
+       },
+       {
+        "a": "SUP 23",
+        "b": "SUP 02",
+        "d": 3,
+        "n": 7
+       }
+      ],
+      "semilla": 1,
+      "coste0": 622.7658212746311,
+      "coste": 552.7658212746318,
+      "fecha": "2026-11-26",
+      "base": "ue5yvo8m3",
+      "auto": true
      }
     }
    },
