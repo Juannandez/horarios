@@ -1,5 +1,5 @@
 {
- "guardado": "2026-11-26T10:44:44.775Z",
+ "guardado": "2026-11-26T10:44:56.949Z",
  "nota": "Sin cambios en el cuadrante.",
  "config": {
   "version": 2,
@@ -1501,7 +1501,7 @@
       "franja": "noche",
       "fecha": "12-24",
       "modo": "suma",
-      "valor": 1,
+      "valor": 8,
       "nota": "Nochebuena"
      },
      {
