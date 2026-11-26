@@ -299,6 +299,7 @@ export function completarSede(cfg, base) {
       ausencias: Array.isArray(x.ausencias) ? x.ausencias : [],
       aguante: { avisar: true, ...dicc(b.aguante), ...dicc(x.aguante) },
       findesBolsa: x.findesBolsa ?? b.findesBolsa ?? false,
+      ...((x.tardesBolsa ?? b.tardesBolsa) != null ? { tardesBolsa: !!(x.tardesBolsa ?? b.tardesBolsa) } : {}),
       ...(x.findesBolsaFD != null ? { findesBolsaFD: x.findesBolsaFD } : {}),
       margenCuartos: Math.max(0, Number(x.margenCuartos ?? b.margenCuartos ?? 0) || 0),
       ...((x.margenCuartosFinde ?? b.margenCuartosFinde) != null ? { margenCuartosFinde: Math.max(0, Number(x.margenCuartosFinde ?? b.margenCuartosFinde) || 0) } : {}),

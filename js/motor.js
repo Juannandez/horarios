@@ -238,6 +238,7 @@ export function generar(cfgEntrada, opciones = {}) {
   // Fines de semana con bolsa (Cobertura y bolsa): el ajuste no pone a trabajar a nadie un sábado o domingo que libra;
   // lo que falte se deja en disponibilidad para la bolsa (código DB: localizable, no trabaja).
   const FINDES_BOLSA = !!(cfg.cobertura && cfg.cobertura.findesBolsa === true);
+  const TARDES_BOLSA = !!(cfg.cobertura && cfg.cobertura.tardesBolsa === true);   // lo que falte por la tarde entre semana, también a la bolsa
   // Los fijos discontinuos (refuerzo contratado para sus periodos) sí pueden ir en fin de semana, salvo que se diga que no.
   const FINDES_BOLSA_FD = !(cfg.cobertura && cfg.cobertura.findesBolsaFD === false);
   // Noches exactas: de noche siempre el mínimo (10), ni más ni menos.
@@ -389,6 +390,7 @@ export function generar(cfgEntrada, opciones = {}) {
         exentoFines: !!(g.condiciones && g.condiciones.libreFines), sinVacaciones: !!(g.condiciones && g.condiciones.sinVacaciones),
         // Noches voluntarias (condición del grupo): sin tope ni mínimo de noches al año; el resto de grupos puede ir sin noches.
         nochesVoluntarias: !!(g.condiciones && g.condiciones.nochesVoluntarias),
+        franjasLV: Array.isArray(g.franjasEntreSemana) && g.franjasEntreSemana.length ? g.franjasEntreSemana : null,
         // Noches que puede hacer por encima de las de oficio (cesión): «todos», o «voluntaria» si lo ha aceptado.
         extraNoches: maxNoches == null || exentoNoches ? 0 : (cesion.modo === 'todos' || (cesion.modo === 'voluntaria' && esp.cedeNoches))
           ? Math.max(0, Number(cesion.tope) - maxNoches) : 0,
@@ -398,7 +400,8 @@ export function generar(cfgEntrada, opciones = {}) {
   }
   // Franjas, turno del contrato y turno preferido de una persona un día (con la reducción temporal, si la tiene).
   const enTramo = (p, d) => p.tramo && d >= p.tramo.d0 && d < p.tramo.d1;
-  const franjasDe = (p, d) => (enTramo(p, d) ? p.tramo.franjas : p.franjas);
+  // franjasEntreSemana (del grupo): de lunes a viernes laborable, solo esas franjas (p. ej. fijos discontinuos de tarde).
+  const franjasDe = (p, d) => { const f = enTramo(p, d) ? p.tramo.franjas : p.franjas; return p.franjasLV && !dias[d].finde && !dias[d].festivo ? f.filter(x => p.franjasLV.includes(x)) : f; };
   const contratoDe = (p, d) => (enTramo(p, d) ? p.tramo.turnoContrato : p.turnoContrato);
   const prefDe = (pi, d, f) => { const p = personas[pi], c = (enTramo(p, d) ? p.tramo.pref : p.pref)[f]; return c == null ? null : idx.get(c); };
   // Días en que una persona puede trabajar: de alta, sin fin de semana si lo tiene libre y fuera de sus días libres fijos.
@@ -1677,13 +1680,13 @@ export function generar(cfgEntrada, opciones = {}) {
     return u.map(x => [...x].sort((a, b) => a - b));
   });
   const dejarDisponibilidad = () => {
-    if (!FINDES_BOLSA || !ajusteActivo) return;
+    if (!(FINDES_BOLSA || TARDES_BOLSA) || !ajusteActivo) return;
     const iDB = idx.get('DB'), nDisp = new Int16Array(P);
     for (let d = 0; d < D; d++) {
       for (let c = 0; c < COL.length; c++) for (let f = 0; f < FR.length; f++) {
         // Sábado y domingo, de día.
         // De noche no: siempre 10, las pone el ajuste de las noches (si faltara alguien sería un hueco en rojo).
-        if (!dias[d].finde || FR[f] === 'noche') continue;
+        if (FR[f] === 'noche' || !(dias[d].finde || (TARDES_BOLSA && FR[f] === 'tarde'))) continue;   // entre semana, solo tardes si se pide
         // Lo que falta en la franja, o en el peor cuarto de hora de esa franja para el mínimo más el margen del fin de
         // semana (cuartos de cualquier turno de la franja; los que comparten mañana y tarde, desde las 15:00, a la tarde).
         let falta = real[c][f][d] - cob[c][f][d];

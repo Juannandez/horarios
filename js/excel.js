@@ -36,7 +36,7 @@ export function comprobaciones(res, cfg, colectivo = 'TA') {
     for (let d = 1; d < D; d++) if (t(p, d).franja === 'noche' && t(p, d).trabaja && t(p, d - 1).franja === 'tarde') nocheTarde++;
   }
   // Mínimos por cuartos de hora: entre semana y en fin de semana o festivo; lo que falta con y sin bolsa.
-  let negLV = 0, negFS = 0, negFSb = 0, diasMargen = 0; const horasFS = new Set();
+  let negLV = 0, negLVb = 0, negFS = 0, negFSb = 0, diasMargen = 0; const horasFS = new Set(), horasLV = new Set();
   const MQ = margenesCuartos(cfg);
   if (res.cuartos && ci >= 0) for (let d = 0; d < D; d++) {
     const fs = res.dias[d].finde || res.dias[d].festivo, b = (res.disponibilidad || []).filter(x => x.d === d && x.colectivo === colectivo).length, mq = MQ.de(res.dias[d]);
@@ -44,7 +44,7 @@ export function comprobaciones(res, cfg, colectivo = 'TA') {
     for (let q = 0; q < 96; q++) {
       const v = res.cuartos.min(ci, d, q); if (v == null) continue;
       const x = res.cuartos.cob[ci][d * 96 + q] - v;
-      if (x < 0) { if (!fs) negLV++; else { negFS++; if (b >= -x) negFSb++; horasFS.add(`${String(q >> 2).padStart(2, '0')}:${String((q & 3) * 15).padStart(2, '0')}`); } }
+      if (x < 0) { if (!fs) { negLV++; if (b >= -x) negLVb++; horasLV.add(`${String(q >> 2).padStart(2, '0')}:00`); } else { negFS++; if (b >= -x) negFSb++; horasFS.add(`${String(q >> 2).padStart(2, '0')}:${String((q & 3) * 15).padStart(2, '0')}`); } }
       else if (x < mq[q]) bajo = true;
     }
     if (bajo) diasMargen++;
@@ -61,7 +61,7 @@ export function comprobaciones(res, cfg, colectivo = 'TA') {
       ['Noche el día después de una tarde', String(nocheTarde), !nocheTarde],
       ['Semanas con mañanas y tardes mezcladas', String(mezcla), !mezcla],
       [`Noches con justo el mínimo`, `${exactas} de ${D}`, exactas === D],
-      ['Lunes a viernes por debajo del mínimo (cuartos de hora)', String(negLV), !negLV],
+      ['Lunes a viernes por debajo del mínimo (cuartos de hora)', negLV ? `${negLV}${negLVb ? `, ${negLVb} cubiertos con bolsa` : ''}${horasLV.size ? ` (de ${[...horasLV].sort()[0]} a ${[...horasLV].sort().slice(-1)[0]})` : ''}` : '0', !negLV || negLVb === negLV],
       ['Fines de semana y festivos por debajo del mínimo (cuartos de hora)', negFS ? `${negFS}${negFSb ? `, ${negFSb} cubiertos con bolsa` : ''}${horasFS.size ? ` (a las ${[...horasFS].slice(0, 4).join(', ')})` : ''}` : '0', !negFS || negFSb === negFS],
       ['Días con algún cuarto por debajo del margen pedido', String(diasMargen), null],
       [`Teleasistentes en sala a la vez`, res.puestos && res.puestos.valor ? `${res.puestos.max} como máximo (hay ${res.puestos.valor} puestos)` : 'sin tope de puestos', !(res.puestos && res.puestos.valor && res.puestos.max > res.puestos.valor)],

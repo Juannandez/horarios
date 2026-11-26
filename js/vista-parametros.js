@@ -538,6 +538,7 @@ export function seccionCobertura(cfg) {
   <section class="panel"><h2>Fines de semana</h2>
     <p class="tenue">Con esto marcado, el ajuste no pone a trabajar de día a nadie un sábado o un domingo que libra (las noches sí se cubren: siempre el mínimo). Si ese día falta gente, deja a alguien que libra en <b>disponibilidad para la bolsa</b> (código DB: localizable, no trabaja ni suma horas), repartido entre la plantilla.</p>
     <div class="campos">${chk('cobertura.findesBolsa', !!cob.findesBolsa, 'Fines de semana sin llamar a nadie: lo que falte, en disponibilidad para la bolsa', 'data-estructura="1"')}</div>
+    <div class="campos">${chk('cobertura.tardesBolsa', !!cob.tardesBolsa, 'Tardes de lunes a viernes: lo que falte, también en disponibilidad para la bolsa', 'data-estructura="1"')}</div>
     ${cob.findesBolsa ? `<p>Ahora: <b>${fmtNum((res.disponibilidad || []).length)}</b> disponibilidades en fines de semana en el año${(res.disponibilidad || []).length ? ` (${fmtNum(new Set(res.disponibilidad.map(x => x.persona)).size)} personas distintas)` : ''}.</p>` : ''}
   </section>
   <section class="panel"><h2>Bajas y ausencias</h2>
