@@ -88,7 +88,7 @@ export const NIVEL_DEFECTO = {
   descanso: 'bloquea', maxSeguidos: 'bloquea', maxNoches: 'bloquea', maxNochesSeguidas: 'bloquea', descansoTrasNoche: 'bloquea',
   bloquesNoche: 'bloquea', tope: 'bloquea', ratio: 'bloquea',
   maxFines: 'avisa', maxFinesSeguidos: 'avisa', minFinesLibresMes: 'avisa', minFinesLibresEntre: 'avisa', finesCoherentes: 'avisa',
-  finCompleto: 'avisa', maxEntradas: 'avisa',
+  finCompleto: 'avisa', maxEntradas: 'avisa', minLibresSemana: 'avisa',
 };
 export const nivelRegla = (k, r) => (r && r.nivel) || NIVEL_DEFECTO[k] || 'avisa';
 
@@ -115,6 +115,7 @@ export const REGLAS_CATALOGO = [
   { k: 'minFinesLibresMes', texto: 'Fines de semana libres completos (sábado y domingo sin turno) como mínimo cada mes', unidad: 'fines de semana', defecto: 1, normas: ['finLibreCadaMes'], decision: 'Decisión de la sección (20-11-2026): «un fin de semana al mes como el horario que tenemos ahora». En el horario de 2027 lo cumple el 99 % en Sevilla y el 100 % en Málaga.' },
   { k: 'finCompleto', texto: 'Fin de semana completo: si se trabaja, sábado y domingo (no uno suelto)', unidad: '', defecto: true, sinValor: true, normas: ['finesUnoDeTres'], decision: 'Petición de CGT: el fin de semana trabajado es completo. El rotatorio de partida ya los tiene completos; la regla impide que el ajuste los parta (no quita solo el sábado o solo el domingo, ni llama a alguien para uno solo). Si el otro día no está disponible (vacaciones, baja, AJ) no cuenta como partido.' },
   { k: 'maxEntradas', texto: 'Máximo de horas de entrada distintas en el año por persona', unidad: 'horas de entrada', defecto: 4, normas: ['rotacionIrregular'], sinFuente: true, decision: 'Petición de CGT al nuevo modelo de la consultora: limitar las horas de entrada distintas. 4 = mañana, tarde, noche y un solape.' },
+  { k: 'minLibresSemana', texto: 'Días libres como mínimo cada semana (de lunes a domingo)', unidad: 'días', defecto: 2, normas: ['dosDiasDescansoSemana'], decision: 'Reivindicación sindical: dos días de descanso cada semana. El rotatorio ya los da; la regla impide que el ajuste, al completar la jornada o cubrir un hueco, ponga un turno que deje una semana con menos.' },
   { k: 'descanso',          texto: 'Descanso mínimo entre el fin de un turno y el inicio del siguiente', unidad: 'horas', defecto: 12, normas: ['descansoEntreJornadas'] },
   { k: 'maxSeguidos',       texto: 'Máximo de días de trabajo seguidos', unidad: 'días', defecto: 5, decision: 'Decisión de la sección (20-11-2026): 5 días. Coincide con el máximo del patrón de la consultora y con la petición de CGT de «sin semanas de 6 días».', normas: ['maxDiasSeguidos'] },
   { k: 'tope',              texto: 'Horas por encima del objetivo que se admiten sin aviso (bolsa)', unidad: 'horas', defecto: 0, decision: 'Decisión de la sección (20-11-2026): 0 h, cualquier exceso sobre la jornada se avisa. En el cuadrante de 2027 lo más común son 3,5 h a bolsa.', normas: ['horasBolsaPlanificadas'] },
@@ -144,6 +145,7 @@ export const REGLAS = () => ({
   minFinesLibresMes: { activo: false, valor: 1 },    // se cumple sola con el patrón 2 + 1
   finCompleto: { activo: true, valor: true },      // fin de semana trabajado: sábado y domingo (CGT)
   maxEntradas: { activo: true, valor: 4 },          // horas de entrada distintas (CGT)
+  minLibresSemana: { activo: true, valor: 2 },      // dos días libres cada semana, de lunes a domingo (reivindicación)
   descanso:    { activo: true, valor: 12 },
   maxSeguidos: { activo: true, valor: 5 },
   tope:        { activo: true, valor: 0 },   // horas por encima del objetivo que se admiten sin aviso (bolsa): decisión de la sección

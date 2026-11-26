@@ -13,10 +13,11 @@ const claveYo = () => `horarios.yo.${estado.cfg.id}`;
 const leerYo = () => { try { return localStorage.getItem(claveYo()) || ''; } catch (e) { return ''; } };
 const ponerYo = (id) => { try { localStorage.setItem(claveYo(), id); } catch (e) { /* sin almacenamiento */ } };
 
+const nombreMes = (res, m) => { const x = res.meses[m] || {}; return `${MESES[x.mes ?? 0]}${res.meses.length > 12 ? ` ${x.anio}` : ''}`; };
 function mes(res, pi, m) {
   const D = res.D, dias = res.dias.filter(d => d.mc === m);
   const huecos = (dias[0].dow + 7) % 7;
-  return `<div class="mi-mes" role="grid" aria-label="${MESES[m]}">
+  return `<div class="mi-mes" role="grid" aria-label="${esc(nombreMes(res, m))}">
     ${DIAS_CORTOS.map(x => `<div class="mi-cab" role="columnheader">${x}</div>`).join('')}
     ${'<div></div>'.repeat(huecos)}
     ${dias.map(d => { const t = res.turnos[res.grid[pi * D + d.i]]; return `<div class="mi-dia${d.finde ? ' finde' : ''}${d.festivo ? ' festivo' : ''}" role="gridcell" title="${esc(t.nombre)}${d.festivo ? ` · ${esc(d.festivo)}` : ''}">
@@ -47,6 +48,15 @@ function resultado(res, r) {
     </div></section>`;
 }
 
+// El año entero: todos los meses del cuadrante en miniatura y, arriba, cuántos días de cada turno.
+function anioEntero(res, pi) {
+  const cuenta = new Map();
+  for (let d = 0; d < res.D; d++) { const t = res.turnos[res.grid[pi * res.D + d]]; if (t.codigo === 'L') continue; cuenta.set(t.codigo, { t, n: ((cuenta.get(t.codigo) || {}).n || 0) + 1 }); }
+  const orden = [...cuenta.values()].sort((a, b) => (b.t.trabaja ? 1 : 0) - (a.t.trabaja ? 1 : 0) || b.n - a.n);
+  return `<div class="mi-totales">${orden.map(({ t, n }) => `<span class="mi-total" title="${esc(t.nombre)}"><span class="muestra" style="${estiloTurno(t)}">${esc(t.codigo)}</span> ${fmtNum(n)}</span>`).join('')}</div>
+    <div class="mi-anio">${res.meses.map(x => `<div class="mi-anio-mes"><h3>${esc(nombreMes(res, x.mc))}</h3>${mes(res, pi, x.mc)}</div>`).join('')}</div>`;
+}
+
 export function pintarMi(raiz) {
   const { res, cfg } = estado, u = ui();
   let yo = leerYo(); if (!res.personas.some(p => p.id === yo)) yo = res.personas[0].id;
@@ -67,9 +77,11 @@ export function pintarMi(raiz) {
         <div class="cifra"><b>${p.fines}</b><span>fines de semana</span></div>
         <div class="cifra"><b>${fmtH(p.bolsa ? p.bolsa.saldo : 0)} h</b><span>saldo de bolsa</span></div>
       </div></section>
-    <section class="panel"><div class="mi-nav"><button type="button" class="btn mini" data-mi-mes="-1" ${u.mes <= 0 ? 'disabled' : ''} aria-label="Mes anterior">←</button>
-      <h2>${MESES[(res.meses[u.mes] || {}).mes ?? 0]}${res.meses.length > 12 ? ` ${(res.meses[u.mes] || {}).anio}` : ''}</h2><button type="button" class="btn mini" data-mi-mes="1" ${u.mes >= res.meses.length - 1 ? 'disabled' : ''} aria-label="Mes siguiente">→</button></div>
-      ${mes(res, pi, u.mes)}</section>
+    <section class="panel">
+      <div class="grupo segmentado" role="group" aria-label="Ver" style="margin-bottom:10px"><button type="button" data-mi-ver="mes" aria-pressed="${!u.anio}">Mes</button><button type="button" data-mi-ver="anio" aria-pressed="${!!u.anio}">Año entero</button></div>
+      ${u.anio ? anioEntero(res, pi) : `<div class="mi-nav"><button type="button" class="btn mini" data-mi-mes="-1" ${u.mes <= 0 ? 'disabled' : ''} aria-label="Mes anterior">←</button>
+      <h2>${esc(nombreMes(res, u.mes))}</h2><button type="button" class="btn mini" data-mi-mes="1" ${u.mes >= res.meses.length - 1 ? 'disabled' : ''} aria-label="Mes siguiente">→</button></div>
+      ${mes(res, pi, u.mes)}`}</section>
     <section class="panel"><h2>Comprobar antes de pedir</h2>
       <div class="campos">
         <label class="campo"><span>Qué quieres pedir</span><select id="mi-tipo">${TIPOS_SOLICITUD.map(t => `<option value="${t.id}" ${s.tipo === t.id ? 'selected' : ''}>${esc(t.nombre)}</option>`).join('')}</select></label>
@@ -102,6 +114,7 @@ export function eventosMi(raiz, repintar) {
     if (estado.vista !== 'mi') return;
     const b = e.target.closest('button'); if (!b) return;
     const u = ui(), { res, cfg } = estado;
+    if (b.dataset.miVer) { u.anio = b.dataset.miVer === 'anio'; return repintar(); }
     if (b.dataset.miMes) { u.mes = Math.min(estado.res.meses.length - 1, Math.max(0, u.mes + Number(b.dataset.miMes))); return repintar(); }
     const yo = $('#mi-yo', raiz).value;
     if (b.dataset.mi === 'ics') {

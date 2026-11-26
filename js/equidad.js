@@ -29,7 +29,8 @@ export function valoresEquidad(res, colectivo) {
     // se prorratean solo por los días de alta; las horas, además, por la jornada.
     const kDias = p.hasta != null && p.desde != null ? Math.max(1, p.hasta - p.desde) / D : 1;
     const kHoras = kDias * (Number(p.horasSemana) || 35) / 35;
-    const v = { fines: p.fines, noches: p.noches, festivos, domingos, horas: p.horas };
+    // Festivos como los cuenta el motor (la noche de un festivo, para quien sale si así está configurado).
+    const v = { fines: p.fines, noches: p.noches, festivos: Array.isArray(p.festivosCuentan) ? p.festivosCuentan.length : festivos, domingos, horas: p.horas };
     const n = Object.fromEntries(Object.entries(v).map(([m, x]) => [m, x / (m === 'horas' ? kHoras : kDias)]));
     return { pi: p.pi, id: p.id, nombre: p.nombre || '', grupo: p.grupoNombre, k: kDias, v, n };
   });

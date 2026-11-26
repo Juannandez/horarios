@@ -188,6 +188,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const finesCoherentes = !!usa('finesCoherentes');
   const finCompleto = !!usa('finCompleto');             // fin de semana trabajado = sábado y domingo
   const maxEntradas = reg('maxEntradas', 4);             // horas de entrada distintas en el año
+  const minLibresSemana = reg('minLibresSemana', 2);     // días libres como mínimo cada semana (lunes a domingo)
   const descansoTrasNoche = reg('descansoTrasNoche', 3) || 0;
   const ajusteActivo = !R.ajuste || R.ajuste.activo !== false;
   // Cobertura y bolsa (Parámetros › Cobertura y bolsa): cesión de noches, bolsa de horas, margen, ausencias y aguante.
@@ -571,9 +572,18 @@ export function generar(cfgEntrada, opciones = {}) {
   const topeNoches = (pi) => (maxNoches == null ? Infinity : maxNoches + (cesionActiva ? personas[pi].extraNoches : 0));
   // ¿Puede la persona pi hacer el turno ti el día d (en lugar de lo que tiene)?
   const trabajaEn = (pi, d) => d >= 0 && d < D && T[grid[pi * D + d]].trabaja;
+  // Días sin turno de la semana (lunes a domingo) del día d; null si la semana no cae entera en el cuadrante.
+  const libresSemana = (pi, d) => {
+    const l = d - dias[d].dow;
+    if (l < 0 || l + 6 >= D) return null;
+    let n = 0; for (let x = l; x <= l + 6; x++) if (!T[grid[pi * D + x]].trabaja) n++;
+    return n;
+  };
   const puede = (pi, d, ti) => {
     const nuevo = T[ti], viejo = T[grid[pi * D + d]];
     if (!nuevo.trabaja) return true;
+    // Días libres cada semana: no se pone un turno en un día libre si la semana se queda con menos.
+    if (minLibresSemana != null && !viejo.trabaja) { const n = libresSemana(pi, d); if (n != null && n - 1 < minLibresSemana) return false; }
     if (personas[pi].soloLaborables && dias[d].tipo !== 'laborable') return false;
     if (!permitidoDia(personas[pi], d) || !franjasDe(personas[pi], d).includes(nuevo.franja)) return false;
     { const tc = contratoDe(personas[pi], d)[nuevo.franja]; if (tc && tc !== nuevo.codigo) return false; }
@@ -684,6 +694,10 @@ export function generar(cfgEntrada, opciones = {}) {
     if (maxNoches != null && noches[pi] > topeNoches(pi)) return false;
     if (maxFines != null && !personas[pi].exentoFines && fines[pi] > maxFines) return false;
     if (maxEntradas != null && nEntradas[pi] > maxEntradas) return false;
+    if (minLibresSemana != null) for (let x = Math.max(0, a); x <= Math.min(D - 1, b); x++) {
+      if (x !== a && dias[x].dow !== 0) continue;
+      const n = libresSemana(pi, x); if (n != null && n < minLibresSemana) return false;
+    }
     return true;
   };
   // Medio fin de semana: un día del fin de semana trabajado y el otro libre y disponible (no vacaciones, baja, AJ…).
@@ -966,6 +980,7 @@ export function generar(cfgEntrada, opciones = {}) {
           if (modo) { mejorNota = nota; mejor = pi; mejorTi = ti; mejorModo = modo; }
         }
         if (mejor >= 0) { aplicar(mejor, d, mejorTi, mejorModo); stats.movidos++; hecho = true; }
+        else if (f !== 2 && moverTramo(c, d, f)) { stats.movidos++; hecho = true; }
         else {
           // b) poner turno a alguien que libra ese día (si su libre «puede pasar a turno al planificar»)
           for (const pi of porColectivo[c]) {
@@ -983,6 +998,35 @@ export function generar(cfgEntrada, opciones = {}) {
         falta--;
       }
     }
+  };
+
+  // a2) Pasar de mañana a tarde (o al revés) los últimos días de trabajo antes de un descanso: desde el día d hasta su
+  // siguiente día libre, entre semana y como mucho 3 días, si en su franja sobra gente todos esos días. No cambian ni
+  // sus horas ni sus días libres (los dos días libres de la semana se mantienen) y entre turnos quedan las 12 h: de
+  // mañana a tarde hay de sobra y tras la última tarde viene el descanso. Se prefiere el tramo más corto.
+  const moverTramo = (c, d, f) => {
+    let mejor = null;
+    for (const pi of porColectivo[c]) {
+      const k = pi * D + d, g = franjaIdx[grid[k]];
+      if (g < 0 || g === 2 || g === f || !movible(pi, d) || dias[d].finde) continue;
+      let e = d; while (e + 1 < D && T[grid[pi * D + e + 1]].trabaja) e++;
+      const largo = e - d + 1;
+      if (largo > 3 || (mejor && largo >= mejor.largo)) continue;
+      let ok = true;
+      for (let x = d; x <= e && ok; x++) {
+        const kx = pi * D + x;
+        if (dias[x].finde || dias[x].festivo || franjaIdx[grid[kx]] !== g || !movible(pi, x) || origen[kx] === ORIGEN.VACACIONES) ok = false;
+        else if (cob[c][g][x] - 1 < necesidad[c][g][x] || prefDe(pi, x, FR[f]) == null) ok = false;
+      }
+      if (ok) mejor = { pi, e, largo };
+      if (mejor && mejor.largo === 1) break;
+    }
+    if (!mejor) return false;
+    const { pi, e } = mejor, antes = [];
+    for (let x = d; x <= e; x++) { antes.push([grid[pi * D + x], origen[pi * D + x]]); poner(pi, x, prefDe(pi, x, FR[f]), ORIGEN.CUBRE); }
+    if (valida(pi, Math.max(0, d - 1), Math.min(D - 1, e + 1))) return true;
+    for (let x = d; x <= e; x++) poner(pi, x, antes[x - d][0], antes[x - d][1]);
+    return false;
   };
 
   // Quien queda por debajo de su objetivo recibe turnos en sus días libres, donde menos gente hay.
@@ -1064,6 +1108,67 @@ export function generar(cfgEntrada, opciones = {}) {
     recortarNoches(1); equilibrarNoches(1); recortar(1); conCesion(1); recortar(1); completar(1); conMargenFinal(1);
   } else aplicarRatio();
   cesionActiva = true;   // desde aquí (mejora del reparto, avisos), cada persona con su tope propio
+
+  // 3 bis. Festivos repartidos (Equidad): que nadie trabaje 2 festivos o más que otra persona de su colectivo. Se
+  // cambian dos días entre dos personas: quien lleva más festivos libra un festivo entre semana (d) y a cambio trabaja
+  // un día cercano no festivo (d2) que libraba quien lleva menos; esta hace el turno del festivo. Cada día sigue con la
+  // misma gente en cada turno y cada persona con las mismas horas; solo se acepta si las dos pueden (descansos, rachas,
+  // descanso tras las noches, fines coherentes, casos especiales). No se tocan fines de semana, noches, vacaciones ni
+  // cambios a mano. Solo plantilla de todo el año. Se apaga con cfg.equilibrarFestivos = false.
+  const festivosRepartidos = () => {
+    const movidos = { dias: 0 };
+    if (cfg.equilibrarFestivos === false || !ajusteActivo) return movidos;
+    const fdias = dias.filter(x => x.festivo && !x.finde).map(x => x.i);
+    if (!fdias.length) return movidos;
+    const festTrab = new Int16Array(P);
+    const contar = (pi) => { let n = 0; for (let d = 0; d < D; d++) { const t = T[grid[pi * D + d]]; if (t.trabaja && cuentaEn(d, t).festivo) n++; } return n; };
+    const fijo = (pi, d) => { const o = origen[pi * D + d]; return o === ORIGEN.MANUAL || o === ORIGEN.VACACIONES || o === ORIGEN.AUSENCIA; };
+    const deDia = (ti) => T[ti].trabaja && (T[ti].franja === 'manana' || T[ti].franja === 'tarde');
+    const intentar = (a, b, d) => {
+      const ta = grid[a * D + d], lb = grid[b * D + d];
+      for (let k = 1; k <= 21; k++) for (const d2 of [d - k, d + k]) {
+        if (d2 < 0 || d2 >= D || dias[d2].finde || dias[d2].festivo) continue;
+        const tb = grid[b * D + d2], la = grid[a * D + d2];
+        if (!deDia(tb) || fijo(b, d2) || !libre(a, d2)) continue;
+        const oa = [origen[a * D + d], origen[a * D + d2]], ob = [origen[b * D + d], origen[b * D + d2]];
+        poner(a, d, lb, ORIGEN.MEJORA); poner(b, d2, la, ORIGEN.MEJORA);
+        if (puede(b, d, ta) && puede(a, d2, tb)) {
+          poner(b, d, ta, ORIGEN.MEJORA); poner(a, d2, tb, ORIGEN.MEJORA);
+          const r = (x) => [Math.max(0, x - 1), Math.min(D - 1, x + 1)];
+          if (valida(a, ...r(d)) && valida(a, ...r(d2)) && valida(b, ...r(d)) && valida(b, ...r(d2))) return true;
+        }
+        poner(a, d, ta, oa[0]); poner(a, d2, la, oa[1]); poner(b, d, lb, ob[0]); poner(b, d2, tb, ob[1]);
+      }
+      return false;
+    };
+    for (let c = 0; c < COL.length; c++) {
+      const lista = porColectivo[c].filter(pi => { const p = personas[pi]; return !p.horarioLibre && !p.altaDias && !p.tramo && !(p.desde > 0) && !(p.hasta < D); });
+      if (lista.length < 2) continue;
+      for (const pi of lista) festTrab[pi] = contar(pi);
+      for (let vuelta = 0; vuelta < 8; vuelta++) {
+        let hubo = false;
+        const ricos = [...lista].sort((x, y) => festTrab[y] - festTrab[x]);
+        const minimo = () => lista.reduce((mn, pi) => Math.min(mn, festTrab[pi]), Infinity);
+        for (const a of ricos) {
+          if (festTrab[a] - minimo() < 2) break;
+          for (const d of fdias) {
+            if (festTrab[a] - minimo() < 2) break;
+            if (!deDia(grid[a * D + d]) || fijo(a, d)) continue;
+            const pobres = lista.filter(b => b !== a && festTrab[a] - festTrab[b] >= 2 && libre(b, d)).sort((x, y) => festTrab[x] - festTrab[y]).slice(0, 120);
+            for (const b of pobres) {
+              if (!intentar(a, b, d)) continue;
+              festTrab[a]--; festTrab[b]++; movidos.dias++; hubo = true;
+              break;
+            }
+          }
+        }
+        if (!hubo) break;
+      }
+    }
+    stats.festivosRepartidos = movidos.dias;
+    return movidos;
+  };
+  festivosRepartidos();
 
   // 4. Equidad: intercambios de semanas enteras entre dos personas del mismo grupo (como el paso de equidad de
   // Calabrio o la búsqueda local de Timefold). Cada día sigue con la misma gente en cada franja (la cobertura no
@@ -1198,7 +1303,7 @@ export function generar(cfgEntrada, opciones = {}) {
   for (const [g, lista] of porGrupo) medias.set(g, [fines, festivoTrab, domingoTrab, especialTrab].map(v => lista.reduce((s, pi) => s + v[pi], 0) / lista.length));
   // Festivos especiales (Nochebuena, Navidad, Nochevieja, Año Nuevo, Reyes…), sumando los de años anteriores
   // (cfg.repartoFestivos.historial): quien los trabajó el año pasado tiende a librarlos este.
-  const PESOS = [1, 1, 0.5, 1];
+  const PESOS = [1, 2, 0.5, 1];   // fines, festivos (el doble: que nadie trabaje 2 más que otro), domingos, especiales
   // Los fijos discontinuos (horario libre, solo en sus periodos de alta) no entran: no se comparan con la plantilla.
   const fueraEquidad = (pi) => !!(personas[pi].horarioLibre || personas[pi].altaDias);
   const costePersona = (pi) => { if (fueraEquidad(pi)) return 0; const m = medias.get(personas[pi].grupo); return PESOS[0] * (fines[pi] - m[0]) ** 2 + PESOS[1] * (festivoTrab[pi] - m[1]) ** 2 + PESOS[2] * (domingoTrab[pi] - m[2]) ** 2 + PESOS[3] * (especialTrab[pi] - m[3]) ** 2; };

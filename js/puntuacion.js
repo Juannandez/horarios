@@ -28,6 +28,7 @@ const TITULOS = {
   finesCoherentes: () => 'Fin de semana en otro turno que su semana',
   finCompleto: () => 'Fin de semana partido (solo el sábado o solo el domingo)',
   maxEntradas: (v) => `Más de ${v} horas de entrada distintas en el año`,
+  minLibresSemana: (v) => `Semana con menos de ${v} días libres`,
   tope: (v) => `Más de ${v} h por encima de la jornada`,
 };
 
@@ -132,6 +133,14 @@ export function infracciones(res, cfg) {
         if (f.dias.length < 2) continue;
         const [a, b] = f.dias;
         if (trab(a) !== trab(b) && t(trab(a) ? b : a).disponible !== false) caso('finCompleto', [trab(a) ? a : b], trab(a) ? 'solo el sábado' : 'solo el domingo');
+      }
+    }
+    if (salida.minLibresSemana) {
+      const min = val('minLibresSemana');
+      for (let l = 0; l + 6 < D; l++) {
+        if (dias[l].dow !== 0) continue;
+        const trabajados = []; for (let x = l; x <= l + 6; x++) if (trab(x)) trabajados.push(x);
+        if (7 - trabajados.length < min) caso('minLibresSemana', trabajados, `semana del ${dias[l].fecha.slice(8)}/${dias[l].fecha.slice(5, 7)}: ${7 - trabajados.length} ${7 - trabajados.length === 1 ? 'día libre' : 'días libres'}`);
       }
     }
     if (salida.maxEntradas) {
