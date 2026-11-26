@@ -207,6 +207,9 @@ export function generar(cfgEntrada, opciones = {}) {
   const FINDES_BOLSA = !!(cfg.cobertura && cfg.cobertura.findesBolsa === true);
   // Los fijos discontinuos (refuerzo contratado para sus periodos) sí pueden ir en fin de semana, salvo que se diga que no.
   const FINDES_BOLSA_FD = !(cfg.cobertura && cfg.cobertura.findesBolsaFD === false);
+  // Noches exactas: de noche siempre el mínimo (10), ni más ni menos.
+  const NOCHES_EXACTAS = !!(cfg.cobertura && cfg.cobertura.nochesExactas);
+  let nochesFinde = false;   // durante el ajuste de las noches exactas, de noche sí se trabaja en fin de semana
   const descansoTrasNoche = reg('descansoTrasNoche', 3) || 0;
   const ajusteActivo = !R.ajuste || R.ajuste.activo !== false;
   // Cobertura y bolsa (Parámetros › Cobertura y bolsa): cesión de noches, bolsa de horas, margen, ausencias y aguante.
@@ -422,11 +425,14 @@ export function generar(cfgEntrada, opciones = {}) {
       if (!porCuadrante) { for (let d = d0; d <= fin; d++) { grid[pi * D + d] = iV; origen[pi * D + d] = ORIGEN.VACACIONES; } return; }
       const n = diasHabiles(a.inicio, a.fin, festV);
       a.diasCuadrante = n;
+      let ultimo = -1;
       for (let d = d0, puestos = 0; d < D && puestos < n; d++) {
         if (!T[grid[pi * D + d]].trabaja) continue;
         grid[pi * D + d] = iV; origen[pi * D + d] = ORIGEN.VACACIONES; puestos++;
-        a.finCuadrante = dias[d].fecha;
+        a.finCuadrante = dias[d].fecha; ultimo = d;
       }
+      // Sus días libres dentro de las vacaciones también son de vacaciones: el ajuste no puede ponerle nada en ellos.
+      for (let d = d0; d <= ultimo; d++) if (grid[pi * D + d] !== iV) origen[pi * D + d] = ORIGEN.VACACIONES;
     });
     // Los días sueltos de vacaciones no van en el cuadrante: se restan cuando cada persona los pide. De partida la
     // jornada planificada es la del convenio (1.480,5 h). Con «sueltosEnJornada» se suman a la jornada, como hace el
@@ -668,7 +674,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const puede = (pi, d, ti) => {
     const nuevo = T[ti], viejo = T[grid[pi * D + d]];
     if (!nuevo.trabaja) return true;
-    if (FINDES_BOLSA && dias[d].finde && !viejo.trabaja && !(FINDES_BOLSA_FD && personas[pi].horarioLibre)) return false;   // nadie más a trabajar en fin de semana
+    if (FINDES_BOLSA && dias[d].finde && !viejo.trabaja && !(FINDES_BOLSA_FD && personas[pi].horarioLibre) && !(nochesFinde && nuevo.franja === 'noche')) return false;   // nadie más a trabajar en fin de semana (salvo noches, siempre 10)
     // Una sola franja de día por semana: en una semana de mañana no se pone una tarde (ni al revés).
     if (unaFranja && !personas[pi].horarioLibre && (nuevo.franja === 'manana' || nuevo.franja === 'tarde')) {
       const l = d - dias[d].dow; let mm = 0, tt = 0;
@@ -807,7 +813,8 @@ export function generar(cfgEntrada, opciones = {}) {
   };
   const libre = (pi, d) => {
     const t = T[grid[pi * D + d]];
-    if (FINDES_BOLSA && dias[d].finde && !(FINDES_BOLSA_FD && personas[pi].horarioLibre)) return false;   // el fin de semana libre no se toca
+    if (origen[pi * D + d] === ORIGEN.VACACIONES) return false;   // dentro de sus vacaciones (y AJ): no se toca
+    if (FINDES_BOLSA && dias[d].finde && !nochesFinde && !(FINDES_BOLSA_FD && personas[pi].horarioLibre)) return false;   // el fin de semana libre no se toca (de noche, sí: siempre 10)
     return !t.trabaja && t.disponible !== false && origen[pi * D + d] !== ORIGEN.MANUAL;
   };
   const movible = (pi, d) => origen[pi * D + d] !== ORIGEN.MANUAL && origen[pi * D + d] !== ORIGEN.CUBRE;
@@ -1025,6 +1032,21 @@ export function generar(cfgEntrada, opciones = {}) {
     let puestos = 0;
     for (const q of porColectivo[c].filter(elegible)) {
       for (let vueltas = 0; noches[q] < minNoches && vueltas < 10; vueltas++) {
+        // Con noches exactas, primero se queda con un bloque de un fijo discontinuo (que lo deja): no sobra nadie.
+        if (NOCHES_EXACTAS) {
+          let tomado = false;
+          for (const f of porColectivo[c].filter(pi => personas[pi].horarioLibre)) {
+            for (const [s, e] of bloquesNocheDe(f)) {
+              if (e - s + 1 > minNoches - noches[q] + 1) continue;
+              let man = false; for (let x = s; x <= e; x++) if (origen[f * D + x] === ORIGEN.MANUAL) man = true;
+              if (man) continue;
+              nochesFinde = true; const ok2 = intentarBloque(c, q, idx.get(personas[q].pref.noche), s, e); nochesFinde = false;
+              if (ok2) { for (let x = s; x <= e; x++) poner(f, x, iLibre, ORIGEN.RECORTE); tomado = true; puestos++; break; }
+            }
+            if (tomado) break;
+          }
+          if (tomado) continue;
+        }
         const cand = inicios.map(d => [d, cob[c][2][d] + cob[c][2][d + 1]]).sort((a, b) => a[1] - b[1]);
         let ok = false;
         for (const [d] of cand) if (tomarBloqueNoche(c, q, d, d + 1)) { ok = true; puestos++; break; }
@@ -1076,7 +1098,23 @@ export function generar(cfgEntrada, opciones = {}) {
       cand.push([cedida + horas[pi] / personas[pi].objetivo + noches[pi] / 14 + (dias[b].finde ? fines[pi] / 17 : 0), pi, idx.get(codigo)]);
     }
     cand.sort((x, y) => x[0] - y[0]);
-    for (const [, pi, ti] of cand) {
+    for (const [, pi, ti] of cand) if (intentarBloque(c, pi, ti, a, b)) return true;
+    return false;
+  };
+  // Pone a pi el bloque de noches de a a b (turno ti) con su descanso detrás, si vale; si no, lo deja como estaba.
+  const intentarBloque = (c, pi, ti, a, b) => {
+    // Cada día del bloque: libre, o con un turno de día que sobra ese día (nunca vacaciones, AJ, baja ni cambios a mano).
+    let nuevas = 0;
+    for (let x = a; x <= b; x++) {
+      const k = pi * D + x, g = franjaIdx[grid[k]];
+      if (g === 2) continue;
+      if (personas[pi].soloLaborables && dias[x].tipo !== 'laborable') return false;
+      if (libre(pi, x)) nuevas++;
+      else if (g >= 0 && cambiable(k) && cob[c][g][x] - 1 >= necesidad[c][g][x]) nuevas++;
+      else return false;
+    }
+    if (!nuevas || (maxNoches != null && noches[pi] + nuevas > topeNoches(pi))) return false;
+    {
       const cambios = [];
       const cambia = (x, nt) => { cambios.push([x, grid[pi * D + x], origen[pi * D + x]]); poner(pi, x, nt, ORIGEN.CUBRE); };
       for (let x = a; x <= b; x++) if (franjaIdx[grid[pi * D + x]] !== 2) cambia(x, ti);
@@ -1094,6 +1132,90 @@ export function generar(cfgEntrada, opciones = {}) {
       for (let i = cambios.length - 1; i >= 0; i--) poner(pi, cambios[i][0], cambios[i][1], cambios[i][2]);
     }
     return false;
+  };
+
+  // Noches exactas (Cobertura y bolsa): de noche hay justo el mínimo (10), ni más ni menos.
+  //  1) Las que se quedan cortas se cubren con un bloque entero (también en fin de semana: de noche siempre 10). Si
+  //     nadie puede sin pasarse de su tope, alguien que tiene un bloque entre semana donde sobra gente lo cambia por este.
+  //  2) Las que tienen gente de más pierden bloques enteros (o la noche del extremo de un bloque de 3): primero de los
+  //     fijos discontinuos y después de quien pasa del mínimo de noches. Nadie baja de su mínimo.
+  //  Luego recortar() y completar() reajustan las horas.
+  const bloquesNocheDe = (pi) => { const r = []; for (let d = 0; d < D; d++) { if (!esNoche(pi, d) || esNoche(pi, d - 1)) continue; let b = d; while (esNoche(pi, b + 1)) b++; r.push([d, b]); } return r; };
+  const ajustarNoches = (c) => {
+    const nec = (d) => real[c][2][d];
+    const sobra = (d) => cob[c][2][d] - nec(d);
+    // Con «las noches mandan» (nochesExactas === 'estricto'), se quitan noches de más aunque alguien baje de su mínimo.
+    const estricto = (cfg.cobertura || {}).nochesExactas === 'estricto';
+    const minimoDe = (pi) => (personas[pi].horarioLibre || estricto ? 0 : minNoches ?? 0);
+    const manual = (pi, s, e) => { for (let x = s; x <= e; x++) if (origen[pi * D + x] === ORIGEN.MANUAL) return true; return false; };
+    let cubiertas = 0, quitadas = 0;
+    // 0) Hasta el mínimo de noches de cada uno: primero con bloques de los fijos discontinuos (que los dejan).
+    subirNoches(c);
+    nochesFinde = true;
+    for (let d = 0; d < D; d++) {
+      for (let v = 0; sobra(d) < 0 && v < 6; v++) {
+        if (cubrirBloque(c, d)) { cubiertas++; continue; }
+        // Cambio: un bloque entre semana sobrante de alguien pasa a este.
+        const [a, b] = bloqueDe(d); let hecho = false;
+        const cand = porColectivo[c].filter(q => personas[q].pref && personas[q].pref.noche && idx.has(personas[q].pref.noche) && !personas[q].exentoNoches).sort((x, y) => noches[x] - noches[y]);
+        for (const q of cand) {
+          for (const [s, e] of bloquesNocheDe(q)) {
+            if (e >= a - 4 && s <= b + 4) continue;
+            let ok = !manual(q, s, e); for (let x = s; x <= e && ok; x++) if (sobra(x) < 1) ok = false;
+            if (!ok) continue;
+            const antes = []; for (let x = s; x <= e; x++) { antes.push([grid[q * D + x], origen[q * D + x]]); poner(q, x, iLibre, ORIGEN.RECORTE); }
+            if (intentarBloque(c, q, idx.get(personas[q].pref.noche), a, b)) { hecho = true; break; }
+            for (let x = s; x <= e; x++) poner(q, x, antes[x - s][0], antes[x - s][1]);
+          }
+          if (hecho) break;
+        }
+        if (!hecho) break;
+        cubiertas++;
+      }
+    }
+    // 3) Noches de fijos discontinuos que puede hacer la plantilla: quien tiene un bloque donde sobra gente lo cambia por
+    //    el del fijo discontinuo (sin bajar de su mínimo ni pasar de su tope), y el fijo discontinuo deja esas noches.
+    let cambiadas = 0;
+    for (const f of porColectivo[c].filter(pi => personas[pi].horarioLibre)) {
+      for (const [s, e] of bloquesNocheDe(f)) {
+        if (manual(f, s, e)) continue;
+        const L = e - s + 1;
+        const cand = porColectivo[c].filter(q => !personas[q].horarioLibre && personas[q].pref && personas[q].pref.noche && idx.has(personas[q].pref.noche) && !personas[q].exentoNoches).sort((x, y) => noches[x] - noches[y]);
+        let hecho = false;
+        for (const q of cand) {
+          for (const [s2, e2] of bloquesNocheDe(q)) {
+            const L2 = e2 - s2 + 1;
+            if ((e2 >= s - 4 && s2 <= e + 4) || noches[q] - L2 + L < (minNoches ?? 0) || noches[q] - L2 + L > topeNoches(q) || manual(q, s2, e2)) continue;
+            let ok = true; for (let x = s2; x <= e2 && ok; x++) if (sobra(x) < 1) ok = false;
+            if (!ok) continue;
+            const antes = []; for (let x = s2; x <= e2; x++) { antes.push([grid[q * D + x], origen[q * D + x]]); poner(q, x, iLibre, ORIGEN.RECORTE); }
+            nochesFinde = true;
+            const puesto = intentarBloque(c, q, idx.get(personas[q].pref.noche), s, e);
+            nochesFinde = false;
+            if (puesto) { for (let x = s; x <= e; x++) poner(f, x, iLibre, ORIGEN.RECORTE); hecho = true; cambiadas++; break; }
+            for (let x = s2; x <= e2; x++) poner(q, x, antes[x - s2][0], antes[x - s2][1]);
+          }
+          if (hecho) break;
+        }
+      }
+    }
+    nochesFinde = false;
+    for (let d = 0; d < D; d++) {
+      for (let v = 0; sobra(d) > 0 && v < 12; v++) {
+        const cand = porColectivo[c].filter(pi => esNoche(pi, d)).sort((x, y) => (personas[y].horarioLibre ? 1 : 0) - (personas[x].horarioLibre ? 1 : 0) || noches[y] - noches[x]);
+        let hecho = false;
+        for (const pi of cand) {
+          const blo = bloquesNocheDe(pi).find(([s, e]) => s <= d && d <= e); if (!blo || manual(pi, blo[0], blo[1])) continue;
+          const [s, e] = blo, largo = e - s + 1;
+          let todo = true; for (let x = s; x <= e; x++) if (sobra(x) < 1) todo = false;
+          if (todo && noches[pi] - largo >= minimoDe(pi)) { for (let x = s; x <= e; x++) poner(pi, x, iLibre, ORIGEN.RECORTE); hecho = true; quitadas += largo; break; }
+          // Bloque de 3: se quita la noche del extremo si es la que sobra.
+          if (largo === 3 && (d === s || d === e) && noches[pi] - 1 >= minimoDe(pi)) { poner(pi, d, iLibre, ORIGEN.RECORTE); hecho = true; quitadas++; break; }
+        }
+        if (!hecho) break;
+      }
+    }
+    stats.nochesExactas = { cubiertas, quitadas, cambiadas };
   };
 
   const cubrir = (c) => {
@@ -1257,6 +1379,7 @@ export function generar(cfgEntrada, opciones = {}) {
     // Margen para imprevistos: al final, con las noches de oficio y sin tocar lo ya cubierto.
     const conMargenFinal = (c) => { if (!hayMargen) return; aplicarMargen(c); cesionActiva = false; cubrir(c); recortar(c); completar(c); cesionActiva = true; };
     recortarNoches(0); equilibrarNoches(0); subirNoches(0); recortar(0); conCesion(0); recortar(0); completar(0); conMargenFinal(0);
+    if (NOCHES_EXACTAS) { ajustarNoches(0); recortar(0); completar(0); }
     aplicarRatio();
     recortarNoches(1); equilibrarNoches(1); subirNoches(1); recortar(1); conCesion(1); recortar(1); completar(1); conMargenFinal(1);
   } else aplicarRatio();
@@ -1396,7 +1519,7 @@ export function generar(cfgEntrada, opciones = {}) {
           let mejor = -1;
           for (const pi of porColectivo[c]) {
             const kk = pi * D + d, t = T[grid[kk]];
-            if (t.trabaja || t.codigo !== 'L' || origen[kk] === ORIGEN.MANUAL) continue;
+            if (t.trabaja || t.codigo !== 'L' || origen[kk] === ORIGEN.MANUAL || origen[kk] === ORIGEN.VACACIONES) continue;
             if (FR[f] === 'noche' ? !franjasDe(personas[pi], d).includes('noche') : !franjasDe(personas[pi], d).includes(FR[f])) continue;
             if (!permitidoDia(personas[pi], d) || (d > 0 && T[grid[kk - 1]].franja === 'noche') || (d < D - 1 && T[grid[kk + 1]].franja === 'noche')) continue;
             if (mejor < 0 || nDisp[pi] < nDisp[mejor]) mejor = pi;
