@@ -443,6 +443,7 @@ const borrador = cambiosSinGuardar();
 { const { v, sub } = leerHash(); estado.vista = VISTAS.includes(v) ? v : 'cuadrante'; estado.sub = estado.vista === v ? sub : ''; }
 ponerMenuCorto(document.documentElement.dataset.menu === 'corto', false);
 pintar();
+if (estado.appVieja) avisar('Esta pestaña tiene una versión antigua de la app: puedes ver el cuadrante, pero no guardar. Recarga la página (Ctrl+F5, o Cmd+Mayús+R en el Mac) para tener la nueva.', 'mal', 0);
 window.horariosListo = true; // js/arranque.js: la app ha arrancado
 if (estado.borradorRecuperado) avisar('Se han recuperado los cambios de este ordenador que se habían apartado (por una versión más nueva guardada desde otro sitio): se han juntado con la versión de ahora y se guardan solos.', 'bien', 12000);
 else if (estado.borradorJuntado) avisar('Mientras tanto se guardó una versión más nueva desde otro sitio: se ha juntado con lo que tenías aquí, sin perder nada.', 'bien', 9000);

@@ -181,6 +181,8 @@ export async function cargar() {
   } catch (e) {
     estado.servidor = 'sin-conexion';
   }
+  // Una configuración guardada por una app más nueva: esta pestaña (en caché) no puede guardar, solo ver.
+  estado.appVieja = !!(delServidor && Number(delServidor.appMin) > APP_VERSION);
   const base = completar(delServidor || clonar(CONFIG_BASE));
   estado.publicada = JSON.stringify(base);
   let borrador = null;
@@ -188,7 +190,7 @@ export async function cargar() {
   // Una sola versión para todos: solo la administración recupera lo que dejó a medias. Sin sesión, al abrir se ve
   // siempre la versión publicada (los cambios de prueba no sobreviven a recargar la página).
   // En GitHub (sin sesiones) lo de este ordenador se guarda hasta que se publica o se descarta.
-  if (borrador && !estado.admin && !DEMO) { borrador = null; borrarBorrador(); }
+  if (borrador && !estado.admin && !DEMO) { borrador = null; if (estado.servidor === 'ok') borrarBorrador(); }   // sin conexión no se borra: puede ser de la administración
   // En GitHub: si el borrador de este ordenador se hizo sobre una versión publicada más antigua que la de ahora (se ha
   // guardado desde otro ordenador), no se carga encima: se aparta y se avisa, para no pisar lo nuevo.
   // Ahora se juntan: lo cambiado aquí se pone encima de la versión nueva (fusión a tres bandas con la versión de la que
@@ -234,6 +236,10 @@ export async function cargar() {
 
 // Rellena lo que falte en una configuración antigua o importada, sin pisar lo que haya.
 // Acepta también la versión 1 (una sola sede, la de Sevilla).
+// Versión del formato de la configuración que entiende esta app. Se sube cada vez que se añade un ajuste nuevo: la
+// configuración guarda la más alta que la ha tocado (appMin) y una pestaña con una app más vieja no puede guardar
+// (perdería esos ajustes): pide recargar.
+export const APP_VERSION = 3;
 export function completar(cfg) {
   const base = clonar(CONFIG_BASE);
   if (!cfg || typeof cfg !== 'object') return base;
@@ -242,7 +248,9 @@ export function completar(cfg) {
     const { tema, encuestas, version, ...sede } = cfg;
     todo = { tema, encuestas, sedes: [{ ...sede, id: 'sevilla', nombre: 'Sevilla', titulo: sede.nombre }] };
   }
-  const c = { version: 2, tema: todo.tema || base.tema, encuestas: Array.isArray(todo.encuestas) ? todo.encuestas : base.encuestas, sedes: [],
+  // Lo que esta versión no conoce se conserva tal cual (lo habrá puesto una versión más nueva).
+  const { version: _v, tema: _t, encuestas: _e, sedes: _s, escenarios: _es, portalHorario: _p, appMin: _a, ...desconocido } = todo;
+  const c = { ...desconocido, version: 2, appMin: Math.max(APP_VERSION, Number(todo.appMin) || 0), tema: todo.tema || base.tema, encuestas: Array.isArray(todo.encuestas) ? todo.encuestas : base.encuestas, sedes: [],
     // Escenarios: fotos con nombre del cuadrante de una sede (como los escenarios de Calabrio), para comparar.
     escenarios: Array.isArray(todo.escenarios) ? todo.escenarios.filter(e => e && e.id && e.sede && e.cfg) : [],
     // Dirección de Portal Horario (el sistema oficial de solicitudes); vacío = la de partida.
@@ -296,6 +304,8 @@ export function completarSede(cfg, base) {
       ...((x.margenCuartosFinde ?? b.margenCuartosFinde) != null ? { margenCuartosFinde: Math.max(0, Number(x.margenCuartosFinde ?? b.margenCuartosFinde) || 0) } : {}),
       nochesExactas: x.nochesExactas ?? b.nochesExactas ?? false,
     };
+    // Los ajustes que esta versión no conoce se conservan (al final, para no cambiar el orden de los conocidos).
+    for (const k of Object.keys(x)) if (!(k in c.cobertura)) c.cobertura[k] = x[k];
     c.cobertura.bolsa.inicial = dicc(c.cobertura.bolsa.inicial);
     c.cobertura.bolsa.consumida = dicc(c.cobertura.bolsa.consumida);
   }
@@ -340,7 +350,15 @@ export function cambiosSinGuardar() { return JSON.stringify(estado.todo) !== est
 // objetos se juntan campo a campo y las listas con identificador (sedes, escenarios, grupos, turnos) elemento a elemento.
 const igualJSON = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const esObjeto = (x) => x != null && typeof x === 'object' && !Array.isArray(x);
-const claveDe = (x) => (esObjeto(x) ? x.id ?? x.codigo ?? null : null);
+// Clave de un elemento de una lista: su id o código; los mínimos, colectivo + franja (+ fecha); las ausencias, persona + desde.
+const claveDe = (x) => {
+  if (!esObjeto(x)) return null;
+  if (x.id != null) return x.id;
+  if (x.codigo != null) return x.codigo;
+  if (x.colectivo != null && x.franja != null) return `${x.colectivo}|${x.franja}|${x.fecha ?? ''}`;
+  if (x.persona != null && x.desde != null) return `${x.persona}|${x.desde}|${x.tipo ?? ''}`;
+  return null;
+};
 const conClaves = (l) => Array.isArray(l) && l.length > 0 && l.every(x => claveDe(x) != null);
 export function fusionar(base, mio, remoto) {
   if (igualJSON(mio, base)) return remoto;
@@ -348,7 +366,8 @@ export function fusionar(base, mio, remoto) {
   if (esObjeto(mio) && esObjeto(remoto) && esObjeto(base)) {
     const out = { ...remoto };
     for (const k of new Set([...Object.keys(mio), ...Object.keys(remoto), ...Object.keys(base)])) {
-      const v = fusionar(base[k], mio[k], remoto[k]);
+      // La mejora del reparto va entera (mezclar intercambios de dos búsquedas no vale): manda la de aquí.
+      const v = k === 'mejora' && esObjeto(mio[k]) && Array.isArray(mio[k].intercambios) ? (igualJSON(mio[k], base[k]) ? remoto[k] : mio[k]) : fusionar(base[k], mio[k], remoto[k]);
       if (v === undefined) delete out[k]; else out[k] = v;
     }
     return out;
@@ -362,6 +381,15 @@ export function fusionar(base, mio, remoto) {
       out.push(R.has(k) ? fusionar(B.get(k), x, R.get(k)) : x);
     }
     for (const x of remoto) { const k = claveDe(x); if (!M.has(k) && !B.has(k)) out.push(x); }   // nuevo de allí
+    return out;
+  }
+  // Listas de fichas sin clave (reglas de solape, festivos añadidos…): se conserva lo de aquí, se añade lo nuevo de
+  // allí y se quita lo que allí borraron y aquí no se tocó. Las listas de valores sueltos (un patrón) van enteras.
+  const fichas = (l) => Array.isArray(l) && l.every(esObjeto);
+  if (fichas(mio) && fichas(remoto) && fichas(base) && (mio.length || remoto.length)) {
+    const j = (l) => new Set(l.map(x => JSON.stringify(x))), B = j(base), M = j(mio), R = j(remoto);
+    const out = mio.filter(x => { const t = JSON.stringify(x); return R.has(t) || !B.has(t); });
+    for (const x of remoto) { const t = JSON.stringify(x); if (!M.has(t) && !B.has(t)) out.push(x); }
     return out;
   }
   return mio;
@@ -492,6 +520,7 @@ export function cambiado({ inmediato = false, sinHistorial = false } = {}) {
 // Trae la versión más nueva del repositorio y pone encima lo cambiado aquí (fusión a tres bandas).
 export async function juntarConRemota() {
   const r = await leerRemota();
+  if (r.config && Number(r.config.appMin) > APP_VERSION) { estado.appVieja = true; throw new Error('Hay una versión más nueva de la app: recarga la página (Ctrl+F5, o Cmd+Mayús+R en el Mac) antes de guardar.'); }
   const remoto = completar(r.config), base = JSON.parse(estado.publicada);
   const sede = estado.sede;
   estado.todo = completar(fusionar(base, estado.todo, remoto));
@@ -595,10 +624,13 @@ export async function guardarEnServidor() {
     const d = estado.descargas[`${claveFuente(sede.festivos.fuente)}|${Number(sede.anio)}`];
     if (d && Array.isArray(d.lista)) sede.festivos.cache = d;
   }
-  const d = DEMO ? { guardado: await guardarGithub(estado.todo, resumenCambios(), estado.guardado) } : await api('guardar', { config: estado.todo, nota: resumenCambios() });
-  estado.publicada = JSON.stringify(estado.todo);
+  if (estado.appVieja) throw new Error('Esta pestaña tiene una versión antigua de la app y no puede guardar: recarga la página (Ctrl+F5, o Cmd+Mayús+R en el Mac).');
+  // Se guarda una foto de este momento: lo que se cambie mientras llega la respuesta sigue «sin guardar».
+  const foto = JSON.stringify(estado.todo), enviado = JSON.parse(foto);
+  const d = DEMO ? { guardado: await guardarGithub(enviado, resumenCambios(), estado.guardado) } : await api('guardar', { config: enviado, nota: resumenCambios() });
+  estado.publicada = foto;
   estado.guardado = d.guardado;
-  borrarBorrador();
+  if (JSON.stringify(estado.todo) === foto) borrarBorrador();
 }
 export function descartarCambios() {
   apuntarHistorial();
