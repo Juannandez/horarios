@@ -1,5 +1,5 @@
 {
- "guardado": "2026-11-26T11:17:28.594Z",
+ "guardado": "2026-11-26T11:17:51.976Z",
  "nota": "Sevilla: vacaciones",
  "config": {
   "version": 2,
@@ -1309,7 +1309,7 @@
        "inicio": "2027-08-30",
        "fin": "2027-09-21",
        "plazas": {
-        "TA": 24,
+        "TA": 28,
         "SUP": 3
        }
       }
