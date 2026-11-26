@@ -509,6 +509,11 @@ export function seccionCobertura(cfg) {
     <div class="tabla-caja" style="max-height:340px"><table class="tabla-lista"><thead><tr><th scope="col">Persona</th><th scope="col" class="num">Saldo de partida</th><th scope="col" class="num">A favor en el cuadrante</th><th scope="col" class="num">Ya cogido</th><th scope="col" class="num">Saldo</th><th scope="col" class="num">Días devueltos</th></tr></thead><tbody>${filasBolsa}</tbody></table></div>
     <p class="tenue" style="margin-top:6px">Se ven las 60 con más saldo; busca para ver otras. CSV: «código;horas» (p. ej. «TA 017;12,5»).</p>
   </section>
+  <section class="panel"><h2>Noches exactas</h2>
+    <p class="tenue">De noche, justo el mínimo (10), ni una persona más ni una menos. El ajuste cubre las noches cortas (también en fin de semana), pasa bloques de noches de quien tiene de más a donde hacen falta (primero los de los fijos discontinuos) y quita las que sobran.</p>
+    <div class="campos">${campo('Noches', sel('cobertura.nochesExactas', cob.nochesExactas === 'estricto' ? 'estricto' : cob.nochesExactas ? 'si' : 'no', [['no', 'Sin ajustar (puede haber más del mínimo)'], ['si', 'Exactas, sin bajar a nadie de su mínimo de noches'], ['estricto', 'Exactas siempre, aunque alguien baje de su mínimo de noches']], 'data-estructura="1" data-noches-exactas="1"'))}</div>
+    ${cob.nochesExactas ? (() => { const x = res.stats.nochesExactas || {}; let ex = 0; for (let d = 0; d < res.D; d++) if (res.cobertura[0][2][d] === res.necesidad[0][2][d]) ex++; return `<p>Ahora: <b>${fmtNum(ex)}</b> de ${fmtNum(res.D)} noches con justo el mínimo de teleasistencia.</p>`; })() : ''}
+  </section>
   <section class="panel"><h2>Margen sobre el mínimo por cuartos de hora</h2>
     <p class="tenue">Con mínimos por cuartos de hora: de 7:45 a 22:00 el ajuste intenta tener al menos el mínimo más estas personas en cada cuarto (cambiando turnos dentro de la franja, sin quitar a nadie de donde no sobra y, en fin de semana, con los fijos discontinuos). La noche va sin margen. Los huecos se siguen midiendo con el mínimo; donde no se llega al margen sale en amarillo en el cuadrante.</p>
     <div class="campos">${campo('Personas por encima del mínimo', num('cobertura.margenCuartos', cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}</div>
@@ -816,6 +821,7 @@ export function eventosParametros(raiz, repintar) {
       const g = cfg.grupos[Number(ruta.split('.')[1])];
       g.patron = resolverPatron(g, cfg.grupos).slice();
     }
+    if (ruta === 'cobertura.nochesExactas') valor = valor === 'estricto' ? 'estricto' : valor === 'si';
     ponerRuta(cfg, ruta, valor);
     if (ruta === 'minimosHora.activo' && valor) { const t = minimosHoraDesdeFranjas(cfg); for (const c of ['TA', 'SUP']) if (!Array.isArray(cfg.minimosHora[c])) cfg.minimosHora[c] = t[c]; }
     if (ruta.startsWith('reglas.') && ruta.endsWith('.activo')) { const n = el.closest('tr') && $('input[type=number]', el.closest('tr')); if (n) n.disabled = !valor; }
