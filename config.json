@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T13:11:52.191Z",
- "nota": "Sevilla: 14 noches como mínimo para quien hace noches en 3RM+2RT y 8 h",
+ "guardado": "2026-11-26T13:12:32.815Z",
+ "nota": "Sevilla: vuelve «fines de semana sin llamar a nadie» (disponibilidad para la bolsa) en el 3RM+2RT abierto",
  "config": {
   "version": 2,
   "tema": "day",
@@ -1029,7 +1029,7 @@
      "aguante": {
       "avisar": true
      },
-     "findesBolsa": false
+     "findesBolsa": true
     },
     "aj": {
      "activo": true,
