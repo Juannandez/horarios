@@ -881,7 +881,7 @@ export function generar(cfgEntrada, opciones = {}) {
         }
         if (mejor >= 0) { aplicar(mejor, d, mejorTi, mejorModo); stats.movidos++; hecho = true; }
         else {
-          // b) llamar a alguien que libra ese día
+          // b) poner turno a alguien que libra ese día (si su libre «puede pasar a turno al planificar»)
           for (const pi of porColectivo[c]) {
             if (!libre(pi, d)) continue;
             const ti = prefDe(pi, d, FR[f]);
