@@ -1,5 +1,5 @@
 {
- "guardado": "2026-11-26T10:46:57.049Z",
+ "guardado": "2026-11-26T10:47:16.968Z",
  "nota": "Sevilla: festivos",
  "config": {
   "version": 2,
@@ -1336,11 +1336,6 @@
        "nombre": "Corpus Christi (local)",
        "regla": "pascua",
        "dias": 60
-      },
-      {
-       "nombre": "Reyes",
-       "regla": "fija",
-       "fecha": "01-06"
       }
      ],
      "extra": [],
