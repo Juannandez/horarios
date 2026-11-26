@@ -229,7 +229,8 @@ export function generar(cfgEntrada, opciones = {}) {
   // Semanas sin tardes entre dos semanas de tarde (3 = «3 de mañana y 1 de tarde»): el ajuste no pone una tarde en una
   // semana si en alguna de las N anteriores o siguientes ya hay tardes.
   const sinTardeEntre = usa('semanasEntreTardes') ? Math.max(0, Number(R.semanasEntreTardes.valor) || 0) : 0;
-  const unaFranja = !!usa('unaFranjaSemana');            // el ajuste no mezcla mañana y tarde en una misma semana
+  const unaFranja = !!usa('unaFranjaSemana');
+  const sinNocheTrasTarde = !!usa('nocheTrasTarde');     // no se entra de noche el día después de una tarde            // el ajuste no mezcla mañana y tarde en una misma semana
   const minNoches = reg('minNoches', 14);                // noches como mínimo al año para quien hace noches
   const PUESTOS = Math.max(0, Number(cfg.puestos) || 0);  // puestos operativos en sala (0 = sin tope)
   // Fines de semana con bolsa (Cobertura y bolsa): el ajuste no pone a trabajar a nadie un sábado o domingo que libra;
@@ -314,6 +315,8 @@ export function generar(cfgEntrada, opciones = {}) {
     const patronBase = resolverPatron(g, cfg.grupos || []).map(c => (idx.has(c) ? c : 'L'));
     const patron = aplicarSolapes(patronBase, g.id, cfg.solapes, c => idx.has(c));
     patrones.set(g.id, patron);
+    // Ciclo para quien no hace noches (patronSinNoches, mismo largo): sus semanas de noche pasan a ser de día.
+    if (Array.isArray(g.patronSinNoches) && g.patronSinNoches.length === patronBase.length) patrones.set(`${g.id}|sn`, aplicarSolapes(g.patronSinNoches.map(c => (idx.has(c) ? c : 'L')), g.id, cfg.solapes, c => idx.has(c)));
     const semanas = patron.length / 7;
     const n = Math.min(Math.floor(tamGrupo(g)), 2000);
     const deReales = reales[g.colectivo] && reales[g.colectivo].length && primerGrupo[g.colectivo] === g.id ? reales[g.colectivo] : null;
@@ -415,7 +418,7 @@ export function generar(cfgEntrada, opciones = {}) {
 
   // 1. Ciclo
   personas.forEach((p, pi) => {
-    const patron = patrones.get(p.grupo);
+    const patron = (p.exentoNoches && patrones.get(`${p.grupo}|sn`)) || patrones.get(p.grupo);
     const semanas = patron.length / 7;
     for (let d = 0; d < D; d++) {
       const w = (((dias[d].semana + semanaCiclo0 + p.desfase) % semanas) + semanas) % semanas;
@@ -732,6 +735,8 @@ export function generar(cfgEntrada, opciones = {}) {
       for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 6); x++) { if (x === d) continue; const t = T[grid[pi * D + x]]; if (!t.trabaja) continue; if (t.franja === 'manana') mm++; else if (t.franja === 'tarde') tt++; }
       if ((nuevo.franja === 'tarde' && mm > 0) || (nuevo.franja === 'manana' && tt > 0)) return false;
     }
+    if (sinNocheTrasTarde && nuevo.franja === 'noche' && d > 0 && T[grid[pi * D + d - 1]].franja === 'tarde') return false;
+    if (sinNocheTrasTarde && nuevo.franja === 'tarde' && d < D - 1 && T[grid[pi * D + d + 1]].franja === 'noche') return false;
     if (sinTardeEntre && nuevo.franja === 'tarde' && viejo.franja !== 'tarde' && !personas[pi].horarioLibre && tardeCerca(pi, d)) return false;
     // Puestos en sala: el ajuste no pone a nadie más en una franja si ya están todos los puestos ocupados.
     if (PUESTOS && (!viejo.trabaja || viejo.franja !== nuevo.franja)) {
@@ -823,6 +828,7 @@ export function generar(cfgEntrada, opciones = {}) {
     for (let x = Math.max(0, a - 1); x <= Math.min(D - 2, b); x++) {
       const t1 = T[grid[pi * D + x]], t2 = T[grid[pi * D + x + 1]];
       if (descanso != null && t1.trabaja && t2.trabaja && t2.ini + 1440 - t1.fm < descanso * 60) return false;
+      if (sinNocheTrasTarde && t1.franja === 'tarde' && t2.franja === 'noche') return false;   // noche el día después de una tarde
     }
     const racha = (x, f) => { let n = 1; for (let y = x - 1; y >= 0 && f(y); y--) n++; for (let y = x + 1; y < D && f(y); y++) n++; return n; };
     for (let x = a; x <= b; x++) {
@@ -1166,6 +1172,7 @@ export function generar(cfgEntrada, opciones = {}) {
       else return false;
     }
     if (!nuevas || (maxNoches != null && noches[pi] + nuevas > topeNoches(pi))) return false;
+    if (sinNocheTrasTarde && a > 0 && T[grid[pi * D + a - 1]].franja === 'tarde') return false;   // el día de antes, de tarde, no
     {
       const cambios = [];
       const cambia = (x, nt) => { cambios.push([x, grid[pi * D + x], origen[pi * D + x]]); poner(pi, x, nt, ORIGEN.CUBRE); };
@@ -1383,6 +1390,38 @@ export function generar(cfgEntrada, opciones = {}) {
     }
   };
 
+  // Puestos en sala: si un día hay más gente en una franja que puestos, alguien de esa franja pasa su turno a otro día
+  // de lunes a viernes de la misma semana en que libra y queda sitio (mismas horas; nunca vacaciones ni cambios a mano).
+  const enSala = (d, f) => { let n = 0; for (let c = 0; c < COL.length; c++) n += cob[c][f][d]; return n; };
+  const aliviarPuestos = () => {
+    if (!PUESTOS || !ajusteActivo) return;
+    for (let d = 0; d < D; d++) for (let f = 0; f < 2; f++) {
+      let vueltas = 0;
+      while (enSala(d, f) > PUESTOS && vueltas++ < 40) {
+        let hecho = false;
+        const l = d - dias[d].dow;
+        for (const c of [0, 1]) for (const pi of porColectivo[c] || []) {
+          if (hecho) break;
+          const kd = pi * D + d, ti = grid[kd];
+          if (franjaIdx[ti] !== f || origen[kd] === ORIGEN.MANUAL || origen[kd] === ORIGEN.VACACIONES || personas[pi].horarioLibre) continue;
+          if (cob[c][f][d] - 1 < real[c][f][d] || !quitarSinBajar(pi, d, ti)) continue;
+          for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 4) && !hecho; x++) {
+            if (x === d || dias[x].festivo || !libre(pi, x) || enSala(x, f) + 1 > PUESTOS) continue;
+            const od = origen[kd];
+            poner(pi, d, iLibre, ORIGEN.RECORTE);
+            if (puede(pi, x, ti)) {
+              poner(pi, x, ti, ORIGEN.CUBRE);
+              if (valida(pi, Math.max(0, l - 1), Math.min(D - 1, l + 7)) && semanaCoherente(pi, x)) { hecho = true; stats.puestosAliviados = (stats.puestosAliviados || 0) + 1; break; }
+              poner(pi, x, iLibre, ORIGEN.CICLO);
+            }
+            poner(pi, d, ti, od);
+          }
+        }
+        if (!hecho) break;
+      }
+    }
+  };
+
   // a2) Pasar de mañana a tarde (o al revés) los últimos días de trabajo antes de un descanso: desde el día d hasta su
   // siguiente día libre, entre semana y como mucho 3 días, si en su franja sobra gente todos esos días. No cambian ni
   // sus horas ni sus días libres (los dos días libres de la semana se mantienen) y entre turnos quedan las 12 h: de
@@ -1412,7 +1451,7 @@ export function generar(cfgEntrada, opciones = {}) {
       const antes = [];
       for (let x = d; x <= e; x++) { antes.push([grid[pi * D + x], origen[pi * D + x]]); poner(pi, x, prefDe(pi, x, FR[f]), ORIGEN.CUBRE); }
       const sinMezcla = () => { if (!unaFranja) return true; const l = d - dias[d].dow; for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 6); x++) { const t = T[grid[pi * D + x]]; if (t.trabaja && (t.franja === 'manana' || t.franja === 'tarde') && t.franja !== FR[f]) return false; } return true; };
-      const tardesOk = !(sinTardeEntre && FR[f] === 'tarde' && !personas[pi].horarioLibre && tardeCerca(pi, d));
+      const tardesOk = !(sinTardeEntre && FR[f] === 'tarde' && !personas[pi].horarioLibre && tardeCerca(pi, d)) && !(sinNocheTrasTarde && FR[f] === 'tarde' && e + 1 < D && T[grid[pi * D + e + 1]].franja === 'noche');
       if (tardesOk && valida(pi, Math.max(0, d - 1), Math.min(D - 1, e + 1)) && semanaCoherente(pi, d) && sinMezcla() && (maxEntradas == null || nEntradas[pi] <= maxEntradas)) return true;
       for (let x = d; x <= e; x++) poner(pi, x, antes[x - d][0], antes[x - d][1]);
     }
@@ -1496,6 +1535,7 @@ export function generar(cfgEntrada, opciones = {}) {
     recortarNoches(0); equilibrarNoches(0); subirNoches(0); recortar(0); conCesion(0); recortar(0); completar(0); conMargenFinal(0);
     if (NOCHES_EXACTAS) { ajustarNoches(0); recortar(0); completar(0); }
     huecosConCambios(0);   // lo que siga faltando de día: cambiar un día libre por otro de la semana en que sobre gente
+    aliviarPuestos();      // y donde haya más gente que puestos, pasar algún turno a otro día de la semana
     aplicarRatio();
     recortarNoches(1); equilibrarNoches(1); subirNoches(1); recortar(1); conCesion(1); recortar(1); completar(1); conMargenFinal(1);
   } else aplicarRatio();
