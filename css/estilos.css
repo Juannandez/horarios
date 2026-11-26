@@ -484,3 +484,10 @@ body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
 #principal:fullscreen #caja-cuadrante { max-height: calc(100vh - 260px); }
 .horas-dia-tablas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
 .horas-dia td.mal { color: var(--bad); }
+
+.cuadrante .marca-sn { font-size: 9px; font-weight: 700; color: var(--muted); border: 1px solid var(--line2); border-radius: 4px; padding: 0 3px; margin-left: 2px; }
+
+/* El mes se queda a la vista al desplazarse a los lados, y la cabecera (mes y días) arriba al bajar: el cuadrante ocupa
+   casi toda la altura de la pantalla y se desplaza dentro de su caja. */
+.cuadrante .mes-fijo { position: sticky; left: calc(var(--ancho-persona, 92px) + var(--ancho-grupo, 170px) + 6px); display: inline-block; }
+#caja-cuadrante { max-height: calc(100vh - 84px); }

@@ -18,13 +18,15 @@ const ORDENES = [
   { campo: 'avisos', texto: 'Avisos (incumplimientos de la persona)', sube: 'de menos a más avisos', baja: 'primero quien más avisos tiene' },
 ];
 
+// Quien no hace noches (caso especial sin la franja de noche, exento de noches o contrato sin noches).
+const sinNoches = (p) => !p.horarioLibre && (p.exentoNoches || (Array.isArray(p.franjas) && p.franjas.length && !p.franjas.includes('noche')));
 function personasVisibles() {
   const { res } = estado, u = estado.ui;
   const q = u.buscar.trim().toLowerCase();
   const ordenGrupo = new Map(estado.cfg.grupos.map((g, i) => [g.id, i]));
   let lista = res.personas.filter(p =>
     (u.colectivo === 'todos' || p.colectivo === u.colectivo) &&
-    (u.grupo === 'todos' || p.grupo === u.grupo) &&
+    (u.grupo === 'todos' || p.grupo === u.grupo || (u.grupo === '__sinNoches' && sinNoches(p))) &&
     (!u.soloAvisos || p.alertas.length) &&
     (!u.infraccion || (datosInfracciones().porPersona.get(p.pi) || new Set()).has(u.infraccion)) &&
     (!q || p.id.toLowerCase().includes(q) || p.grupoNombre.toLowerCase().includes(q) || (p.nombre || '').toLowerCase().includes(q)));
@@ -229,7 +231,7 @@ function herramientas() {
       <button type="button" class="btn mini" data-meses="todo" aria-pressed="${u.mesDesde === 0 && u.mesHasta === estado.res.meses.length - 1}">Todo el año</button></div>` : ''}
     <div class="grupo">${seg('colectivo', u.colectivo, [['todos', 'Todos'], ...COLECTIVOS.map(c => [c.id, c.nombre])])}</div>
     <div class="grupo"><label class="oculto" for="sel-grupo">Grupo</label>
-      <select id="sel-grupo"><option value="todos">Todos los grupos</option>${grupos.map(g => `<option value="${esc(g.id)}" ${u.grupo === g.id ? 'selected' : ''}>${esc(g.nombre)}</option>`).join('')}</select>
+      <select id="sel-grupo"><option value="todos">Todos los grupos</option>${grupos.map(g => `<option value="${esc(g.id)}" ${u.grupo === g.id ? 'selected' : ''}>${esc(g.nombre)}</option>`).join('')}<option value="__sinNoches" ${u.grupo === '__sinNoches' ? 'selected' : ''}>Sin noches (${estado.res.personas.filter(sinNoches).length})</option></select>
       <label class="casilla"><input type="checkbox" id="solo-avisos" ${u.soloAvisos ? 'checked' : ''}> Solo con avisos</label></div>
   </div>
   <div class="herramientas"><div class="grupo"><label for="sel-orden" class="etiqueta">Ordenar por</label>
@@ -287,7 +289,7 @@ function tablaMes(lista) {
         : `<td class="c ${d.finde ? 'finde' : ''}"><button type="button" class="${cls} t${ti}" data-p="${p.pi}" data-d="${d.i}"${inf ? ` title="${esc(avisoInf.slice(3))}"` : ''} aria-label="${esc(p.id)}, ${d.dia} de ${MESES[d.mes].toLowerCase()}: ${esc(t.nombre)}${esc(avisoInf)}">${texto}</button></td>`;
     }).join('');
     const al = p.alertas.length ? ' alerta' : '';
-    return `<tr><th scope="row" class="fija enlace" data-informe="${p.pi}" title="Ver el informe de ${esc(p.id)}">${esc(p.id)}</th><td class="fija2" title="${esc(p.nombre || p.grupoNombre)}">${esc(p.nombre || p.grupoNombre)}</td>${celdas}
+    return `<tr><th scope="row" class="fija enlace" data-informe="${p.pi}" title="Ver el informe de ${esc(p.id)}${sinNoches(p) ? ' · no hace noches' : ''}">${esc(p.id)}${sinNoches(p) ? ' <span class="marca-sn" aria-label="sin noches">s/n</span>' : ''}</th><td class="fija2" title="${esc(p.nombre || p.grupoNombre)}">${esc(p.nombre || p.grupoNombre)}</td>${celdas}
       <td class="res${al}" title="${esc(p.alertas.join(' · ') || 'Sin avisos')}">${fmtH(p.horas)}</td><td class="res">${p.noches}</td><td class="res">${p.fines}</td></tr>`;
   };
   // Tablas grandes (p. ej. el año entero): solo se pintan las filas que se ven y se van cambiando al
@@ -343,7 +345,7 @@ function tablaMes(lista) {
   const pieFijo = pie.slice(0, 3).join(''), pieResto = pie.slice(3).join('');
   // Los meses arriba, encima de sus días.
   const grupoMes = []; for (const d of dias) { const k = `${d.mes}|${d.anio}`; if (!grupoMes.length || grupoMes[grupoMes.length - 1].k !== k) grupoMes.push({ k, mes: d.mes, anio: d.anio, n: 0 }); grupoMes[grupoMes.length - 1].n++; }
-  const filaMeses = `<tr class="fila-meses"><th scope="col" class="fija"></th><th scope="col" class="fija2"></th>${grupoMes.map(g => `<th scope="colgroup" colspan="${g.n}" class="mes-cab">${MESES[g.mes]} ${g.anio}</th>`).join('')}<th colspan="3"></th></tr>`;
+  const filaMeses = `<tr class="fila-meses"><th scope="col" class="fija"></th><th scope="col" class="fija2"></th>${grupoMes.map(g => `<th scope="colgroup" colspan="${g.n}" class="mes-cab"><span class="mes-fijo">${MESES[g.mes]} ${g.anio}</span></th>`).join('')}<th colspan="3"></th></tr>`;
   const an = anchos();
   return `${hojaColores}<div class="tabla-caja" id="caja-cuadrante"><table class="cuadrante" style="--ancho-persona:${an.persona}px;--ancho-grupo:${an.grupo}px">
     <caption class="oculto">Cuadrante de ${MESES[(res.meses[u.mesDesde] || {}).mes ?? 0].toLowerCase()}${u.mesHasta !== u.mesDesde ? ` a ${MESES[(res.meses[u.mesHasta] || {}).mes ?? 0].toLowerCase()}` : ''} de ${estado.cfg.anio}</caption>

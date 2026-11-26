@@ -1378,8 +1378,9 @@ export function generar(cfgEntrada, opciones = {}) {
     if (!FINDES_BOLSA || !ajusteActivo) return;
     const iDB = idx.get('DB'), nDisp = new Int16Array(P);
     for (let d = 0; d < D; d++) {
-      if (!dias[d].finde) continue;
       for (let c = 0; c < COL.length; c++) for (let f = 0; f < FR.length; f++) {
+        // Sábado y domingo; de noche, también el viernes (la noche del viernes al sábado es de fin de semana).
+        if (!(dias[d].finde || (FR[f] === 'noche' && dias[d].dow === 4))) continue;
         // Lo que falta en la franja, o en el peor cuarto de hora de esa franja.
         let falta = real[c][f][d] - cob[c][f][d];
         if (MC && Array.isArray(MC[COL[c]])) {
