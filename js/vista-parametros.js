@@ -255,12 +255,13 @@ export function seccionMinimos(cfg) {
   const mh = cfg.minimosHora || {};
   if (mh.activo && COLECTIVOS.every(c => Array.isArray(mh[c.id]))) {
     const res = estado.res, d0 = res.dias.findIndex(x => x.dow === 1 && !x.festivo), d5 = res.dias.findIndex(x => x.dow === 5 && !x.festivo);
+    const d6 = res.dias.findIndex(x => x.dow === 6 && !x.festivo), dF = res.dias.findIndex(x => x.festivo && !x.finde);
     const de = (c, f, d) => (d >= 0 ? fmtNum(res.necesidad[c][f][d]) : '—');
     return `${seccionMinimosHora(cfg)}
       <section class="panel"><h2>Mínimo de cada franja (sale de los de horas)</h2>
         <p class="tenue">El ajuste trabaja por franjas: el mínimo de cada una es el mayor de las horas centrales de su turno. Para cambiarlo, cambia la tabla de horas de arriba.</p>
-        <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Colectivo</th><th scope="col">Franja</th><th scope="col" class="num">Lunes a viernes</th><th scope="col" class="num">Sábado</th></tr></thead><tbody>
-          ${COLECTIVOS.map((c, ci) => FRANJAS.map((f, fi) => `<tr><td>${fi === 0 ? esc(c.nombre) : ''}</td><td>${esc(f.nombre)}</td><td class="num">${de(ci, fi, d0)}</td><td class="num">${de(ci, fi, d5)}</td></tr>`).join('')).join('')}
+        <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Colectivo</th><th scope="col">Franja</th><th scope="col" class="num">Lunes a viernes</th><th scope="col" class="num">Sábado</th><th scope="col" class="num">Domingo</th><th scope="col" class="num">Festivo</th></tr></thead><tbody>
+          ${COLECTIVOS.map((c, ci) => FRANJAS.map((f, fi) => `<tr><td>${fi === 0 ? esc(c.nombre) : ''}</td><td>${esc(f.nombre)}</td><td class="num">${de(ci, fi, d0)}</td><td class="num">${de(ci, fi, d5)}</td><td class="num">${de(ci, fi, d6)}</td><td class="num">${de(ci, fi, dF)}</td></tr>`).join('')).join('')}
         </tbody></table></div></section>
       ${seccionPuestos(cfg)}
       ${seccionAbsentismo(cfg)}

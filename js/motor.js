@@ -639,6 +639,19 @@ export function generar(cfgEntrada, opciones = {}) {
     let n = 0; for (let x = l; x <= l + 6; x++) if (!T[grid[pi * D + x]].trabaja) n++;
     return n;
   };
+  // Fin de semana coherente con su semana: si de lunes a viernes va más de mañana, el fin de semana trabajado no va de
+  // tarde (y al revés). quita: un día de lunes a viernes que se va a quitar (para comprobarlo antes de quitarlo).
+  const semanaCoherente = (pi, d, quita = -1) => {
+    if (!finesCoherentes) return true;
+    const l = d - dias[d].dow; let m = 0, t = 0;
+    for (let x = Math.max(0, l); x < Math.min(D, l + 5); x++) { if (x === quita) continue; const tt = T[grid[pi * D + x]]; if (!tt.trabaja) continue; if (tt.franja === 'manana') m++; else if (tt.franja === 'tarde') t++; }
+    for (let x = l + 5; x <= l + 6; x++) {
+      if (x < 0 || x >= D) continue; const tt = T[grid[pi * D + x]];
+      if (!tt.trabaja) continue;
+      if ((m > t && tt.franja === 'tarde') || (t > m && tt.franja === 'manana')) return false;
+    }
+    return true;
+  };
   const puede = (pi, d, ti) => {
     const nuevo = T[ti], viejo = T[grid[pi * D + d]];
     if (!nuevo.trabaja) return true;
@@ -798,6 +811,7 @@ export function generar(cfgEntrada, opciones = {}) {
           const sobra = cob[c][f][d] - necesidad[c][f][d];
           if (sobra < 1) continue;
           if (!cuartosOk(pi, d, ti)) continue;   // con mínimos por cuartos, que no deje un relevo corto
+          if (!dias[d].finde && !semanaCoherente(pi, d, d)) continue;   // que su fin de semana siga en la franja de su semana
           const nota = (dias[d].festivo ? 1000 : 0) + (dias[d].finde ? 500 : 0) + sobra / Math.max(1, necesidad[c][f][d]) * 100;
           if (nota > mejorNota) { mejorNota = nota; mejor = d; }
         }
@@ -1259,7 +1273,28 @@ export function generar(cfgEntrada, opciones = {}) {
             if (n >= nota) continue;
             for (const t of turnosDe(pi, d)) if (cqT[t].includes(q) && puede(pi, d, t)) { mejor = pi; mejorT = t; nota = n; break; }
           }
-          if (mejor < 0) break;
+          if (mejor < 0) {
+            // Un fijo discontinuo que no puede: trabaja este día y libra otro de esa semana, o el día siguiente (si al día
+            // siguiente entraba de mañana y no le daría tiempo a descansar), en que sobre gente. Mismas horas.
+            let hecho = false;
+            for (const pi of porColectivo[c]) {
+              if (hecho || !personas[pi].horarioLibre || !libre(pi, d)) continue;
+              const l = d - dias[d].dow;
+              for (let x = Math.max(0, l); x <= Math.min(D - 1, Math.max(l + 6, d + 1)) && !hecho; x++) {
+                const kx = pi * D + x, tx = grid[kx];
+                if (x === d || !T[tx].trabaja || T[tx].franja === 'noche' || origen[kx] === ORIGEN.MANUAL || origen[kx] === ORIGEN.VACACIONES) continue;
+                const fx = franjaIdx[tx];
+                if (cob[c][fx][x] - 1 < necesidad[c][fx][x] || !cuartosOk(pi, x, tx)) continue;
+                const lx = grid[pi * D + d], o0 = origen[kx];
+                poner(pi, x, iLibre, ORIGEN.RECORTE);
+                const t = turnosDe(pi, d).find(tt => cqT[tt].includes(q) && Math.abs((T[tt].horas || 0) - (T[tx].horas || 0)) < 1e-9 && puede(pi, d, tt));
+                if (t != null) { poner(pi, d, t, ORIGEN.CUBRE); if (valida(pi, Math.max(0, l - 1), Math.min(D - 1, Math.max(l + 7, d + 2)))) { hecho = true; puestos++; break; } poner(pi, d, lx, ORIGEN.CICLO); }
+                poner(pi, x, tx, o0);
+              }
+            }
+            if (!hecho) break;
+            continue;
+          }
           poner(mejor, d, mejorT, ORIGEN.CUBRE); puestos++;
         }
       }
@@ -1304,7 +1339,8 @@ export function generar(cfgEntrada, opciones = {}) {
           if (mejorD < 0) { poner(pi, d, ti, o0); continue; }
           const k2 = pi * D + mejorD, l2 = grid[k2], o2 = origen[k2];
           poner(pi, mejorD, mejorTi, ORIGEN.CUBRE);
-          if (!valida(pi, Math.max(0, mejorD - 1), Math.min(D - 1, mejorD + 1)) || !valida(pi, Math.max(0, d - 1), Math.min(D - 1, d + 1))) {
+          if (!valida(pi, Math.max(0, mejorD - 1), Math.min(D - 1, mejorD + 1)) || !valida(pi, Math.max(0, d - 1), Math.min(D - 1, d + 1))
+            || !semanaCoherente(pi, d) || !semanaCoherente(pi, mejorD)) {
             poner(pi, mejorD, l2, o2); poner(pi, d, ti, o0); continue;
           }
           nFest[pi]--; librados++;
@@ -1340,7 +1376,8 @@ export function generar(cfgEntrada, opciones = {}) {
         if (puede(b, d, ta) && puede(a, d2, tb)) {
           poner(b, d, ta, ORIGEN.MEJORA); poner(a, d2, tb, ORIGEN.MEJORA);
           const r = (x) => [Math.max(0, x - 1), Math.min(D - 1, x + 1)];
-          if (valida(a, ...r(d)) && valida(a, ...r(d2)) && valida(b, ...r(d)) && valida(b, ...r(d2))) return true;
+          if (valida(a, ...r(d)) && valida(a, ...r(d2)) && valida(b, ...r(d)) && valida(b, ...r(d2))
+            && semanaCoherente(a, d) && semanaCoherente(a, d2) && semanaCoherente(b, d) && semanaCoherente(b, d2)) return true;
         }
         poner(a, d, ta, oa[0]); poner(a, d2, la, oa[1]); poner(b, d, lb, ob[0]); poner(b, d2, tb, ob[1]);
       }
@@ -1436,6 +1473,8 @@ export function generar(cfgEntrada, opciones = {}) {
       if (minFinesLibresMes != null && !personas[pi].exentoFines && mesFinde[dias[d].semana] >= 0 && libresMes(pi, mesFinde[dias[d].semana]) < minFinesLibresMes) return false;
       if (minFinesLibresEntre != null && !personas[pi].exentoFines && pegados(pi, dias[d].semana)) return false;
     }
+    // Y el fin de semana de cada semana tocada sigue en la franja de su semana (aunque el cambio sea entre semana).
+    for (let d = a; d <= b; d++) if ((d === a || dias[d].dow === 0) && !semanaCoherente(pi, d)) return false;
     return true;
   };
   const intercambiar = (pa, pb, d0, n) => {
