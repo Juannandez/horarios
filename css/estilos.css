@@ -431,3 +431,7 @@ body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
 
 .rot-herr .grupo { flex-wrap: wrap; align-items: center; gap: 6px; }
 .rot-herr label { font-size: .85rem; color: var(--muted); }
+
+.guardar-pastilla .pastilla-texto { font-size: .85rem; padding: 0 8px; font-weight: 600; color: var(--muted); }
+.guardar-pastilla .pastilla-texto.bien { color: var(--ok, #17663a); }
+.guardar-pastilla .pastilla-texto.mal { color: var(--bad); }

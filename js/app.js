@@ -1,6 +1,6 @@
 // Arranque de la app: navegación, sesión, barra de guardado y vista Ajustes.
 import { DEMO, modal, resumenCambios } from './nucleo.js';
-import { repoGithub, urlSubida, ficheroPublicacion, hayAcceso, crearAcceso, cambiarContrasena, quitarAcceso } from './github.js';
+import { repoGithub, urlSubida, ficheroPublicacion, hayAcceso, crearAcceso, cambiarContrasena, quitarAcceso, sesionRecordada } from './github.js';
 import { estado, esc, $, $$, cargar, alRegenerar, cambiosSinGuardar, guardarEnServidor, descartarCambios, entrar, salirSesion,
   avisar, confirmar, ponerTema, ponerMenuCorto, APARIENCIAS, deshacer, rehacer, puedeDeshacer, puedeRehacer, descargar, completar, cambiado, clonar, fmtFecha, ponerSede, api } from './nucleo.js';
 import { CONFIG_BASE } from './datos-base.js';
@@ -50,7 +50,7 @@ function pintarAccesoGithub() {
   const caja = $('#acceso-github'); if (!caja) return;
   const pend = cambiosSinGuardar() ? 'Tienes cambios <b>sin guardar</b> en este ordenador.' : 'Lo que ves es la versión publicada, la misma para todos.';
   if (estado.admin) {
-    caja.innerHTML = `<p>${pend} Sesión de administración abierta en esta pestaña: «Guardar para todos» la publica y todo el mundo la ve en 1-2 minutos.</p>
+    caja.innerHTML = `<p>${pend} Sesión de administración abierta${sesionRecordada() ? ' y <b>recordada en este ordenador</b>' : ' en esta pestaña'}: <b>cada cambio se guarda solo para todos</b> a los pocos segundos (se ve en la esquina de abajo). Todo el mundo lo ve en 1-2 minutos.</p>
       <div class="fila-acciones"><button type="button" class="btn primario" data-accion="guardar" ${cambiosSinGuardar() ? '' : 'disabled'}>Guardar para todos</button><button type="button" class="btn" data-accion="salir">Cerrar sesión</button></div>
       <form id="form-cambiar-github" class="campos" style="margin-top:10px" autocomplete="off"><label class="campo"><span>Contraseña nueva</span><input type="password" id="gh-nueva" minlength="12" required autocomplete="new-password"></label>
         <button type="submit" class="btn">Cambiar la contraseña</button>
@@ -62,7 +62,9 @@ function pintarAccesoGithub() {
     caja.innerHTML = `<p>${pend} Para guardar para todos, entra con la contraseña de administración.</p>
       <form class="fila-acciones" id="form-entrar"><label class="oculto" for="clave">Contraseña</label>
         <input type="password" id="clave" autocomplete="current-password" placeholder="Contraseña de administración" required>
+        <label class="casilla"><input type="checkbox" id="recordar" checked><span>Recordar en este ordenador</span></label>
         <button type="submit" class="btn primario">Entrar</button></form>
+      <p class="tenue">Con la contraseña puesta, <b>cada cambio se guarda solo para todos</b> a los pocos segundos. «Recordar en este ordenador» evita escribirla cada vez; no lo marques en un ordenador que use más gente.</p>
       <details style="margin-top:10px"><summary>¿Has olvidado la contraseña o ha caducado la clave?</summary>${formPreparar('Vuelve a preparar el acceso con una clave nueva')}</details>${manual()}`;
   } else {
     caja.innerHTML = `<p>${pend} Todavía no hay contraseña de administración. Prepárala una vez y luego, desde cualquier ordenador, entra con ella y guarda para todos.</p>${formPreparar('Preparar el acceso (una vez)')}${manual()}`;
@@ -177,7 +179,8 @@ function pintarSesion() {
 function pintarBarraGuardar() {
   const caja = $('#barra-guardar');
   const hay = cambiosSinGuardar();
-  if ((!hay && !puedeRehacer()) || estado.vista === 'resultados') { caja.innerHTML = ''; return; }
+  const autoHecho = DEMO && estado.admin && estado.auto && (estado.auto.hora || estado.auto.estado === 'error' || estado.auto.estado === 'conflicto');
+  if ((!hay && !puedeRehacer() && !autoHecho) || estado.vista === 'resultados') { caja.innerHTML = ''; return; }
   // Deshacer y rehacer (también con Ctrl+Z y Ctrl+Mayús+Z), como Sling o Deputy.
   const historia = `<span class="fila-acciones historia" style="margin:0">
       <button type="button" class="btn mini" data-accion="deshacer" ${puedeDeshacer() ? '' : 'disabled'} title="Deshacer (Ctrl+Z)" aria-label="Deshacer">↶ Deshacer</button>
@@ -185,6 +188,22 @@ function pintarBarraGuardar() {
   // Plegada (de partida): una pastilla pequeña en la esquina que no tapa nada. Se despliega al pulsarla.
   let plegada = true;
   try { plegada = sessionStorage.getItem('horarios.barraAbierta') !== '1'; } catch (e) { /* sin almacenamiento */ }
+  // Versión de GitHub con la contraseña puesta: se guarda sola. La pastilla solo dice cómo va.
+  if (DEMO && estado.admin) {
+    const au = estado.auto || {};
+    const txt = au.estado === 'guardando' ? 'Guardando para todos…'
+      : au.estado === 'pendiente' ? 'Se guardará en unos segundos…'
+      : au.estado === 'conflicto' ? '⚠ Hay una versión más nueva de otro ordenador'
+      : au.estado === 'error' ? '⚠ No se ha podido guardar'
+      : au.hora && !hay ? `✓ Guardado para todos a las ${au.hora}` : hay ? 'Cambios sin guardar' : '';
+    if (!txt) { caja.innerHTML = ''; return; }
+    caja.innerHTML = `<div class="guardar-pastilla" role="status" aria-live="polite" title="${esc(au.error || 'Cada cambio se guarda solo para todos, unos segundos después.')}">
+      <span class="pastilla-texto ${au.estado === 'error' || au.estado === 'conflicto' ? 'mal' : au.estado === 'hecho' && !hay ? 'bien' : ''}">${txt}</span>
+      ${puedeDeshacer() ? '<button type="button" class="btn mini" data-accion="deshacer" title="Deshacer (⌘ Cmd + Z)">↶</button>' : ''}
+      ${au.estado === 'error' ? '<button type="button" class="btn mini primario" data-accion="guardar">Reintentar</button>' : ''}
+      ${au.estado === 'conflicto' ? '<button type="button" class="btn mini primario" data-accion="recargar">Recargar</button>' : ''}</div>`;
+    return;
+  }
   if (!hay) { caja.innerHTML = plegada ? '' : `<div class="guardar-barra" role="region" aria-label="Deshacer">${historia}<button type="button" class="btn mini" data-accion="barra-plegar" title="Ocultar esta barra">Ocultar</button></div>`; return; }
   if (plegada) {
     caja.innerHTML = `<div class="guardar-pastilla" role="region" aria-label="Cambios sin guardar">
@@ -231,6 +250,7 @@ function ir(vista, sub = estado.sub || '') {
 }
 
 async function guardar() {
+  if (DEMO && estado.admin) { estado.auto = { estado: 'pendiente' }; const { autoguardar } = await import('./nucleo.js'); await autoguardar(); return pintar(); }
   try { await guardarEnServidor(); olvidarVersiones(); avisar(DEMO ? 'Guardado en GitHub (y como versión nueva). Todo el mundo lo verá en 1-2 minutos, al recargar la página.' : 'Configuración guardada en el servidor (y como versión nueva). Ya la ve todo el mundo.', 'bien', DEMO ? 9000 : undefined); }
   catch (e) { avisar(`No se ha guardado. ${esc(e.message)}`, 'mal', 0); }
   pintar();
@@ -283,6 +303,7 @@ document.addEventListener('click', async (e) => {
   if (b.dataset.ir) return ir(b.dataset.ir);
   const a = b.dataset.accion;
   if (a === 'guardar') return guardar();
+  if (a === 'recargar') return location.reload();
   if (a === 'deshacer' || a === 'rehacer') return hacerHistoria(a === 'deshacer');
   if (a === 'barra-abrir' || a === 'barra-plegar') {
     try { sessionStorage.setItem('horarios.barraAbierta', a === 'barra-abrir' ? '1' : '0'); } catch (e) { /* sin almacenamiento */ }
@@ -353,7 +374,8 @@ raiz.addEventListener('submit', async (e) => {
   if (e.target.id !== 'form-entrar') return;
   e.preventDefault();
   const clave = $('#clave').value;
-  try { await entrar(clave); avisar(DEMO ? 'Contraseña correcta: ya puedes guardar para todos (en esta pestaña).' : 'Sesión de administración iniciada.', 'bien'); pintar(); }
+  const recordar = !!($('#recordar') && $('#recordar').checked);
+  try { await entrar(clave, recordar); avisar(DEMO ? `Contraseña correcta. Desde ahora cada cambio se guarda solo para todos${recordar ? ', y este ordenador la recuerda' : ''}.` : 'Sesión de administración iniciada.', 'bien'); pintar(); }
   catch (err) { avisar(`No se ha iniciado la sesión. ${esc(err.message)}`, 'mal', 0); $('#clave').select(); }
 });
 
@@ -380,6 +402,8 @@ raiz.addEventListener('click', (e) => {
 });
 
 // Al recalcular: el cuadrante se repinta entero; en Parámetros solo los resúmenes (para no perder el foco).
+// El guardado automático avisa aquí de cómo va (pastilla de la esquina).
+estado.alAutoguardar = () => pintarBarraGuardar();
 alRegenerar(() => {
   if (estado.vista === 'cuadrante') pintarCuadrante(raiz);
   else if (estado.vista === 'parametros') refrescarResumenParametros(raiz);
@@ -398,6 +422,8 @@ const borrador = cambiosSinGuardar();
 ponerMenuCorto(document.documentElement.dataset.menu === 'corto', false);
 pintar();
 window.horariosListo = true; // js/arranque.js: la app ha arrancado
-if (borrador) avisar('Se ha recuperado lo que estabas cambiando en este navegador. Si no lo quieres, pulsa «Descartar» abajo.', '', 9000);
+if (estado.borradorApartado) avisar('Desde otro ordenador se ha guardado una versión más nueva: se ha cargado esa. Lo que tenías sin guardar aquí se ha apartado (no se ha perdido, pero no se usa).', '', 12000);
+else if (borrador && DEMO && estado.admin) { const { programarAutoguardado } = await import('./nucleo.js'); programarAutoguardado(4000); }
+else if (borrador) avisar('Se ha recuperado lo que estabas cambiando en este navegador. Si no lo quieres, pulsa «Descartar» abajo.', '', 9000);
 if (estado.servidor === 'demo' && !borrador) avisar('Versión de GitHub: ves la versión publicada, la misma para todos. Lo que cambies se guarda en este ordenador hasta que lo publiques (Ajustes → Publicar).', '', 7000);
 else if (estado.servidor !== 'ok') avisar('No hay conexión con el servidor: la página funciona con los valores de partida o con tus cambios de este navegador.', 'mal', 9000);

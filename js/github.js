@@ -8,6 +8,7 @@ import { cifrar, descifrar } from './plantilla.js';
 export const EN_GITHUB = typeof location !== 'undefined' && /\.github\.io$/i.test(location.hostname);
 const FICHERO = 'config.json', ACCESO = 'acceso.json';
 const CLAVE_SESION = 'horarios.github.sesion';   // token descifrado, solo en esta pestaña
+const CLAVE_RECORDADA = 'horarios.github.recordada';   // o en este ordenador, si se pidió «recordar»
 const CLAVE_COPIA = 'horarios.github.ultima';    // lo último que guardó este navegador (Pages tarda 1-2 min)
 
 export function repoGithub() {
@@ -15,8 +16,9 @@ export function repoGithub() {
   const repo = location.pathname.split('/').filter(Boolean)[0] || `${usuario}.github.io`;
   return `${usuario}/${repo}`;
 }
-export const tokenSesion = () => { try { return sessionStorage.getItem(CLAVE_SESION) || ''; } catch (e) { return ''; } };
-export function cerrarSesionGithub() { try { sessionStorage.removeItem(CLAVE_SESION); } catch (e) { /* sin almacenamiento */ } }
+export const tokenSesion = () => { try { return sessionStorage.getItem(CLAVE_SESION) || localStorage.getItem(CLAVE_RECORDADA) || ''; } catch (e) { return ''; } };
+export const sesionRecordada = () => { try { return !!localStorage.getItem(CLAVE_RECORDADA); } catch (e) { return false; } };
+export function cerrarSesionGithub() { try { sessionStorage.removeItem(CLAVE_SESION); localStorage.removeItem(CLAVE_RECORDADA); } catch (e) { /* sin almacenamiento */ } }
 
 async function gh(ruta, { crudo = false, metodo = 'GET', cuerpo, token = tokenSesion() } = {}) {
   const cab = { Accept: crudo ? 'application/vnd.github.raw+json' : 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
@@ -72,13 +74,13 @@ export async function crearAcceso(token, contrasena) {
   await escribir(ACCESO, JSON.stringify(sobre), 'Acceso de administración (clave cifrada con contraseña)', token);
   try { sessionStorage.setItem(CLAVE_SESION, token); } catch (e) { /* sin almacenamiento */ }
 }
-export async function entrarConContrasena(contrasena) {
+export async function entrarConContrasena(contrasena, recordar = false) {
   const a = await leerPages(ACCESO);
   if (!a || !a.datos) throw new Error('Todavía no se ha preparado el acceso con contraseña (Ajustes → Preparar el acceso).');
   let datos;
   try { datos = await descifrar(a, contrasena); } catch (e) { throw new Error('La contraseña no es correcta.'); }
   if (!datos || !datos.token) throw new Error('El acceso guardado no es válido: vuelve a prepararlo.');
-  try { sessionStorage.setItem(CLAVE_SESION, datos.token); } catch (e) { /* sin almacenamiento */ }
+  try { sessionStorage.setItem(CLAVE_SESION, datos.token); if (recordar) localStorage.setItem(CLAVE_RECORDADA, datos.token); } catch (e) { /* sin almacenamiento */ }
 }
 export async function cambiarContrasena(nueva) {
   const token = tokenSesion();
@@ -93,9 +95,19 @@ export async function quitarAcceso() {
   cerrarSesionGithub();
 }
 // Guarda config.json para todos (una sola versión) y recuerda la copia hasta que Pages la sirva.
-export async function guardarGithub(config, nota) {
+// conocido: la marca «guardado» de la versión de la que parte este ordenador. Si en GitHub hay una más nueva (guardada
+// desde otro ordenador), no se pisa: se lanza un error con .nueva = true.
+export async function guardarGithub(config, nota, conocido = '') {
   const token = tokenSesion();
   if (!token) throw new Error('Entra con la contraseña de administración para guardar.');
+  if (conocido) {
+    let remota = '';
+    try { remota = JSON.parse(await gh(`/contents/${FICHERO}`, { crudo: true, token })).guardado || ''; } catch (e) { if (e.status !== 404) throw e; }
+    if (remota && remota > conocido) {
+      const err = new Error('Hay una versión más nueva guardada desde otro ordenador. Recarga la página para traerla (tus cambios de aquí siguen guardados en este ordenador).');
+      err.nueva = true; throw err;
+    }
+  }
   const texto = ficheroPublicacion(config, nota);
   await escribir(FICHERO, texto, `Configuración: ${nota}`, token);
   try { localStorage.setItem(CLAVE_COPIA, texto); } catch (e) { /* sin almacenamiento */ }

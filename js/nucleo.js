@@ -189,6 +189,17 @@ export async function cargar() {
   // siempre la versión publicada (los cambios de prueba no sobreviven a recargar la página).
   // En GitHub (sin sesiones) lo de este ordenador se guarda hasta que se publica o se descarta.
   if (borrador && !estado.admin && !DEMO) { borrador = null; borrarBorrador(); }
+  // En GitHub: si el borrador de este ordenador se hizo sobre una versión publicada más antigua que la de ahora (se ha
+  // guardado desde otro ordenador), no se carga encima: se aparta y se avisa, para no pisar lo nuevo.
+  if (borrador && DEMO) {
+    let baseBorrador = null;
+    try { baseBorrador = localStorage.getItem(CLAVE_BORRADOR + '.base'); } catch (e) { /* sin almacenamiento */ }
+    if (baseBorrador != null && estado.guardado && baseBorrador < estado.guardado) {
+      try { localStorage.setItem(CLAVE_BORRADOR + '.apartado', JSON.stringify(borrador)); } catch (e) { /* sin almacenamiento */ }
+      borrador = null; borrarBorrador();
+      estado.borradorApartado = true;
+    }
+  }
   estado.todo = borrador ? completar(borrador) : base;
   if (borrador && JSON.stringify(estado.todo) === estado.publicada) borrarBorrador();
   let sede = '';
@@ -294,7 +305,7 @@ export function ponerSede(id) {
 }
 
 export function cambiosSinGuardar() { return JSON.stringify(estado.todo) !== estado.publicada; }
-export function borrarBorrador() { try { localStorage.removeItem(CLAVE_BORRADOR); } catch (e) {} }
+export function borrarBorrador() { try { localStorage.removeItem(CLAVE_BORRADOR); localStorage.removeItem(CLAVE_BORRADOR + '.base'); } catch (e) {} }
 
 let temporizador = 0;
 const oyentes = new Set();
@@ -375,14 +386,42 @@ export const rehacer = () => irAFoto(historial.adelante, historial.atras);
 
 export function cambiado({ inmediato = false } = {}) {
   apuntarHistorial();
-  try { localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(estado.todo)); } catch (e) {}
+  try { localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(estado.todo)); localStorage.setItem(CLAVE_BORRADOR + '.base', estado.guardado || ''); } catch (e) {}
   clearTimeout(temporizador);
   if (inmediato) regenerar();
   else temporizador = setTimeout(regenerar, 180);
+  programarAutoguardado();
 }
 
-export async function entrar(clave) {
-  if (DEMO) { await entrarConContrasena(clave); estado.admin = true; return; }
+// Guardado automático (versión de GitHub con la contraseña puesta): unos segundos después del último cambio, se guarda
+// para todos solo. estado.auto: { estado: 'pendiente'|'guardando'|'hecho'|'error'|'conflicto', hora, error }.
+let temporizadorAuto = null;
+const avisarAuto = () => { if (typeof estado.alAutoguardar === 'function') estado.alAutoguardar(); };
+export function programarAutoguardado(ms = 6000) {
+  if (!DEMO || !estado.admin) return;
+  if (estado.auto && estado.auto.estado === 'conflicto') return;
+  clearTimeout(temporizadorAuto);
+  estado.auto = { ...(estado.auto || {}), estado: 'pendiente' }; avisarAuto();
+  temporizadorAuto = setTimeout(autoguardar, ms);
+}
+export async function autoguardar() {
+  if (!DEMO || !estado.admin) return;
+  if (!cambiosSinGuardar()) { estado.auto = { ...(estado.auto || {}), estado: estado.auto && estado.auto.hora ? 'hecho' : '' }; return avisarAuto(); }
+  if (estado.auto && estado.auto.estado === 'guardando') return programarAutoguardado(3000);
+  estado.auto = { ...(estado.auto || {}), estado: 'guardando' }; avisarAuto();
+  try {
+    await guardarEnServidor();
+    estado.auto = { estado: 'hecho', hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) };
+    // Si se cambió algo mientras se guardaba, otra vuelta.
+    if (cambiosSinGuardar()) programarAutoguardado(3000);
+  } catch (e) {
+    estado.auto = { estado: e.nueva ? 'conflicto' : 'error', error: e.message };
+  }
+  avisarAuto();
+}
+
+export async function entrar(clave, recordar = false) {
+  if (DEMO) { await entrarConContrasena(clave, recordar); estado.admin = true; if (cambiosSinGuardar()) programarAutoguardado(1500); return; }
   const d = await api('entrar', { clave });
   estado.token = d.token; estado.admin = true; guardarSesion();
 }
@@ -441,7 +480,7 @@ export async function guardarEnServidor() {
     const d = estado.descargas[`${claveFuente(sede.festivos.fuente)}|${Number(sede.anio)}`];
     if (d && Array.isArray(d.lista)) sede.festivos.cache = d;
   }
-  const d = DEMO ? { guardado: await guardarGithub(estado.todo, resumenCambios()) } : await api('guardar', { config: estado.todo, nota: resumenCambios() });
+  const d = DEMO ? { guardado: await guardarGithub(estado.todo, resumenCambios(), estado.guardado) } : await api('guardar', { config: estado.todo, nota: resumenCambios() });
   estado.publicada = JSON.stringify(estado.todo);
   estado.guardado = d.guardado;
   borrarBorrador();
