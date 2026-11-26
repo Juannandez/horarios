@@ -191,11 +191,9 @@ function pintarBarraGuardar() {
   // Versión de GitHub con la contraseña puesta: se guarda sola. La pastilla solo dice cómo va.
   if (DEMO && estado.admin) {
     const au = estado.auto || {};
-    const txt = au.estado === 'guardando' ? 'Guardando para todos…'
-      : au.estado === 'pendiente' ? 'Se guardará en unos segundos…'
-      : au.estado === 'conflicto' ? '⚠ Hay una versión más nueva de otro ordenador'
-      : au.estado === 'error' ? '⚠ No se ha podido guardar'
-      : au.hora && !hay ? `✓ Guardado para todos a las ${au.hora}` : hay ? 'Cambios sin guardar' : '';
+    // Se guarda solo y sin avisos: la pastilla solo sale si hay un problema.
+    const txt = au.estado === 'conflicto' ? '⚠ Hay una versión más nueva de otro ordenador'
+      : au.estado === 'error' ? '⚠ No se ha podido guardar' : '';
     if (!txt) { caja.innerHTML = ''; return; }
     caja.innerHTML = `<div class="guardar-pastilla" role="status" aria-live="polite" title="${esc(au.error || 'Cada cambio se guarda solo para todos, unos segundos después.')}">
       <span class="pastilla-texto ${au.estado === 'error' || au.estado === 'conflicto' ? 'mal' : au.estado === 'hecho' && !hay ? 'bien' : ''}">${txt}</span>
