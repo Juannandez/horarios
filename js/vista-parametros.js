@@ -173,9 +173,21 @@ function editorPatron(g, gi, cfg, turnosMap) {
   const origen = `<div class="campos">${campo('Patrón', `<select data-ruta="grupos.${gi}.patronDe" data-estructura="1">
       <option value="">Propio de este grupo</option>${otros.map(o => `<option value="${esc(o.id)}" ${g.patronDe === o.id ? 'selected' : ''}>El mismo que «${esc(o.nombre)}»</option>`).join('')}</select>`)}</div>`;
   if (g.patronDe) return origen + resumen;
-  const rotatorios = g.colectivo === 'TA' && !g.desde && !g.hasta && !g.soloLaborables ? `<div class="herramientas"><div class="grupo"><label for="rot-${gi}">Poner un rotatorio de ejemplo</label>
-    <select id="rot-${gi}">${ROTATORIOS.map(r => `<option value="${r.id}">${esc(r.nombre)}</option>`).join('')}</select>
-    <button type="button" class="btn mini" data-accion="aplicar-rotatorio" data-g="${gi}">Poner</button></div></div>` : '';
+  // Turnos que más usa ya el patrón de este grupo en cada franja (para proponerlos al poner un rotatorio).
+  const usado = (f) => { const n = new Map(); for (const c of patron) if ((turnosMap.get(c) || {}).franja === f) n.set(c, (n.get(c) || 0) + 1); return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] || ''; };
+  const opcionesFr = (f, actual) => cfg.turnos.filter(t => t.franja === f).map(t => `<option value="${esc(t.codigo)}" ${t.codigo === actual ? 'selected' : ''}>${esc(t.codigo)} ${esc(t.inicio || '')}-${esc(t.fin || '')}</option>`).join('');
+  const codigosPatron = [...new Set(patron)].filter(c => turnosMap.has(c));
+  const rotatorios = !g.desde && !g.hasta && !g.soloLaborables && !(g.periodos || []).length ? `<div class="herramientas rot-herr">
+    <div class="grupo"><label for="rot-${gi}">Poner un rotatorio</label>
+      <select id="rot-${gi}">${ROTATORIOS.map(r => `<option value="${r.id}">${esc(r.nombre)}</option>`).join('')}</select>
+      <label for="rot-m-${gi}">con mañana</label><select id="rot-m-${gi}">${opcionesFr('manana', usado('manana'))}</select>
+      <label for="rot-t-${gi}">tarde</label><select id="rot-t-${gi}">${opcionesFr('tarde', usado('tarde'))}</select>
+      <label for="rot-n-${gi}">noche</label><select id="rot-n-${gi}">${opcionesFr('noche', usado('noche'))}</select>
+      <button type="button" class="btn mini primario" data-accion="aplicar-rotatorio" data-g="${gi}">Poner</button></div>
+    <div class="grupo"><label for="cam-a-${gi}">En este patrón, cambiar</label>
+      <select id="cam-a-${gi}">${codigosPatron.map(c => `<option>${esc(c)}</option>`).join('')}</select>
+      <label for="cam-b-${gi}">por</label><select id="cam-b-${gi}">${cfg.turnos.map(t => `<option>${esc(t.codigo)}</option>`).join('')}</select>
+      <button type="button" class="btn mini" data-accion="patron-cambiar" data-g="${gi}">Cambiar</button></div></div>` : '';
   const semanas = patron.length / 7;
   const opciones = cfg.turnos.map(t => t.codigo);
   const filas = Array.from({ length: semanas }, (_, w) => `<tr><th scope="row" class="tenue">S${w + 1}</th>${DIAS_CORTOS.map((_, d) => {
@@ -821,11 +833,20 @@ export function eventosParametros(raiz, repintar) {
       cambiado({ inmediato: true }); return repintar();
     }
     if (a === 'aplicar-rotatorio') {
-      const id = $(`#rot-${b.dataset.g}`, raiz).value, rot = ROTATORIOS.find(r => r.id === id);
-      if (!(await confirmar(`¿Poner «${esc(rot.nombre)}»?`, 'Sustituye el patrón de semanas del grupo (los cambios hechos a mano en el patrón se pierden; Ctrl+Z lo deshace). Pone también «una semana de tarde cada N» y «un fin de semana de cada 3».', 'Poner'))) return;
-      aplicarRotatorio(cfg, id);
+      const gi = b.dataset.g, id = $(`#rot-${gi}`, raiz).value, rot = ROTATORIOS.find(r => r.id === id), g = cfg.grupos[Number(gi)];
+      const op = { grupo: gi, manana: $(`#rot-m-${gi}`, raiz).value, tarde: $(`#rot-t-${gi}`, raiz).value, noche: $(`#rot-n-${gi}`, raiz).value };
+      if (!(await confirmar(`¿Poner «${esc(rot.nombre)}» en «${esc(g.nombre)}»?`, `Con mañana ${esc(op.manana)}, tarde ${esc(op.tarde)} y noche ${esc(op.noche)}. Sustituye el patrón de semanas de este grupo (los cambios hechos a mano en él se pierden; Ctrl+Z lo deshace). Pone también «una semana de tarde cada N» y «un fin de semana de cada 3».`, 'Poner'))) return;
+      aplicarRotatorio(cfg, id, op);
       cambiado({ inmediato: true }); repintar();
-      return avisar(`Rotatorio «${esc(rot.nombre)}» puesto.`, 'bien');
+      return avisar(`«${esc(rot.nombre)}» puesto en «${esc(g.nombre)}» (${esc(op.manana)} / ${esc(op.tarde)} / ${esc(op.noche)}).`, 'bien');
+    }
+    if (a === 'patron-cambiar') {
+      const gi = b.dataset.g, g = cfg.grupos[Number(gi)], de = $(`#cam-a-${gi}`, raiz).value, por = $(`#cam-b-${gi}`, raiz).value;
+      if (!de || !por || de === por) return;
+      const n = g.patron.filter(c => c === de).length;
+      g.patron = g.patron.map(c => (c === de ? por : c));
+      cambiado({ inmediato: true }); repintar();
+      return avisar(`En «${esc(g.nombre)}»: ${n} casillas de ${esc(de)} pasan a ${esc(por)}.`, 'bien');
     }
     if (a === 'aj-anadir') {
       const id = $('#aj-nueva', raiz) && $('#aj-nueva', raiz).value;

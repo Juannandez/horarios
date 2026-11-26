@@ -428,3 +428,6 @@ button.inf-punt[aria-expanded="true"] { outline: 2px solid var(--gl-marca, #0b2a
 .guardar-pastilla .btn.mini:first-child { color: var(--warn, #b26b00); font-weight: 700; }
 body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
 .tabla-lista input[type="time"], .tabla-lista.tabla-turnos input[type="time"], .param-cuerpo .tabla-lista input[type="time"] { width: 116px !important; min-width: 116px !important; }
+
+.rot-herr .grupo { flex-wrap: wrap; align-items: center; gap: 6px; }
+.rot-herr label { font-size: .85rem; color: var(--muted); }

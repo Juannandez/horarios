@@ -81,10 +81,13 @@ export function minimosConsultora(sede) {
 // Pone uno de los rotatorios de ejemplo (datos-base.js, ROTATORIOS) en el grupo de teleasistencia con patrón propio,
 // con los turnos de mañana, tarde y noche que ya use el grupo, y ajusta las reglas que lo acompañan: «una semana de
 // tarde cada N» y «2 fines de semana libres entre dos trabajados» (un fin de semana de cada 3). Cambia cfg en su sitio.
-export function aplicarRotatorio(cfg, id) {
+// opciones: { grupo: índice del grupo (si no, el primer grupo de teleasistencia con patrón propio), manana, tarde,
+// noche: códigos de turno que lleva este rotatorio (si no, los que más use ya el grupo) }.
+export function aplicarRotatorio(cfg, id, opciones = {}) {
   const rot = ROTATORIOS.find(r => r.id === id);
   if (!rot) throw new Error('Rotatorio desconocido.');
-  const g = cfg.grupos.find(x => x.colectivo === 'TA' && !x.patronDe && !x.desde && !x.hasta && !x.soloLaborables && !(x.periodos || []).length) || cfg.grupos.find(x => !x.patronDe);
+  const g = (opciones.grupo != null ? cfg.grupos[Number(opciones.grupo)] : null)
+    || cfg.grupos.find(x => x.colectivo === 'TA' && !x.patronDe && !x.desde && !x.hasta && !x.soloLaborables && !(x.periodos || []).length) || cfg.grupos.find(x => !x.patronDe);
   if (!g) throw new Error('No hay un grupo con patrón propio.');
   const franja = new Map(cfg.turnos.map(t => [t.codigo, t.franja]));
   const actual = resolverPatron(g, cfg.grupos);
@@ -92,7 +95,8 @@ export function aplicarRotatorio(cfg, id) {
     const n = new Map(); for (const x of actual) if (franja.get(x) === f) n.set(x, (n.get(x) || 0) + 1);
     return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] || (franja.get(def) === f ? def : (cfg.turnos.find(t => t.franja === f) || {}).codigo) || def;
   };
-  const cambio = { RM1: masUsado('manana', 'RM1'), RT1: masUsado('tarde', 'RT1'), N: masUsado('noche', 'N') };
+  const vale = (c, f) => (c && franja.get(c) === f ? c : null);
+  const cambio = { RM1: vale(opciones.manana, 'manana') || masUsado('manana', 'RM1'), RT1: vale(opciones.tarde, 'tarde') || masUsado('tarde', 'RT1'), N: vale(opciones.noche, 'noche') || masUsado('noche', 'N') };
   g.patron = rot.patron().map(c => cambio[c] || c);
   const R = cfg.reglas || (cfg.reglas = {});
   R.tardeCada = { ...(R.tardeCada || { nivel: 'informe' }), activo: true, valor: rot.tardeCada };
