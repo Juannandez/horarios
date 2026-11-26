@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T10:41:10.867Z",
- "nota": "Sevilla («3RM+2RT»): noche de 22 a 8 h con 10 teleasistentes",
+ "guardado": "2026-11-26T10:42:53.323Z",
+ "nota": "Sin cambios en el cuadrante.",
  "config": {
   "version": 2,
   "tema": "day",
@@ -2100,7 +2100,7 @@
     "inicioCuadrante": "01-15",
     "escenarioAbierto": "esc-3rot-llamadas",
     "absentismo": {
-     "dia": 0,
+     "dia": 15,
      "noche": 0,
      "cuenta": "margen"
     }
@@ -3047,6 +3047,11 @@
     "especiales": {},
     "minimosHora": {
      "activo": false
+    },
+    "absentismo": {
+     "dia": 0,
+     "noche": 0,
+     "cuenta": "margen"
     }
    }
   ],
