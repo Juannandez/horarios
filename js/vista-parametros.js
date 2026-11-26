@@ -547,16 +547,14 @@ export function seccionContratos(cfg) {
     const e = casoEspecial(cfg.especiales[id]), r = `especiales.${id}`;
     return `<tr>
       <th scope="row">${esc(id)}${nombreDe(id) ? `<br><span class="tenue">${esc(nombreDe(id))}</span>` : ''}</th>
-      <td>${sel(`${r}.contrato`, e.contrato, [['', 'El del grupo'], ...cfg.contratos.map(c => [c.id, `${c.nombre} (${String(c.horasSemana).replace('.', ',')} h)`])], 'aria-label="Contrato"')}</td>
-      <td>${sel(`${r}.franjas`, e.franjas.join(','), OPC_FRANJAS, 'aria-label="Franjas"')}</td>
-      <td>${chk(`${r}.sinFindes`, e.sinFindes, 'Sin fines de semana')}</td>
+      <td><span class="fechas-pila">${sel(`${r}.contrato`, e.contrato, [['', 'El del grupo'], ...cfg.contratos.map(c => [c.id, `${c.nombre} (${String(c.horasSemana).replace('.', ',')} h)`])], 'aria-label="Contrato" title="Contrato"')}${sel(`${r}.franjas`, e.franjas.join(','), OPC_FRANJAS, 'aria-label="Franjas" title="Franjas que puede hacer"')}</span></td>
+      <td class="centro">${chk(`${r}.sinFindes`, e.sinFindes, '<span class="oculto">Sin fines de semana</span>')}</td>
       <td><span class="dias-libres" role="group" aria-label="Días libres fijos">${DIAS_LETRA.map((l, dw) => `<label title="${DIAS_CORTOS[dw] || l}"><input type="checkbox" data-dias-libres="${esc(id)}" value="${dw}" ${e.diasLibres.includes(dw) ? 'checked' : ''}><span>${l}</span></label>`).join('')}</span></td>
-      <td><input type="date" data-ruta="${r}.alta" value="${esc(e.alta)}" aria-label="Alta"></td>
-      <td><input type="date" data-ruta="${r}.baja" value="${esc(e.baja)}" aria-label="Baja"></td>
+      <td><span class="fechas-pila"><input type="date" data-ruta="${r}.alta" value="${esc(e.alta)}" aria-label="Alta" title="Alta"><input type="date" data-ruta="${r}.baja" value="${esc(e.baja)}" aria-label="Baja" title="Baja"></span></td>
       <td class="num">${num(`${r}.semanaInicio`, e.semanaInicio || '', 'min="0" aria-label="Semana de inicio en el ciclo" style="width:70px"')}</td>
       <td>${sel(`${r}.reduccion.contrato`, e.reduccion.contrato, [['', 'Sin reducción'], ...cfg.contratos.filter(c => c.id !== 'completa').map(c => [c.id, `${c.nombre} (${String(c.horasSemana).replace('.', ',')} h)`])], 'aria-label="Reducción temporal: contrato" data-estructura="1"')}
         ${e.reduccion.contrato ? `<br><input type="date" data-ruta="${r}.reduccion.desde" value="${esc(e.reduccion.desde)}" aria-label="Reducción desde"> <input type="date" data-ruta="${r}.reduccion.hasta" value="${esc(e.reduccion.hasta)}" aria-label="Reducción hasta">` : ''}</td>
-      <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar-especial" data-id="${esc(id)}">Quitar</button></td></tr>`;
+      <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar-especial" data-id="${esc(id)}" aria-label="Quitar el caso de ${esc(id)}" title="Quitar">✕</button></td></tr>`;
   }).join('');
   const sinCaso = personas.filter(p => !(cfg.especiales || {})[p.id]);
   return `<section class="panel" id="sec-contratos"><h2>Contratos</h2>
@@ -569,7 +567,7 @@ export function seccionContratos(cfg) {
       <label class="oculto" for="esp-nueva">Persona</label><select id="esp-nueva">${sinCaso.map(p => `<option value="${esc(p.id)}">${esc(p.id)}${p.nombre ? ` · ${esc(p.nombre)}` : ''}</option>`).join('')}</select>
       <button type="button" class="btn" data-accion="anadir-especial" ${sinCaso.length ? '' : 'disabled'}>Añadir caso</button></div>
       <div class="grupo"><label class="oculto" for="esp-buscar">Buscar</label><input type="text" id="esp-buscar" placeholder="Buscar código o nombre" value="${esc(u.buscar)}" style="width:200px"></div></div>
-    ${ids.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista tabla-especiales"><thead><tr><th scope="col">Persona</th><th scope="col">Contrato</th><th scope="col">Franjas</th><th scope="col">Fines de semana</th><th scope="col">Días libres fijos</th><th scope="col">Alta</th><th scope="col">Baja</th><th scope="col" class="num">Semana de inicio</th><th scope="col" title="Otro contrato entre dos fechas: lactancia, cuidado de un familiar, tratamiento…">Reducción temporal</th><th scope="col"></th></tr></thead><tbody>${filasE || '<tr><td colspan="10">Nadie con ese código o nombre.</td></tr>'}</tbody></table></div>`
+    ${ids.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista tabla-especiales"><thead><tr><th scope="col">Persona</th><th scope="col">Contrato / franjas</th><th scope="col" class="centro">Sin fines de semana</th><th scope="col">Días libres fijos</th><th scope="col">Alta / baja</th><th scope="col" class="num">Semana de inicio</th><th scope="col" title="Otro contrato entre dos fechas: lactancia, cuidado de un familiar, tratamiento…">Reducción temporal</th><th scope="col"></th></tr></thead><tbody>${filasE || '<tr><td colspan="8">Nadie con ese código o nombre.</td></tr>'}</tbody></table></div>`
       : '<p class="tenue">Todavía no hay casos especiales: todo el mundo sigue el ciclo de su grupo con jornada completa.</p>'}
   </section>`;
 }

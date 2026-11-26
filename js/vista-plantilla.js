@@ -1,6 +1,6 @@
 // Vista Plantilla: las personas reales (nombre, colectivo, sede, turno actual, exención de noches y jornada), solo
 // para administración. Se cifran en este navegador con una frase de paso; el servidor solo guarda el texto cifrado.
-import { estado, esc, $, api, avisar, confirmar, regenerar, descargar } from './nucleo.js';
+import { estado, esc, $, api, avisar, confirmar, regenerar, descargar, DEMO } from './nucleo.js';
 import { cifrar, descifrar, leerCsvPlantilla, CABECERA_PLANTILLA } from './plantilla.js';
 
 const u = () => (estado.ui.plantilla ||= { buscar: '', sede: 'todas', colectivo: 'todos' });
@@ -8,10 +8,16 @@ let frase = '';            // solo en memoria de esta pestaña
 let sobre = undefined;     // undefined = sin consultar; null = no hay plantilla en el servidor
 let cambiada = false;
 
+// En la versión de GitHub no hay servidor y el repositorio es público: la plantilla cifrada se guarda solo en este
+// ordenador (localStorage). Para llevarla a otro, se descarga una copia cifrada (.json) y se abre allí.
+const CLAVE_LOCAL = 'horarios.plantilla.cifrada';
+const leerLocal = () => { try { return JSON.parse(localStorage.getItem(CLAVE_LOCAL) || 'null'); } catch (e) { return null; } };
 async function cargarSobre(repintar) {
+  if (DEMO) { sobre = leerLocal(); return repintar(); }
   try { sobre = (await api('plantilla')).sobre || null; } catch (e) { sobre = null; avisar(`No se ha podido consultar la plantilla. ${esc(e.message)}`, 'mal', 0); }
   repintar();
 }
+const dondeSeGuarda = () => (DEMO ? 'en este ordenador' : 'en el servidor');
 const aplicar = () => { regenerar(); };
 
 export function pintarPlantilla(raiz, repintar) {
@@ -23,8 +29,11 @@ export function pintarPlantilla(raiz, repintar) {
   }
   if (sobre === undefined && !estado.plantilla) { raiz.innerHTML = '<p class="tenue">Consultando la plantilla…</p>'; cargarSobre(repintar); return; }
   if (!estado.plantilla) {
-    raiz.innerHTML = `<div class="cabecera"><div><h1>Plantilla</h1><p>Las personas reales, cifradas: el servidor solo guarda texto ilegible y los nombres se descifran en este navegador con la frase de paso.</p></div></div>
+    raiz.innerHTML = `<div class="cabecera"><div><h1>Plantilla</h1><p>${DEMO
+        ? 'Las personas reales, cifradas con tu frase de paso. En esta versión los nombres <b>nunca se suben a GitHub</b>: la plantilla cifrada se guarda solo en este ordenador. Para usarla en otro, descarga la copia cifrada y ábrela allí.'
+        : 'Las personas reales, cifradas: el servidor solo guarda texto ilegible y los nombres se descifran en este navegador con la frase de paso.'}</p></div></div>
       <section class="panel" style="max-width:640px">
+      ${DEMO ? `<div class="fila-acciones" style="margin:0 0 10px"><label class="btn" for="pl-abrir-copia">Abrir una copia cifrada (.json)</label><input type="file" id="pl-abrir-copia" accept=".json,application/json" class="oculto"></div>` : ''}
       ${sobre ? `<h2>Abrir la plantilla</h2><p class="tenue">Guardada el ${esc(new Date(sobre.fecha).toLocaleString('es-ES'))}.</p>
         <form class="fila-acciones" id="pl-abrir"><label class="oculto" for="pl-frase">Frase de paso</label><input type="password" id="pl-frase" placeholder="Frase de paso" autocomplete="off" required style="flex:1;min-width:220px"><button type="submit" class="btn primario">Abrir</button></form>`
       : `<h2>Crear la plantilla</h2><p class="tenue">Elige una frase de paso larga (12 caracteres o más) y guárdala en tu gestor de contraseñas. <b>Si se pierde, los nombres no se pueden recuperar</b>: habría que volver a importarlos.</p>
@@ -42,9 +51,10 @@ export function pintarPlantilla(raiz, repintar) {
       <label class="btn" for="pl-importar">Importar CSV</label><input type="file" id="pl-importar" accept=".csv,text/csv,.txt" class="oculto">
       <button type="button" class="btn" data-pl="modelo">Plantilla CSV</button>
       <button type="button" class="btn" data-pl="exportar">Exportar CSV</button>
-      <button type="button" class="btn primario" data-pl="guardar" ${cambiada ? '' : 'disabled'}>Guardar cifrada</button>
+      <button type="button" class="btn primario" data-pl="guardar" ${cambiada ? '' : 'disabled'}>Guardar cifrada${DEMO ? ' en este ordenador' : ''}</button>
+      ${DEMO ? '<button type="button" class="btn" data-pl="copia">Descargar copia cifrada</button>' : ''}
       <button type="button" class="btn" data-pl="cerrar">Cerrar</button></div></div>
-    ${cambiada ? '<p class="banda aviso">Hay cambios en la plantilla sin guardar en el servidor.</p>' : ''}
+    ${cambiada ? `<p class="banda aviso">Hay cambios en la plantilla sin guardar ${dondeSeGuarda()}.</p>` : ''}
     <div class="cifras">${sedes.map(s => `<div class="cifra"><b>${cuenta(s.id, 'TA') + cuenta(s.id, 'SUP')}</b><span>${esc(s.nombre)}: ${cuenta(s.id, 'TA')} teleasistentes y ${cuenta(s.id, 'SUP')} supervisores</span></div>`).join('')}
       <div class="cifra"><b>${P.filter(p => p.exentoNoches).length}</b><span>exentas de noches</span></div>
       <div class="cifra"><b>${P.filter(p => p.horasSemana < 35).length}</b><span>con jornada reducida</span></div></div>
@@ -73,7 +83,11 @@ export function eventosPlantilla(raiz, repintar) {
     e.preventDefault();
     if (e.target.id === 'pl-abrir') {
       const f = $('#pl-frase').value;
-      try { estado.plantilla = await descifrar(sobre, f); frase = f; cambiada = false; aplicar(); avisar('Plantilla abierta en esta pestaña.', 'bien'); repintar(); }
+      try {
+        estado.plantilla = await descifrar(sobre, f); frase = f; cambiada = false;
+        if (DEMO) try { localStorage.setItem(CLAVE_LOCAL, JSON.stringify(sobre)); } catch (e2) { /* sin almacenamiento */ }
+        aplicar(); avisar('Plantilla abierta en esta pestaña.', 'bien'); repintar();
+      }
       catch (err) { avisar(`${esc(err.message)} Revísala y vuelve a escribirla.`, 'mal', 0); $('#pl-frase').select(); }
     }
     if (e.target.id === 'pl-crear') {
@@ -90,6 +104,14 @@ export function eventosPlantilla(raiz, repintar) {
       const p = estado.plantilla.personas[Number(el.dataset.plI)], k = el.dataset.k;
       p[k] = el.type === 'checkbox' ? el.checked : k === 'horasSemana' ? Number(el.value) || 35 : el.value.trim();
       cambiada = true; aplicar(); repintar(); return;
+    }
+    if (el.id === 'pl-abrir-copia' && el.files[0]) {
+      try {
+        const s = JSON.parse(await el.files[0].text());
+        if (!s || !s.datos || !s.sal || !s.iv) throw new Error('no es una copia cifrada de la plantilla');
+        sobre = s; avisar('Copia cargada. Escribe tu frase de paso para abrirla; al guardarla quedará también en este ordenador.', 'bien'); repintar();
+      } catch (err) { avisar(`No se ha podido abrir: ${esc(err.message)}.`, 'mal', 0); }
+      el.value = ''; return;
     }
     if (el.id === 'pl-sede') { f.sede = el.value; repintar(); }
     if (el.id === 'pl-col') { f.colectivo = el.value; repintar(); }
@@ -124,9 +146,18 @@ export function eventosPlantilla(raiz, repintar) {
         p.contrato || '', p.franjas || '', p.sinFindes ? 'sí' : '', (p.diasLibres || []).map(d => 'LMXJVSD'[d]).join(','), p.alta || '', p.baja || ''])].map(f => f.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n'), 'text/csv;charset=utf-8');
     } else if (a === 'guardar') {
       b.disabled = true; b.textContent = 'Cifrando…';
-      try { await api('guardar-plantilla', { sobre: await cifrar(estado.plantilla, frase) }); sobre = undefined; cambiada = false; avisar('Plantilla cifrada y guardada en el servidor.', 'bien'); }
+      try {
+        const s = await cifrar(estado.plantilla, frase);
+        if (DEMO) { localStorage.setItem(CLAVE_LOCAL, JSON.stringify(s)); sobre = s; cambiada = false; avisar('Plantilla cifrada y guardada en este ordenador (no se sube a GitHub). Para usarla en otro ordenador, «Descargar copia cifrada».', 'bien', 9000); }
+        else { await api('guardar-plantilla', { sobre: s }); sobre = undefined; cambiada = false; avisar('Plantilla cifrada y guardada en el servidor.', 'bien'); }
+      }
       catch (err) { avisar(`No se ha guardado. ${esc(err.message)}`, 'mal', 0); }
       repintar();
+    } else if (a === 'copia') {
+      // Copia cifrada para llevarla a otro ordenador: sin la frase de paso no se puede leer.
+      const s = await cifrar(estado.plantilla, frase);
+      descargar('plantilla-cifrada.json', JSON.stringify(s), 'application/json');
+      avisar('Copia cifrada descargada. En el otro ordenador: Plantilla › «Abrir una copia cifrada» y tu frase de paso.', 'bien', 9000);
     } else if (a === 'cerrar') {
       if (cambiada && !(await confirmar('¿Cerrar sin guardar?', 'Hay cambios sin guardar en el servidor y se perderán.', 'Cerrar sin guardar'))) return;
       estado.plantilla = null; frase = ''; cambiada = false; sobre = undefined; aplicar(); repintar();

@@ -235,8 +235,6 @@ select.nivel-avisa { border-color: var(--warn) !important; }
 .dias-libres span { display: inline-grid; place-items: center; width: 24px; height: 26px; border: 1px solid var(--line2); border-radius: 6px; font-size: .75rem; font-weight: 600; color: var(--muted); }
 .dias-libres input:checked + span { background: var(--v2-activo-tinta, var(--gl-boton)); border-color: var(--v2-activo-tinta, var(--gl-boton)); color: var(--panel); }
 .dias-libres input:focus-visible + span { outline: 2px solid var(--gl-marca); outline-offset: 1px; }
-.tabla-especiales td { white-space: nowrap; }
-.tabla-especiales input[type=date] { min-width: 140px; }
 /* Asistente «Nuevo horario»: los pasos (clase propia: Gestlogix ya tiene su «.pasos») */
 .asis-pasos { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 14px; counter-reset: none; }
 .asis-pasos li a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1px solid var(--line2); background: var(--panel);
@@ -435,3 +433,13 @@ body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
 .guardar-pastilla .pastilla-texto { font-size: .85rem; padding: 0 8px; font-weight: 600; color: var(--muted); }
 .guardar-pastilla .pastilla-texto.bien { color: var(--ok, #17663a); }
 .guardar-pastilla .pastilla-texto.mal { color: var(--bad); }
+
+/* Casos especiales: que quepa sin barra horizontal (alta y baja juntas, desplegables estrechos). */
+.tabla-especiales td, .tabla-especiales th { white-space: normal; }
+.tabla-especiales select { width: 168px !important; max-width: 168px !important; }
+.tabla-especiales input[type=date] { width: 140px !important; min-width: 0 !important; }
+.tabla-especiales input[type=number] { width: 56px !important; }
+.tabla-especiales .centro, .tabla-lista th.centro { text-align: center; }
+.fechas-pila { display: flex; flex-direction: column; gap: 4px; }
+.tabla-especiales .dias-libres span { width: 22px; }
+.tabla-especiales td, .tabla-especiales th[scope=row] { padding-left: 5px; padding-right: 5px; }
