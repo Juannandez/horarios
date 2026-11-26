@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T12:49:49.247Z",
- "nota": "Sevilla: fines de semana sin llamar a nadie (disponibilidad para la bolsa) en 3RM+2RT y 8 h",
+ "guardado": "2026-11-26T12:51:51.756Z",
+ "nota": "Sevilla: una sola franja de día por semana en 3RM+2RT y 8 h",
  "config": {
   "version": 2,
   "tema": "day",
@@ -777,6 +777,10 @@
      "minLibresSemana": {
       "activo": true,
       "valor": 2
+     },
+     "unaFranjaSemana": {
+      "activo": true,
+      "valor": true
      }
     },
     "vacaciones": {
@@ -9473,6 +9477,10 @@
       "minLibresSemana": {
        "activo": true,
        "valor": 2
+      },
+      "unaFranjaSemana": {
+       "activo": true,
+       "valor": true
       }
      },
      "vacaciones": {
@@ -11937,6 +11945,10 @@
       "minLibresSemana": {
        "activo": true,
        "valor": 2
+      },
+      "unaFranjaSemana": {
+       "activo": true,
+       "valor": true
       }
      },
      "vacaciones": {
