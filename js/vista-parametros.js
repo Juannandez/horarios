@@ -509,6 +509,10 @@ export function seccionCobertura(cfg) {
     <div class="tabla-caja" style="max-height:340px"><table class="tabla-lista"><thead><tr><th scope="col">Persona</th><th scope="col" class="num">Saldo de partida</th><th scope="col" class="num">A favor en el cuadrante</th><th scope="col" class="num">Ya cogido</th><th scope="col" class="num">Saldo</th><th scope="col" class="num">Días devueltos</th></tr></thead><tbody>${filasBolsa}</tbody></table></div>
     <p class="tenue" style="margin-top:6px">Se ven las 60 con más saldo; busca para ver otras. CSV: «código;horas» (p. ej. «TA 017;12,5»).</p>
   </section>
+  <section class="panel"><h2>Margen sobre el mínimo por cuartos de hora</h2>
+    <p class="tenue">Con mínimos por cuartos de hora: de 7:45 a 22:00 el ajuste intenta tener al menos el mínimo más estas personas en cada cuarto (cambiando turnos dentro de la franja, sin quitar a nadie de donde no sobra y, en fin de semana, con los fijos discontinuos). La noche va sin margen. Los huecos se siguen midiendo con el mínimo; donde no se llega al margen sale en amarillo en el cuadrante.</p>
+    <div class="campos">${campo('Personas por encima del mínimo', num('cobertura.margenCuartos', cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}</div>
+  </section>
   <section class="panel"><h2>Fines de semana</h2>
     <p class="tenue">Con esto marcado, el ajuste no pone a trabajar a nadie un sábado o un domingo que libra (tampoco a fijos discontinuos ni para cubrir noches). Si ese día falta gente, deja a alguien que libra en <b>disponibilidad para la bolsa</b> (código DB: localizable, no trabaja ni suma horas), repartido entre la plantilla.</p>
     <div class="campos">${chk('cobertura.findesBolsa', !!cob.findesBolsa, 'Fines de semana sin llamar a nadie: lo que falte, en disponibilidad para la bolsa', 'data-estructura="1"')}</div>

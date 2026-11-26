@@ -556,6 +556,11 @@ export function generar(cfgEntrada, opciones = {}) {
     const v = Array.isArray(tabla[fila]) ? Number(tabla[fila][qq]) : NaN;
     return Number.isFinite(v) ? v : null;
   };
+  // Margen sobre el mínimo por cuartos (Cobertura y bolsa): de 7:30 a 22:00, el ajuste intenta tener el mínimo + N en
+  // cada cuarto (no quita a nadie de donde no sobra con ese margen y cambia turnos para llegar). Los huecos se siguen
+  // midiendo con el mínimo. La noche (22:00 a 7:30) va sin margen: son 10 personas.
+  const MARGEN_Q = Math.max(0, Number((cfg.cobertura || {}).margenCuartos) || 0);
+  const margenQ = (q) => { const qq = q % 96; return MARGEN_Q && qq >= 31 && qq < 88 ? MARGEN_Q : 0; };   // de 7:45 a 22:00
   // ¿Se puede quitar el turno tiQuita de pi el día d (poniendo tiPone, si se da) sin dejar un cuarto bajo el mínimo?
   const cuartosOk = (pi, d, tiQuita, tiPone = null) => {
     const c = colIdx[pi];
@@ -565,7 +570,7 @@ export function generar(cfgEntrada, opciones = {}) {
       if (pone && pone.has(q)) continue;
       if (d === 0 && q < 32) continue;
       const v = minCuarto(c, d, q);
-      if (v != null && cobQ[c][d * 96 + q] - 1 < v) return false;
+      if (v != null && cobQ[c][d * 96 + q] - 1 < v + margenQ(q)) return false;
     }
     return true;
   };
@@ -1280,7 +1285,7 @@ export function generar(cfgEntrada, opciones = {}) {
         const t = T[ti];
         return [...delGrupo.get(g)].filter(t2 => t2 !== ti && T[t2].trabaja && T[t2].franja === t.franja && Math.abs((T[t2].horas || 0) - (t.horas || 0)) < 1e-9);
       };
-      const minQ = (d, q) => minCuarto(c, d, q);
+      const minQ = (d, q) => { const v = minCuarto(c, d, q); return v == null ? null : v + margenQ(q); };
       for (let d = 0; d < D; d++) {
         for (let q = 0; q < 96; q++) {
           let falta = (minQ(d, q) ?? 0) - cob[d * 96 + q];
@@ -1318,7 +1323,7 @@ export function generar(cfgEntrada, opciones = {}) {
   // 3 bis d. Si aun así falta gente en algún cuarto de hora (p. ej. un sábado de verano de 15:15 a 16:00), se llama a
   // alguien que libra ese día para un turno que lo cubra (de los de su ciclo; los fijos discontinuos, el de esa franja),
   // empezando por quien menos horas lleva. Es subir el mínimo ese día lo justo para cubrir el relevo.
-  const cubrirCuartos = () => {
+  const cubrirCuartos = (soloMargen = false) => {
     if (cfg.cubrirRelevos === false || !ajusteActivo || !MC) return;
     let puestos = 0;
     for (let c = 0; c < COL.length; c++) {
@@ -1333,10 +1338,10 @@ export function generar(cfgEntrada, opciones = {}) {
       for (let d = 0; d < D; d++) for (let q = 0; q < 96; q++) {
         if (d === 0 && q < 32) continue;
         let vueltas = 0;
-        while ((minCuarto(c, d, q) ?? 0) - cobQ[c][d * 96 + q] > 0 && vueltas++ < 10) {
+        while ((minCuarto(c, d, q) ?? 0) + (soloMargen ? margenQ(q) : 0) - cobQ[c][d * 96 + q] > 0 && vueltas++ < 10) {
           let mejor = -1, mejorT = -1, nota = Infinity;
           for (const pi of porColectivo[c]) {
-            if (!libre(pi, d)) continue;
+            if (soloMargen || !libre(pi, d)) continue;   // para el margen no se llama a nadie: solo cambios de fijos discontinuos
             const n = horas[pi] / Math.max(1, personas[pi].objetivo);
             if (n >= nota) continue;
             for (const t of turnosDe(pi, d)) if (cqT[t].includes(q) && puede(pi, d, t)) { mejor = pi; mejorT = t; nota = n; break; }
@@ -1517,6 +1522,7 @@ export function generar(cfgEntrada, opciones = {}) {
   festivosRepartidos();
   cubrirRelevos();
   cubrirCuartos();
+  if (MARGEN_Q) cubrirCuartos(true);   // el margen: fijos discontinuos que cambian un día de su semana
   dejarDisponibilidad();
 
   // 4. Equidad: intercambios de semanas enteras entre dos personas del mismo grupo (como el paso de equidad de

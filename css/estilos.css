@@ -491,3 +491,6 @@ body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
    casi toda la altura de la pantalla y se desplaza dentro de su caja. */
 .cuadrante .mes-fijo { position: sticky; left: calc(var(--ancho-persona, 92px) + var(--ancho-grupo, 170px) + 6px); display: inline-block; }
 #caja-cuadrante { max-height: calc(100vh - 84px); }
+
+/* Cubierto pero por debajo del margen pedido (por cuartos de hora). */
+.cuadrante tfoot td.justo-margen, .horas-dia td.justo-margen { background: color-mix(in srgb, #FFE08A 45%, var(--panel2)); color: #7a5a00; font-weight: 700; }

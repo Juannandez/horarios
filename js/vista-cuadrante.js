@@ -202,7 +202,7 @@ function panelPorHoras() {
     if (!tramos.length) return '';
     return `<div class="tabla-caja horas-dia" style="max-height:none"><table class="tabla-lista"><caption class="oculto">${col === 'TA' ? 'Teleasistencia' : 'Supervisión'}</caption>
       <thead><tr><th scope="col">${col === 'TA' ? 'Teleasistencia' : 'Supervisión'}</th><th scope="col" class="num">Mínimo</th><th scope="col" class="num">En sala</th><th scope="col" class="num">Diferencia</th></tr></thead><tbody>
-      ${tramos.map(t => { const dif = t.sala - t.min; return `<tr><th scope="row">${hm(t.ini)}–${t.fin === 96 ? '24:00' : hm(t.fin)}</th><td class="num">${t.min}</td><td class="num">${t.sala}</td><td class="num ${dif < 0 ? 'mal' : ''}"><b>${dif > 0 ? '+' : ''}${dif}</b></td></tr>`; }).join('')}
+      ${tramos.map(t => { const dif = t.sala - t.min, mg = (estado.cfg.cobertura || {}).margenCuartos || 0, enMargen = t.ini >= 31 && t.ini < 88; return `<tr><th scope="row">${hm(t.ini)}–${t.fin === 96 ? '24:00' : hm(t.fin)}</th><td class="num">${t.min}</td><td class="num">${t.sala}</td><td class="num ${dif < 0 ? 'mal' : mg && enMargen && dif < mg ? 'justo-margen' : ''}" ${mg && enMargen && dif >= 0 && dif < mg ? `title="Por debajo del margen de ${mg}"` : ''}><b>${dif > 0 ? '+' : ''}${dif}</b></td></tr>`; }).join('')}
       </tbody></table></div>`;
   }).join('');
   const i = visibles.findIndex(d => d.i === dSel);
@@ -334,7 +334,12 @@ function tablaMes(lista) {
     const hm = (h) => `${String(h.hora).padStart(2, '0')}:${String(h.minuto || 0).padStart(2, '0')}`;
     const celdas = dias.map(d => {
       const l = porDia.get(d.i); const rz = u.resaltarDia === d.i ? ' resaltado' : '';
-      if (!l) return `<td class="c${rz}" title="Todos los cuartos de hora cubiertos">✓</td>`;
+      if (!l) {
+        // Sin huecos: ¿llega al margen pedido de 7:45 a 22:00?
+        const mg = (estado.cfg.cobertura || {}).margenCuartos || 0;
+        if (mg && res.cuartos) { let peor = Infinity, cuando = ''; for (let q = 31; q < 88; q++) { const v = res.cuartos.min(0, d.i, q); if (v == null) continue; const x = res.cuartos.cob[0][d.i * 96 + q] - v; if (x < peor) { peor = x; cuando = hm({ hora: q >> 2, minuto: (q & 3) * 15 }); } } if (peor < mg) return `<td class="c justo-margen${rz}" title="Cubierto, pero con menos margen del pedido (${mg}): a las ${cuando} solo +${peor}">+${peor}</td>`; }
+        return `<td class="c${rz}" title="Todos los cuartos de hora cubiertos${(estado.cfg.cobertura || {}).margenCuartos ? ', con el margen pedido' : ''}">✓</td>`;
+      }
       const peor = Math.max(...l.map(h => h.falta));
       const db = (res.disponibilidad || []).filter(x => x.d === d.i && x.colectivo === 'TA');
       if (db.length >= peor) return `<td class="c bolsa${rz}" title="Faltan: ${esc(l.map(h => `${hm(h)} → ${h.falta}`).join(' · '))}. En disponibilidad para la bolsa: ${esc(db.map(x => x.persona).join(', '))}">B${peor}</td>`;

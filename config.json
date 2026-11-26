@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T13:12:32.815Z",
- "nota": "Sevilla: vuelve «fines de semana sin llamar a nadie» (disponibilidad para la bolsa) en el 3RM+2RT abierto",
+ "guardado": "2026-11-26T13:15:45.348Z",
+ "nota": "Sevilla: margen de 4 personas sobre el mínimo por cuartos de hora (7:45 a 22:00) en 3RM+2RT y 8 h",
  "config": {
   "version": 2,
   "tema": "day",
@@ -1029,7 +1029,8 @@
      "aguante": {
       "avisar": true
      },
-     "findesBolsa": true
+     "findesBolsa": true,
+     "margenCuartos": 4
     },
     "aj": {
      "activo": true,
@@ -9767,7 +9768,8 @@
       "aguante": {
        "avisar": true
       },
-      "findesBolsa": true
+      "findesBolsa": true,
+      "margenCuartos": 4
      },
      "aj": {
       "activo": true,
@@ -12238,7 +12240,8 @@
       "aguante": {
        "avisar": true
       },
-      "findesBolsa": true
+      "findesBolsa": true,
+      "margenCuartos": 4
      },
      "aj": {
       "activo": true,
