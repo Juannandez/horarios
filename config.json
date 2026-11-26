@@ -10093,7 +10093,7 @@
      },
      "inicioCuadrante": "01-15",
      "absentismo": {
-      "dia": 0,
+      "dia": 15,
       "noche": 0,
       "cuenta": "margen"
      }
