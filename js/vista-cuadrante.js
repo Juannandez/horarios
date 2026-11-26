@@ -2,6 +2,7 @@
 import { estado, esc, $, $$, MESES, DIAS_CORTOS, fmtNum, fmtFecha, estiloTurno, modal, cambiado, avisar } from './nucleo.js';
 import { ORIGEN, fmtH, horarioTurno, margenesCuartos } from './motor.js';
 import { pdfCuadrante } from './pdf.js';
+import { excelCuadrante } from './excel.js';
 import { COLECTIVOS, FRANJA_NOMBRE } from './datos-base.js';
 import { infracciones, puntuacion, mapaCasillas } from './puntuacion.js';
 import { mejorarReparto } from './mejorar.js';
@@ -420,6 +421,7 @@ export function pintarCuadrante(raiz) {
     <p>${esc(estado.cfg.titulo || '')}. Personas anónimas por código. Cambia cualquier dato en Parámetros y el cuadrante se rehace al momento (${estado.res.ms} ms).</p></div>
     <div class="fila-acciones" style="margin:0">
       <button type="button" class="btn" data-pantalla-completa="1" title="Ver el cuadrante a pantalla completa (Esc para salir)">${document.fullscreenElement ? 'Salir de pantalla completa' : 'Pantalla completa'}</button>
+      <button type="button" class="btn" data-excel-col="TA" title="Todo el año en Excel: cuadrante, leyenda y detalles, informe y mínimos por horas">Excel teleasistentes</button>
       <button type="button" class="btn" data-pdf-col="TA">PDF teleasistentes</button>
       <button type="button" class="btn" data-pdf-col="SUP">PDF supervisores</button>
       <button type="button" class="btn primario" data-mejorar="1" title="Intercambia semanas entre personas del mismo grupo para repartir mejor fines de semana, festivos y domingos, sin tocar la cobertura ni las horas">${estado.cfg.mejora ? 'Mejorar más el reparto' : 'Mejorar reparto'}</button></div></div>
@@ -526,6 +528,24 @@ export function eventosCuadrante(raiz, repintar) {
     }
     if (b.dataset.infraccion != null) { u.infraccion = u.infraccion === b.dataset.infraccion ? '' : b.dataset.infraccion; return repintar(); }
     if (b.dataset.resaltar != null) { u.resaltar = u.resaltar === b.dataset.resaltar ? '' : b.dataset.resaltar; return repintar(); }
+    if (b.dataset.excelCol) {
+      const col = b.dataset.excelCol;
+      // Todo el año con los filtros de grupo y búsqueda actuales (el rango de meses no cuenta: va el año entero).
+      const personas = personasVisibles().filter(p => p.colectivo === col);
+      if (!personas.length) return avisar('No hay nadie con los filtros actuales. Quita algún filtro y vuelve a probar.', 'mal');
+      const texto = b.textContent; b.disabled = true; b.textContent = 'Generando Excel…';
+      try {
+        await new Promise(ok => setTimeout(ok, 20));
+        const escN = (escenarioAbierto() || {}).nombre || '';
+        const blob = await excelCuadrante({ res: estado.res, cfg: estado.cfg, colectivo: col, personas, escenario: escN });
+        const trozo = escN ? `-${escN.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}` : '';
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `cuadrante-${estado.cfg.id || 'sede'}${trozo}-${estado.cfg.anio}-${col === 'SUP' ? 'supervisores' : 'teleasistentes'}.xlsx`;
+        document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+        avisar(`Excel descargado: ${personas.length} personas, todo el año, con la leyenda, el informe y los mínimos por horas.`, 'bien');
+      } catch (err) { avisar(`No se ha generado el Excel. ${esc(err.message)}`, 'mal', 0); }
+      b.disabled = false; b.textContent = texto;
+      return;
+    }
     if (b.dataset.pdfCol) {
       const col = b.dataset.pdfCol, u2 = estado.ui;
       const personas = personasVisibles().filter(p => p.colectivo === col);
