@@ -33,7 +33,8 @@ const cambiosEsc = (e) => estado.cfg.escenarioAbierto === e.id && JSON.stringify
 
 export function pintarEscenarios(raiz, repintar) {
   const cfg = estado.cfg;
-  const esc_ = (estado.todo.escenarios || []).filter(e => e.sede === cfg.id);
+  // De más reciente a más antiguo (por la fecha en que se guardó o se cambió por última vez).
+  const esc_ = (estado.todo.escenarios || []).filter(e => e.sede === cfg.id).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')));
   const cambios = estado.publicada ? resumenCambios() : '';
   if (estado.admin && versiones === undefined) { versiones = null; cargarVersiones(repintar); }
   const abiertoAhora = esc_.find(e => e.id === cfg.escenarioAbierto) || null;

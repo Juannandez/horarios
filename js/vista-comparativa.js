@@ -19,7 +19,7 @@ function opciones(cfg) {
   const lista = [];
   if (HORARIO_2027.sedes[cfg.id]) lista.push({ id: 'real', nombre: 'Horario real 2027' });
   lista.push({ id: 'actual', nombre: 'Este cuadrante' });
-  for (const e of (estado.todo.escenarios || []).filter(x => x.sede === cfg.id)) lista.push({ id: `esc:${e.id}`, nombre: `Escenario «${e.nombre}»`, esc: e });
+  for (const e of (estado.todo.escenarios || []).filter(x => x.sede === cfg.id).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')))) lista.push({ id: `esc:${e.id}`, nombre: `Escenario «${e.nombre}»`, esc: e });
   return lista;
 }
 function cifrasOpcion(op, cfg) {
