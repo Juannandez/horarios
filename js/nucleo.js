@@ -307,7 +307,7 @@ export function completarSede(cfg, base) {
   if (!Array.isArray(c.repartoFestivos.especiales)) c.repartoFestivos.especiales = REPARTO_FESTIVOS().especiales;
   c.ciclo = { ...CICLO(), ...dicc(base.ciclo), ...dicc(cfg.ciclo) };
   if (!c.vacaciones || typeof c.vacaciones !== 'object') c.vacaciones = base.vacaciones ? JSON.parse(JSON.stringify(base.vacaciones)) : { modo: 'escalonado' };
-  c.vacaciones = { modo: 'escalonado', diasHabiles: 17, diasSueltos: 5, horasDia: 7, semilla: 'sorteo', periodos: [], solicitudes: {}, sueltosEnJornada: false, sueltosOctDic: 1, ...c.vacaciones };
+  c.vacaciones = { modo: 'escalonado', diasHabiles: 17, diasSueltos: 5, horasDia: 7, semilla: 'sorteo', periodos: [], solicitudes: {}, sueltosEnJornada: false, sueltosOctDic: 1, cuenta: 'cuadrante', ...c.vacaciones };
   c.vacaciones.solicitudes = dicc(c.vacaciones.solicitudes);
   for (const x of c.contratos) x.turnos = { manana: '', tarde: '', noche: '', ...dicc(x.turnos) };
   for (const g of c.grupos) {
