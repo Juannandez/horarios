@@ -1,5 +1,5 @@
 {
- "guardado": "2026-11-26T16:52:19.193Z",
+ "guardado": "2026-11-26T17:02:16.662Z",
  "nota": "Sevilla: turnos, contratos, grupos y patrones, mejora del reparto",
  "config": {
   "version": 2,
@@ -13083,8 +13083,8 @@
     "id": "esc-8h-sevilla",
     "sede": "sevilla",
     "nombre": "Turnos de 8 h (M 7:30-15:30, T 15-23, N 22-8)",
-    "fecha": "2026-11-26T16:52:12.332Z",
-    "nota": "Turnos de 8 h (M 7:30-15:30, T 15-23, N 22-8) con ciclo de 28 semanas 3+1 estricto: 3 de mañana y 1 de tarde, nunca dos tardes seguidas ni noche tras una tarde. Noches siempre 10. Fijos discontinuos, de lunes a viernes, de tarde o de noche cuando están contratados. Lo que falte por la tarde entre semana y en fin de semana queda en disponibilidad para la bolsa. 168 puestos (solo teleasistencia).",
+    "fecha": "2026-11-26T17:02:09.867Z",
+    "nota": "Turnos de 8 h (M 7:30-15:30, T 15-23, N 22-8) con ciclo de 28 semanas 3+1 estricto: 3 de mañana y 1 de tarde, nunca dos tardes seguidas ni noche tras una tarde. Noches siempre 10. Fijos discontinuos: cualquier turno cuando están contratados. Lo que falte por la tarde entre semana y en fin de semana queda en disponibilidad para la bolsa. 168 puestos (solo teleasistencia).",
     "cfg": {
      "id": "sevilla",
      "nombre": "Sevilla",
@@ -13699,11 +13699,7 @@
        "condiciones": {
         "libreFines": true,
         "sinVacaciones": true
-       },
-       "franjasEntreSemana": [
-        "tarde",
-        "noche"
-       ]
+       }
       }
      ],
      "solapes": [],
@@ -15805,15 +15801,21 @@
         "n": 7
        },
        {
+        "a": "TA 213",
+        "b": "TA 154",
+        "d": 346,
+        "n": 7
+       },
+       {
         "a": "TA 121",
         "b": "TA 053",
         "d": 339,
         "n": 7
        },
        {
-        "a": "TA 308",
-        "b": "TA 013",
-        "d": 353,
+        "a": "TA 301",
+        "b": "TA 289",
+        "d": 346,
         "n": 7
        },
        {
@@ -15823,21 +15825,21 @@
         "n": 14
        },
        {
-        "a": "TA 171",
-        "b": "TA 071",
-        "d": 122,
-        "n": 14
+        "a": "TA 291",
+        "b": "TA 210",
+        "d": 346,
+        "n": 7
        },
        {
-        "a": "TA 015",
-        "b": "TA 003",
-        "d": 122,
-        "n": 14
-       },
-       {
-        "a": "TA 153",
-        "b": "TA 140",
+        "a": "TA 308",
+        "b": "TA 153",
         "d": 353,
+        "n": 7
+       },
+       {
+        "a": "TA 233",
+        "b": "TA 217",
+        "d": 346,
         "n": 7
        },
        {
@@ -15847,27 +15849,15 @@
         "n": 7
        },
        {
-        "a": "TA 167",
-        "b": "TA 155",
-        "d": 38,
+        "a": "TA 031",
+        "b": "TA 015",
+        "d": 122,
         "n": 14
        },
        {
-        "a": "TA 200",
-        "b": "TA 246",
+        "a": "TA 015",
+        "b": "TA 224",
         "d": 339,
-        "n": 7
-       },
-       {
-        "a": "TA 277",
-        "b": "TA 205",
-        "d": 346,
-        "n": 7
-       },
-       {
-        "a": "TA 152",
-        "b": "TA 097",
-        "d": 353,
         "n": 7
        },
        {
@@ -15895,12 +15885,6 @@
         "n": 7
        },
        {
-        "a": "TA 271",
-        "b": "TA 227",
-        "d": 353,
-        "n": 7
-       },
-       {
         "a": "TA 110",
         "b": "TA 305",
         "d": 353,
@@ -15923,25 +15907,13 @@
         "b": "TA 037",
         "d": 339,
         "n": 7
-       },
-       {
-        "a": "TA 191",
-        "b": "TA 171",
-        "d": 353,
-        "n": 7
-       },
-       {
-        "a": "TA 191",
-        "b": "TA 023",
-        "d": 353,
-        "n": 7
        }
       ],
       "semilla": 1,
-      "coste0": 1001.3889386475587,
-      "coste": 900.3889386475582,
+      "coste0": 1016.1097178683375,
+      "coste": 932.1097178683376,
       "fecha": "2026-11-26",
-      "base": "1usu3d5cf2",
+      "base": "c0yvjecdz",
       "auto": true
      }
     }
