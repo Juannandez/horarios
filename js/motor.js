@@ -804,6 +804,81 @@ export function generar(cfgEntrada, opciones = {}) {
     return false;
   };
 
+  // Equilibrar las noches (Equidad): las vacaciones, el AJ o los ajustes dejan a unas personas con menos noches que
+  // otras (9 frente a 14). Se pasan bloques enteros de noches de lunes a viernes, sin festivos, de quien tiene más de
+  // la media + 1 a quien tiene menos de la media − 1, si quien recibe puede: los días del bloque libres o con un turno
+  // de día que sobra ese día, y su descanso tras las noches libre (si tenía turno de día, se le quita, también solo si
+  // sobra). No se toca a quien trabaja ese fin de semana, así que fines y festivos no cambian. La cobertura de noche
+  // tampoco (el bloque solo cambia de persona); las horas las reajustan luego recortar() y completar().
+  // Fuera: fijos discontinuos, refuerzos de unos meses, quien no hace noches y las reducciones temporales. Se apaga
+  // con cfg.equilibrarNoches = false.
+  const equilibrarNoches = (c) => {
+    if (cfg.equilibrarNoches === false || !bloques) return 0;
+    // Solo quien está todo el año: un refuerzo de unos meses tiene menos noches por estar menos tiempo, no por reparto.
+    const elegible = (pi) => { const p = personas[pi]; return p.pref && p.pref.noche && idx.has(p.pref.noche) && !p.exentoNoches && !p.horarioLibre && !p.altaDias && !p.tramo && !(p.desde > 0) && !(p.hasta < D); };
+    const lista = porColectivo[c].filter(elegible);
+    if (lista.length < 2) return 0;
+    const media = lista.reduce((s, pi) => s + noches[pi], 0) / lista.length, tol = 1;
+    const bloquesDe = (pi) => {
+      const r = [];
+      for (let d = 0; d < D; d++) {
+        if (!esNoche(pi, d) || esNoche(pi, d - 1)) continue;
+        let b = d; while (esNoche(pi, b + 1)) b++;
+        let ok = true;
+        for (let x = d; x <= b && ok; x++) if (origen[pi * D + x] === ORIGEN.MANUAL || dias[x].finde || dias[x].festivo) ok = false;
+        if (ok) r.push([d, b]);
+      }
+      return r;
+    };
+    const tomar = (q, d, b) => {
+      const fin = Math.min(D - 1, b + (descansoTrasNoche || 0)), ti = idx.get(personas[q].pref.noche);
+      // Su fin de semana de esa semana (y de la siguiente si el descanso llega) tiene que estar libre.
+      for (let x = Math.max(0, d - dias[d].dow); x <= Math.min(D - 1, fin + 6 - dias[fin].dow); x++) if (dias[x].finde && trabajaEn(q, x)) return false;
+      for (let x = d; x <= fin; x++) {
+        const k = q * D + x, t = T[grid[k]];
+        if (!t.trabaja) { if (x <= b && !libre(q, x)) return false; continue; }
+        if (!cambiable(k) || franjaIdx[grid[k]] === 2 || dias[x].festivo) return false;
+        const f = franjaIdx[grid[k]];
+        if (cob[c][f][x] - 1 < necesidad[c][f][x]) return false;
+      }
+      const antes = [];
+      for (let x = d; x <= fin; x++) antes.push([grid[q * D + x], origen[q * D + x]]);
+      for (let x = d; x <= fin; x++) {
+        if (x <= b) poner(q, x, ti, ORIGEN.CUBRE);
+        else if (T[grid[q * D + x]].trabaja) poner(q, x, iLibre, ORIGEN.RECORTE);
+      }
+      if (noches[q] <= topeNoches(q) && valida(q, Math.max(0, d - 1), Math.min(D - 1, fin + 1))) return true;
+      for (let x = d; x <= fin; x++) poner(q, x, antes[x - d][0], antes[x - d][1]);
+      return false;
+    };
+    let movidos = 0;
+    for (let pasada = 0; pasada < 4; pasada++) {
+      let hubo = false;
+      const pobres = lista.filter(pi => noches[pi] < media - tol).sort((a, b) => noches[a] - noches[b]);
+      for (const q of pobres) {
+        for (let intento = 0; intento < 6 && noches[q] < media - tol; intento++) {
+          const ricos = lista.filter(pi => noches[pi] > media + tol).sort((a, b) => noches[b] - noches[a]);
+          let movio = false;
+          for (const pi of ricos) {
+            for (const [d, b] of bloquesDe(pi)) {
+              const L = b - d + 1;
+              if (noches[q] + L >= noches[pi] || noches[q] + L > media + tol) continue;
+              if (!tomar(q, d, b)) continue;
+              for (let x = d; x <= b; x++) poner(pi, x, iLibre, ORIGEN.RECORTE);
+              movio = true; break;
+            }
+            if (movio) break;
+          }
+          if (!movio) break;
+          movidos++; hubo = true;
+        }
+      }
+      if (!hubo) break;
+    }
+    stats.nochesEquilibradas = (stats.nochesEquilibradas || 0) + movidos;
+    return movidos;
+  };
+
   // Cubre la noche del día d con un bloque entero (p. ej. viernes a domingo) de una sola persona.
   // Cada día del bloque tiene que estar libre o en una franja que va sobrada ese día. Tras el bloque,
   // si el día siguiente choca con el descanso y sobra gente, ese día pasa a saliente de noche.
@@ -984,9 +1059,9 @@ export function generar(cfgEntrada, opciones = {}) {
     const conCesion = (c) => { if (opciones.cesionDosPasadas) { cesionActiva = false; cubrir(c); } cesionActiva = true; cubrir(c); };
     // Margen para imprevistos: al final, con las noches de oficio y sin tocar lo ya cubierto.
     const conMargenFinal = (c) => { if (!hayMargen) return; aplicarMargen(c); cesionActiva = false; cubrir(c); recortar(c); completar(c); cesionActiva = true; };
-    recortarNoches(0); recortar(0); conCesion(0); recortar(0); completar(0); conMargenFinal(0);
+    recortarNoches(0); equilibrarNoches(0); recortar(0); conCesion(0); recortar(0); completar(0); conMargenFinal(0);
     aplicarRatio();
-    recortarNoches(1); recortar(1); conCesion(1); recortar(1); completar(1); conMargenFinal(1);
+    recortarNoches(1); equilibrarNoches(1); recortar(1); conCesion(1); recortar(1); completar(1); conMargenFinal(1);
   } else aplicarRatio();
   cesionActiva = true;   // desde aquí (mejora del reparto, avisos), cada persona con su tope propio
 
