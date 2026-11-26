@@ -1,7 +1,7 @@
 // PDF del cuadrante (por colectivo) y de los informes por persona, generados en el navegador con jsPDF
 // (js/vendor/jspdf-4.2.1.umd.min.js, licencia MIT). Nada sale del navegador: el PDF se descarga.
 // Las fuentes estándar del PDF solo tienen letras latinas: se evitan símbolos como ≥ o −.
-import { ORIGEN, horarioTurno, margenDia } from './motor.js';
+import { ORIGEN, horarioTurno, margenesCuartos } from './motor.js';
 import { analizarPersona } from './informe.js';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -155,7 +155,10 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
         lx += ancho;
       });
     }
-    // Mínimos por horas de cada día del mes (con mínimos por horas o por cuartos de hora).
+  }
+  // Al final, los mínimos por horas de cada día, un mes por página (con mínimos por horas o por cuartos de hora).
+  for (let mes = mesDesde; mes <= mesHasta; mes++) {
+    const dias = res.dias.filter(d => (d.mc ?? d.mes) === mes);
     paginaHoras(doc, { res, cfg, ci, dias, titulo: `Mínimos por horas ${cfg.anio} · ${cfg.nombre}${escenario ? ` · ${escenario}` : ''} · ${nombreCol} · ${nomMes(res, mes)}` });
   }
   const conNombres = lista.some(p => p.nombre);
@@ -170,15 +173,15 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
 const AMBAR = [146, 90, 0], FONDO_MAL = [250, 222, 222], FONDO_AMBAR = [253, 238, 200], BOLSA = [31, 92, 153], FONDO_BOLSA = [222, 234, 248];
 function paginaHoras(doc, { res, cfg, ci, dias, titulo }) {
   if (!res.cuartos || ci < 0 || !dias.length) return false;
-  const enMargen = (q) => q >= 31 && q < 88, mgLV = margenDia(cfg, { finde: false }), mgFS = margenDia(cfg, { finde: true });
+  const MQ = margenesCuartos(cfg), mgLV = Math.max(0, ...MQ.lv), mgFS = Math.max(0, ...MQ.fs), porTramos = Array.isArray((cfg.cobertura || {}).margenTramos) && cfg.cobertura.margenTramos.length > 0;
   // Casillas: { min, dif, ambar } por hora y día (null: sin mínimo, p. ej. la madrugada del primer día).
   const casillas = Array.from({ length: 24 }, (_, h) => dias.map((d) => {
-    let min = null, dif = null, ambar = false; const mg = margenDia(cfg, d);
+    let min = null, dif = null, ambar = false; const mq = MQ.de(d);
     for (let q = h * 4; q < h * 4 + 4; q++) {
       const m = res.cuartos.min(ci, d.i, q); if (m == null) continue;
       const v = res.cuartos.cob[ci][d.i * 96 + q] - m;
       min = min == null ? m : Math.max(min, m); dif = dif == null ? v : Math.min(dif, v);
-      if (mg && enMargen(q) && v < mg) ambar = true;
+      if (mq[q] && v < mq[q]) ambar = true;
     }
     return min == null ? null : { min, dif, ambar: ambar && dif >= 0 };
   }));
@@ -191,7 +194,7 @@ function paginaHoras(doc, { res, cfg, ci, dias, titulo }) {
   doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...TITULO);
   doc.text(titulo, M, M + 4);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...GRIS);
-  const sub = doc.splitTextToSize(`En cada casilla: arriba, el mínimo de esa hora; abajo, las personas en sala por encima (+) o por debajo (-, en rojo) del mínimo en el peor cuarto de hora de esa hora.${mgLV || mgFS ? ` En ámbar, por debajo del margen pedido de 7:45 a 22:00 (+${mgLV} de lunes a viernes; +${mgFS} en sábado, domingo y festivo).` : ''} En azul con B, lo que falta y queda cubierto con disponibilidad para la bolsa (personas que libran y están localizables).`, W - 2 * M);
+  const sub = doc.splitTextToSize(`En cada casilla: arriba, el mínimo de esa hora; abajo, las personas en sala por encima (+) o por debajo (-, en rojo) del mínimo en el peor cuarto de hora de esa hora.${mgLV || mgFS ? (porTramos ? ` En ámbar, por debajo del margen pedido en cada tramo del día (hasta +${mgLV} de lunes a viernes; hasta +${mgFS} en sábado, domingo y festivo).` : ` En ámbar, por debajo del margen pedido de 7:45 a 22:00 (+${mgLV} de lunes a viernes; +${mgFS} en sábado, domingo y festivo).`) : ''} En azul con B, lo que falta y queda cubierto con disponibilidad para la bolsa (personas que libran y están localizables).`, W - 2 * M);
   doc.text(sub, M, M + 7.5);
   const yCab = M + 7.5 + sub.length * 2.9 + 0.5, yFilas = yCab + 7;
   // Cabecera de días

@@ -1,6 +1,6 @@
 // Vista Cuadrante: el horario de cada persona, con filtros, orden, cobertura y cambios a mano.
 import { estado, esc, $, $$, MESES, DIAS_CORTOS, fmtNum, fmtFecha, estiloTurno, modal, cambiado, avisar } from './nucleo.js';
-import { ORIGEN, fmtH, horarioTurno, margenDia } from './motor.js';
+import { ORIGEN, fmtH, horarioTurno, margenesCuartos } from './motor.js';
 import { pdfCuadrante } from './pdf.js';
 import { COLECTIVOS, FRANJA_NOMBRE } from './datos-base.js';
 import { infracciones, puntuacion, mapaCasillas } from './puntuacion.js';
@@ -190,6 +190,7 @@ function panelPorHoras() {
   const dSel = visibles.some(d => d.i === u.resaltarDia) ? u.resaltarDia : visibles[0].i, dia = res.dias[dSel];
   const cols = u.colectivo === 'todos' ? ['TA', 'SUP'] : [u.colectivo];
   const hm = (q) => `${String(Math.floor(q / 4) % 24).padStart(2, '0')}:${String((q % 4) * 15).padStart(2, '0')}`;
+  const MQd = margenesCuartos(estado.cfg).de(dia);
   const tablas = cols.map(col => {
     const c = res.colectivos.indexOf(col);
     const tramos = [];
@@ -197,12 +198,13 @@ function panelPorHoras() {
       const m = res.cuartos.min(c, dSel, q); if (m == null) continue;
       const n = res.cuartos.cob[c][dSel * 96 + q];
       const t = tramos[tramos.length - 1];
-      if (t && t.min === m && t.fin === q) { t.fin = q + 1; t.sala = Math.min(t.sala, n); } else tramos.push({ ini: q, fin: q + 1, min: m, sala: n });
+      const mg = MQd[q];   // un tramo: mismo mínimo y mismo margen pedido
+      if (t && t.min === m && t.mg === mg && t.fin === q) { t.fin = q + 1; t.sala = Math.min(t.sala, n); } else tramos.push({ ini: q, fin: q + 1, min: m, sala: n, mg });
     }
     if (!tramos.length) return '';
     return `<div class="tabla-caja horas-dia" style="max-height:none"><table class="tabla-lista"><caption class="oculto">${col === 'TA' ? 'Teleasistencia' : 'Supervisión'}</caption>
       <thead><tr><th scope="col">${col === 'TA' ? 'Teleasistencia' : 'Supervisión'}</th><th scope="col" class="num">Mínimo</th><th scope="col" class="num">En sala</th><th scope="col" class="num">Diferencia</th></tr></thead><tbody>
-      ${tramos.map(t => { const dif = t.sala - t.min, mg = margenDia(estado.cfg, dia), enMargen = t.ini >= 31 && t.ini < 88; return `<tr><th scope="row">${hm(t.ini)}–${t.fin === 96 ? '24:00' : hm(t.fin)}</th><td class="num">${t.min}</td><td class="num">${t.sala}</td><td class="num ${dif < 0 ? 'mal' : mg && enMargen && dif < mg ? 'justo-margen' : ''}" ${mg && enMargen && dif >= 0 && dif < mg ? `title="Por debajo del margen de ${mg}"` : ''}><b>${dif > 0 ? '+' : ''}${dif}</b></td></tr>`; }).join('')}
+      ${tramos.map(t => { const dif = t.sala - t.min, mg = t.mg, enMargen = mg > 0; return `<tr><th scope="row">${hm(t.ini)}–${t.fin === 96 ? '24:00' : hm(t.fin)}</th><td class="num">${t.min}</td><td class="num">${t.sala}</td><td class="num ${dif < 0 ? 'mal' : mg && enMargen && dif < mg ? 'justo-margen' : ''}" ${mg && enMargen && dif >= 0 && dif < mg ? `title="Por debajo del margen de ${mg}"` : ''}><b>${dif > 0 ? '+' : ''}${dif}</b></td></tr>`; }).join('')}
       </tbody></table></div>`;
   }).join('');
   const i = visibles.findIndex(d => d.i === dSel);
@@ -332,13 +334,15 @@ function tablaMes(lista) {
     const porDia = new Map();
     for (const h of res.porHoras.huecos) if (h.colectivo === 'TA') { const l = porDia.get(h.d) || []; l.push(h); porDia.set(h.d, l); }
     const hm = (h) => `${String(h.hora).padStart(2, '0')}:${String(h.minuto || 0).padStart(2, '0')}`;
+    const MQpie = margenesCuartos(estado.cfg);
     const celdas = dias.map(d => {
       const l = porDia.get(d.i); const rz = u.resaltarDia === d.i ? ' resaltado' : '';
       if (!l) {
         // Sin huecos: ¿llega al margen pedido de 7:45 a 22:00?
-        const mg = margenDia(estado.cfg, d);
-        if (mg && res.cuartos) { let peor = Infinity, cuando = ''; for (let q = 31; q < 88; q++) { const v = res.cuartos.min(0, d.i, q); if (v == null) continue; const x = res.cuartos.cob[0][d.i * 96 + q] - v; if (x < peor) { peor = x; cuando = hm({ hora: q >> 2, minuto: (q & 3) * 15 }); } } if (peor < mg) return `<td class="c justo-margen${rz}" title="Cubierto, pero con menos margen del pedido (${mg}): a las ${cuando} solo +${peor}">+${peor}</td>`; }
-        return `<td class="c${rz}" title="Todos los cuartos de hora cubiertos${mg ? `, con el margen pedido (+${mg})` : ''}">✓</td>`;
+        // Sin huecos: ¿llega al margen pedido en cada cuarto de hora?
+        const mq = MQpie.de(d), hayMg = mq.some(x => x > 0);
+        if (hayMg && res.cuartos) { let peor = Infinity, cuando = '', sobre = 0, pedido = 0; for (let q = 0; q < 96; q++) { if (!mq[q]) continue; const v = res.cuartos.min(0, d.i, q); if (v == null) continue; const x = res.cuartos.cob[0][d.i * 96 + q] - v; if (x - mq[q] < peor) { peor = x - mq[q]; sobre = x; pedido = mq[q]; cuando = hm({ hora: q >> 2, minuto: (q & 3) * 15 }); } } if (peor < 0) return `<td class="c justo-margen${rz}" title="Cubierto, pero con menos margen del pedido: a las ${cuando} hay +${sobre} y se piden +${pedido}">+${sobre}</td>`; }
+        return `<td class="c${rz}" title="Todos los cuartos de hora cubiertos${hayMg ? ', con el margen pedido' : ''}">✓</td>`;
       }
       const peor = Math.max(...l.map(h => h.falta));
       const db = (res.disponibilidad || []).filter(x => x.d === d.i && x.colectivo === 'TA');

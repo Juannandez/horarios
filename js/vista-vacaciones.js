@@ -1,6 +1,7 @@
 // Vista Vacaciones: periodos estivales con sus plazas, la solicitud de cada persona (por código anónimo), el sorteo y
 // el resultado. Las solicitudes se escriben aquí o se importan de un CSV; la app no lee correos.
-import { estado, esc, $, $$, cambiado, avisar, confirmar, descargar, fmtFecha, fmtNum } from './nucleo.js';
+import { estado, esc, $, $$, cambiado, avisar, confirmar, descargar, fmtFecha, fmtNum, resultadoDe, clonar } from './nucleo.js';
+import { margenesCuartos } from './motor.js';
 import { diasHabiles, diasNaturales } from './vacaciones.js';
 
 const MOTIVO_CORTO = (m) => (m || '').replace('Periodo pedido (ganó el sorteo)', 'Pedido, ganó el sorteo').replace('Periodo pedido (con preferencia)', 'Pedido, con preferencia');
@@ -13,6 +14,35 @@ function filas(vac, res) {
   return res.personas.filter(p => (u.colectivo === 'todos' || p.colectivo === u.colectivo) && (!q || p.id.toLowerCase().includes(q))
     && (!u.solo || (u.solo === 'con' ? sol[p.id] && sol[p.id].periodo : u.solo === 'cambio' ? /^Cambio por sorteo/.test(res.vacaciones?.porPersona.get(p.id)?.motivo || '') : !(sol[p.id] && sol[p.id].periodo))));
 }
+
+// «¿Con cuántas plazas no falta nadie?»: el cuadrante rehecho con menos plazas de teleasistencia en todos los periodos.
+// { clave: configuración con la que se calculó, filas: [{ plazas, falta, margen, sinPlaza }] }
+let pruebaPlazas = null;
+const clavePlazas = () => JSON.stringify([estado.cfg.id, estado.cfg.escenarioAbierto || '', estado.cfg.vacaciones, estado.cfg.cobertura, estado.cfg.grupos.map(g => g.personas)]);
+function medirPlazas(n) {
+  const c = clonar(estado.cfg); delete c.mejora;
+  for (const p of c.vacaciones.periodos) p.plazas.TA = n;
+  const r = resultadoDe(c), ci = r.colectivos.indexOf('TA'), MQ = margenesCuartos(c);
+  let falta = 0, margen = 0;
+  for (let d = 0; d < r.D; d++) {
+    let f = r.cobertura[ci].some((x, fi) => x[d] < r.necesidad[ci][fi][d]), m = false;
+    if (r.cuartos) { const mq = MQ.de(r.dias[d]); for (let q = 0; q < 96; q++) { const v = r.cuartos.min(ci, d, q); if (v == null) continue; const x = r.cuartos.cob[ci][d * 96 + q] - v; if (x < 0) f = true; else if (x < mq[q]) m = true; } }
+    if (f) falta++; else if (m) margen++;
+  }
+  return { plazas: n, falta, margen, sinPlaza: r.vacaciones ? r.vacaciones.sinPlaza.filter(id => (r.personas.find(p => p.id === id) || {}).colectivo === 'TA').length : 0 };
+}
+const panelPlazas = (vac) => {
+  const max = Math.max(0, ...vac.periodos.map(p => Number(p.plazas.TA) || 0));
+  const vale = pruebaPlazas && pruebaPlazas.clave === clavePlazas();
+  const mejor = vale ? pruebaPlazas.filas.filter(x => !x.falta && !x.sinPlaza).sort((a, b) => b.plazas - a.plazas)[0] : null;
+  return `<section class="panel" id="plazas-prueba"><h2>¿Con cuántas plazas no falta nadie?</h2>
+    <p class="tenue">Rehace el cuadrante con ${max} plazas de teleasistencia por periodo y con hasta 6 menos, y cuenta los días en que falta alguien para el mínimo. Tarda unos segundos. No cambia nada: si te convence un número, ponlo arriba.</p>
+    <div class="fila-acciones"><button type="button" class="btn primario" data-vac="probar-plazas">Calcular</button></div>
+    ${vale ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col" class="num">Plazas por periodo</th><th scope="col" class="num">Días con alguien por debajo del mínimo</th><th scope="col" class="num">Días por debajo del margen</th><th scope="col" class="num">Personas sin periodo</th></tr></thead><tbody>
+      ${pruebaPlazas.filas.map(x => `<tr><th scope="row" class="num">${x.plazas}${x.plazas === max ? ' (ahora)' : ''}</th><td class="num ${x.falta ? 'mal' : ''}"><b>${x.falta}</b></td><td class="num">${x.margen}</td><td class="num ${x.sinPlaza ? 'mal' : ''}">${x.sinPlaza}</td></tr>`).join('')}</tbody></table></div>
+      <p>${mejor ? `Con <b>${mejor.plazas}</b> plazas por periodo no falta nadie ningún día y todo el mundo tiene periodo.` : 'Con ninguno de estos números se cumple todo: prueba con más periodos, o revisa los mínimos.'}</p>` : pruebaPlazas ? '<p class="tenue">Has cambiado algo desde el último cálculo: vuelve a calcular.</p>' : ''}
+  </section>`;
+};
 
 export function pintarVacaciones(raiz) {
   const { cfg, res } = estado, vac = cfg.vacaciones, u = (estado.ui.vac ||= { buscar: '', colectivo: 'todos', solo: '' });
@@ -65,6 +95,7 @@ export function pintarVacaciones(raiz) {
       <div class="fila-acciones"><button type="button" class="btn" data-vac="anadir-periodo">Añadir periodo</button></div>
       ${r && r.sinPlaza.length ? `<p class="banda mal">${r.sinPlaza.length} personas no caben en ningún periodo: añade plazas o periodos.</p>` : ''}
     </section>
+    ${panelPlazas(vac)}
 
     ${r && r.sorteo.length ? `<section class="panel"><h2>Sorteos</h2><p class="tenue">Periodos con más peticiones que plazas. Orden de salida del sorteo: las primeras se quedan el periodo; las demás eligen, por este orden, entre los periodos de menor demanda.</p>
       ${r.sorteo.map(x => `<details><summary>Periodo ${x.periodo}: ${esc(x.detalle)}</summary><p class="tenue">${x.orden.map((c, i) => `${i + 1}. ${esc(c)}`).join(' · ')}</p></details>`).join('')}</section>` : ''}
@@ -171,6 +202,14 @@ export function eventosVacaciones(raiz, repintar) {
     if (estado.vista !== 'vacaciones') return;
     const b = e.target.closest('button[data-vac]'); if (!b) return;
     const v = vac(), a = b.dataset.vac;
+    if (a === 'probar-plazas') {
+      const max = Math.max(0, ...v.periodos.map(p => Number(p.plazas.TA) || 0)), texto = b.textContent;
+      b.disabled = true; b.textContent = 'Calculando…';
+      await new Promise(ok => setTimeout(ok, 30));   // que se vea «Calculando…» antes de empezar
+      const filas = []; for (let n = max; n >= Math.max(0, max - 6); n--) { filas.push(medirPlazas(n)); await new Promise(ok => setTimeout(ok, 0)); }
+      pruebaPlazas = { clave: clavePlazas(), filas }; b.disabled = false; b.textContent = texto;
+      return repintar();
+    }
     if (a === 'anadir-periodo') {
       const ult = v.periodos[v.periodos.length - 1];
       const mas = (s, n) => { const d = new Date(`${s}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };

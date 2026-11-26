@@ -30,6 +30,7 @@ const TITULOS = {
   maxEntradas: (v) => `Más de ${v} horas de entrada distintas en el año`,
   minLibresSemana: (v) => `Semana con menos de ${v} días libres`,
   unaFranjaSemana: () => 'Semana con mañanas y tardes mezcladas',
+  semanasEntreTardes: (v) => `Menos de ${v} semanas sin tardes entre dos semanas de tarde`,
   minNoches: (v) => `Menos de ${v} noches al año (quien hace noches)`,
   tope: (v) => `Más de ${v} h por encima de la jornada`,
 };
@@ -140,6 +141,16 @@ export function infracciones(res, cfg) {
     if (salida.minNoches && !p.nochesVoluntarias && !p.horarioLibre && !p.altaDias && !p.exentoNoches && !p.tramo && !(p.desde > 0) && !(p.hasta < D) && !(Array.isArray(p.franjas) && !p.franjas.includes('noche'))) {
       let n = 0; for (let d = 0; d < D; d++) if (noche(d)) n++;
       if (n < val('minNoches')) caso('minNoches', [], `${n} noches`);
+    }
+    if (salida.semanasEntreTardes && !p.horarioLibre) {
+      // Semanas (lunes a domingo) con alguna tarde: entre dos seguidas tiene que haber N semanas sin tardes.
+      const n = Number(val('semanasEntreTardes')) || 0, l0 = dias.findIndex(x => x.dow === 0); let ultima = -99;
+      for (let l = l0 - 7, w = 0; l < D; l += 7, w++) {
+        const ds = []; for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 6); x++) { if (trab(x) && t(x).franja === "tarde") ds.push(x); }
+        if (!ds.length) continue;
+        if (w - ultima - 1 < n && ultima >= 0) caso('semanasEntreTardes', ds, w - ultima === 1 ? 'dos semanas de tarde seguidas' : `solo ${w - ultima - 1} sin tardes`);
+        ultima = w;
+      }
     }
     if (salida.unaFranjaSemana && !p.horarioLibre) {
       for (let l = 0; l + 6 < D; l++) {

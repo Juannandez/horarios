@@ -1,6 +1,6 @@
 // Vista Parámetros: todo lo que define el cuadrante, en listas donde se añade y se quita.
 import { estado, esc, $, $$, DIAS_CORTOS, MESES, fmtNum, estiloTurno, confirmar, modal, cambiado, leerRuta, ponerRuta, nuevoId, tinta, sedeBase, clonar, avisar, pedirFestivos } from './nucleo.js';
-import { estimarPatron, prepararTurno, resolverPatron, aplicarSolapes, fmtH, margenDia } from './motor.js';
+import { estimarPatron, prepararTurno, resolverPatron, aplicarSolapes, fmtH, margenesCuartos } from './motor.js';
 import { COLECTIVOS, FRANJAS, FRANJA_NOMBRE, REGLAS_CATALOGO, TIPOS_FUENTE, nivelRegla, ROTATORIOS } from './datos-base.js';
 import { aplicarRotatorio, minimosHoraDesdeFranjas, tablaHoraConsultora } from './escenarios-plantilla.js';
 import { NIVELES } from './puntuacion.js';
@@ -303,7 +303,9 @@ function seccionAbsentismo(cfg) {
   const a = cfg.absentismo || { dia: 0, noche: 0, cuenta: 'margen' }, res = estado.res;
   const d = res.dias.findIndex(x => !x.finde && !x.festivo && x.mes === 2);
   const ej = (f) => (d >= 0 ? `${fmtNum(res.necesidadPlan[0][f][d])}` : '—');
+  const MQa = margenesCuartos(cfg), hayMargenQ = MQa.lv.some(x => x > 0) || MQa.fs.some(x => x > 0), hayAbs = Number(a.dia) > 0 || Number(a.noche) > 0;
   return `<section class="panel" id="sec-absentismo"><h2>Absentismo previsto</h2>
+    ${hayAbs && hayMargenQ ? `<p class="banda mal">Hay dos márgenes a la vez: este porcentaje de absentismo y el margen por cuartos de hora de Cobertura y bolsa. Si los mínimos ya llevan el absentismo dentro, deja este a 0. <button type="button" class="btn mini" data-accion="absentismo-cero">Poner el absentismo a 0</button></p>` : `<p class="tenue">Si los mínimos que has metido ya llevan el absentismo dentro, déjalo a 0: el margen se pide en Cobertura y bolsa.</p>`}
     <p class="tenue">Un porcentaje sobre el mínimo para cubrir bajas y ausencias. La consultora suma un 20 % fijo a todas las horas. Aquí se elige el porcentaje (0 = nada) y cómo cuenta:</p>
     <div class="campos">
       ${campo('De día (mañana y tarde), %', num('absentismo.dia', a.dia ?? 0, 'min="0" max="100" step="1" style="width:90px" data-estructura="1"'))}
@@ -516,9 +518,22 @@ export function seccionCobertura(cfg) {
   </section>
   <section class="panel"><h2>Margen sobre el mínimo por cuartos de hora</h2>
     <p class="tenue">Con mínimos por cuartos de hora: de 7:45 a 22:00 el ajuste intenta tener al menos el mínimo más estas personas en cada cuarto (cambiando turnos dentro de la franja, sin quitar a nadie de donde no sobra y, en fin de semana, con los fijos discontinuos). La noche va sin margen. Los huecos se siguen midiendo con el mínimo; donde no se llega al margen sale en amarillo en el cuadrante.</p>
-    <div class="campos">${campo('De lunes a viernes: personas por encima del mínimo', num('cobertura.margenCuartos', cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}
-      ${campo('Sábados, domingos y festivos', num('cobertura.margenCuartosFinde', cob.margenCuartosFinde ?? cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}</div>
-    ${res.cuartos && (cob.margenCuartos || cob.margenCuartosFinde) ? (() => { let lv = 0, fs = 0, neg = 0; for (let d = 0; d < res.D; d++) { const mg = margenDia(estado.cfg, res.dias[d]); let peor = Infinity; for (let q = 31; q < 88; q++) { const v = res.cuartos.min(0, d, q); if (v == null) continue; peor = Math.min(peor, res.cuartos.cob[0][d * 96 + q] - v); } if (peor < 0) neg++; else if (peor < mg) { if (res.dias[d].finde || res.dias[d].festivo) fs++; else lv++; } } return `<p>Ahora, en teleasistencia: <b>${fmtNum(neg)}</b> días con algún cuarto por debajo del mínimo; <b>${fmtNum(lv)}</b> días de lunes a viernes y <b>${fmtNum(fs)}</b> de fin de semana o festivo con algún cuarto por debajo del margen.</p>`; })() : ''}
+    ${(() => {
+      const tr = Array.isArray(cob.margenTramos) ? cob.margenTramos : [];
+      const filas = tr.map((t, k) => `<tr><td><input type="time" step="900" data-ruta="cobertura.margenTramos.${k}.desde" value="${esc(t.desde || '')}" data-estructura="1" aria-label="Desde"></td>
+        <td><input type="time" step="900" data-ruta="cobertura.margenTramos.${k}.hasta" value="${esc(t.hasta || '')}" data-estructura="1" aria-label="Hasta"></td>
+        <td class="num">${num(`cobertura.margenTramos.${k}.lv`, t.lv ?? 0, 'min="0" max="30" style="width:80px" data-estructura="1" aria-label="De lunes a viernes"')}</td>
+        <td class="num">${num(`cobertura.margenTramos.${k}.fs`, t.fs ?? t.lv ?? 0, 'min="0" max="30" style="width:80px" data-estructura="1" aria-label="Sábado, domingo y festivo"')}</td>
+        <td class="num"><button type="button" class="btn mini peligro" data-accion="quitar-tramo-margen" data-i="${k}">Quitar</button></td></tr>`).join('');
+      return tr.length
+        ? `<p class="tenue">Margen por tramos del día: cada tramo con su margen. Fuera de los tramos no se pide margen.</p>
+          <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Desde</th><th scope="col">Hasta</th><th scope="col" class="num">Lunes a viernes</th><th scope="col" class="num">Sábado, domingo y festivo</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>
+          <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir-tramo-margen">Añadir tramo</button><button type="button" class="btn" data-accion="quitar-tramos-margen">Volver a un solo margen para todo el día</button></div>`
+        : `<div class="campos">${campo('De lunes a viernes: personas por encima del mínimo', num('cobertura.margenCuartos', cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}
+            ${campo('Sábados, domingos y festivos', num('cobertura.margenCuartosFinde', cob.margenCuartosFinde ?? cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}</div>
+          <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir-tramo-margen" title="Un margen distinto para la mañana, los relevos y la tarde">Poner un margen distinto por tramos del día</button></div>`;
+    })()}
+    ${res.cuartos ? (() => { const MQ = margenesCuartos(estado.cfg); if (!MQ.lv.some(x => x > 0) && !MQ.fs.some(x => x > 0)) return ''; let lv = 0, fs = 0, neg = 0; for (let d = 0; d < res.D; d++) { const mq = MQ.de(res.dias[d]); let bajo = false, falta = false; for (let q = 0; q < 96; q++) { const v = res.cuartos.min(0, d, q); if (v == null) continue; const x = res.cuartos.cob[0][d * 96 + q] - v; if (x < 0) falta = true; else if (x < mq[q]) bajo = true; } if (falta) neg++; else if (bajo) { if (res.dias[d].finde || res.dias[d].festivo) fs++; else lv++; } } return `<p>Ahora, en teleasistencia: <b>${fmtNum(neg)}</b> días con algún cuarto por debajo del mínimo; <b>${fmtNum(lv)}</b> días de lunes a viernes y <b>${fmtNum(fs)}</b> de fin de semana o festivo con algún cuarto por debajo del margen.</p>`; })() : ''}
   </section>
   <section class="panel"><h2>Fines de semana</h2>
     <p class="tenue">Con esto marcado, el ajuste no pone a trabajar de día a nadie un sábado o un domingo que libra (las noches sí se cubren: siempre el mínimo). Si ese día falta gente, deja a alguien que libra en <b>disponibilidad para la bolsa</b> (código DB: localizable, no trabaja ni suma horas), repartido entre la plantilla.</p>
@@ -817,6 +832,13 @@ export function eventosParametros(raiz, repintar) {
     }
     if (ruta === 'anio') {
       if (!final || !(valor >= 2020 && valor <= 2100)) return;
+      // Los periodos de vacaciones van con fecha: se pasan al año nuevo, al mismo día de la semana más cercano.
+      const dif = Number(valor) - Number(cfg.anio), per = (cfg.vacaciones && cfg.vacaciones.periodos) || [];
+      if (dif && per.length) {
+        const mover = (f) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(f || ''); if (!m) return f; const a = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])), b = new Date(Date.UTC(+m[1] + dif, +m[2] - 1, +m[3])); let d = (a.getUTCDay() - b.getUTCDay() + 7) % 7; if (d > 3) d -= 7; b.setUTCDate(b.getUTCDate() + d); return b.toISOString().slice(0, 10); };
+        for (const x of per) { x.inicio = mover(x.inicio); x.fin = mover(x.fin); }
+        avisar(`Los ${per.length} periodos de vacaciones se han pasado a ${valor}, en los mismos días de la semana. Revísalos en Vacaciones. Ctrl+Z lo deshace.`, '', 9000);
+      }
     }
     if (ruta.endsWith('.patronDe') && !valor && antes) {
       // Al pasar a patrón propio, se parte de una copia del que usaba.
@@ -854,6 +876,16 @@ export function eventosParametros(raiz, repintar) {
       cfg.cobertura.ausencias.push({ persona: p ? p.id : '', tipo: 'baja', desde: `${cfg.anio}-01-01`, hasta: `${cfg.anio}-01-07`, nota: '' });
       cambiado({ inmediato: true }); return repintar();
     }
+    if (a === 'anadir-tramo-margen') {
+      const cob = cfg.cobertura, lv = Number(cob.margenCuartos) || 0, fs = cob.margenCuartosFinde != null ? Number(cob.margenCuartosFinde) || 0 : lv;
+      // Al empezar: tres tramos con el margen de ahora (mañana, relevo de las 15:00 y tarde), para retocarlos.
+      if (!Array.isArray(cob.margenTramos) || !cob.margenTramos.length) cob.margenTramos = [{ desde: '07:45', hasta: '14:45', lv, fs }, { desde: '14:45', hasta: '16:00', lv, fs }, { desde: '16:00', hasta: '22:00', lv, fs }];
+      else cob.margenTramos.push({ desde: '22:00', hasta: '23:00', lv: 0, fs: 0 });
+      cambiado({ inmediato: true }); return repintar();
+    }
+    if (a === 'quitar-tramo-margen') { cfg.cobertura.margenTramos.splice(i, 1); if (!cfg.cobertura.margenTramos.length) delete cfg.cobertura.margenTramos; cambiado({ inmediato: true }); return repintar(); }
+    if (a === 'quitar-tramos-margen') { delete cfg.cobertura.margenTramos; cambiado({ inmediato: true }); return repintar(); }
+    if (a === 'absentismo-cero') { cfg.absentismo = { ...(cfg.absentismo || {}), dia: 0, noche: 0 }; cambiado({ inmediato: true }); return repintar(); }
     if (a === 'quitar-ausencia') { cfg.cobertura.ausencias.splice(i, 1); cambiado({ inmediato: true }); return repintar(); }
     if (a === 'minimo-lv') {
       const m = cfg.minimos[i]; if (!m || !Array.isArray(m.dias)) return;
