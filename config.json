@@ -1,5 +1,5 @@
 {
- "guardado": "2026-11-26T10:42:53.323Z",
+ "guardado": "2026-11-26T10:43:21.004Z",
  "nota": "Sin cambios en el cuadrante.",
  "config": {
   "version": 2,
@@ -2102,7 +2102,7 @@
     "absentismo": {
      "dia": 15,
      "noche": 0,
-     "cuenta": "margen"
+     "cuenta": "minimo"
     }
    },
    {
