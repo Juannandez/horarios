@@ -421,3 +421,10 @@ button.inf-punt[aria-expanded="true"] { outline: 2px solid var(--gl-marca, #0b2a
 .cifra-boton { text-align: left; cursor: pointer; font: inherit; color: inherit; }
 .cifra-boton:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--bad) 35%, transparent); }
 .cuadrante thead th.resaltado, .cuadrante tfoot td.resaltado { box-shadow: inset 0 0 0 2px var(--bad); }
+
+/* Barra de guardar: de partida, solo una pastilla pequeña en la esquina; y el contenido deja sitio abajo para que
+   nunca tape una fila o un botón. Casillas de hora con su ancho de siempre (en el Mac, más estrechas se cortan). */
+.guardar-pastilla { display: flex; gap: 6px; align-items: center; padding: 6px; border-radius: 999px; background: var(--elev); border: 1px solid var(--line2); box-shadow: var(--sf-lift); }
+.guardar-pastilla .btn.mini:first-child { color: var(--warn, #b26b00); font-weight: 700; }
+body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
+.tabla-lista input[type="time"], .tabla-lista.tabla-turnos input[type="time"], .param-cuerpo .tabla-lista input[type="time"] { width: 116px !important; min-width: 116px !important; }

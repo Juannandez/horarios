@@ -182,14 +182,24 @@ function pintarBarraGuardar() {
   const historia = `<span class="fila-acciones historia" style="margin:0">
       <button type="button" class="btn mini" data-accion="deshacer" ${puedeDeshacer() ? '' : 'disabled'} title="Deshacer (Ctrl+Z)" aria-label="Deshacer">↶ Deshacer</button>
       <button type="button" class="btn mini" data-accion="rehacer" ${puedeRehacer() ? '' : 'disabled'} title="Rehacer (Ctrl+Mayús+Z)" aria-label="Rehacer">↷</button></span>`;
-  if (!hay) { caja.innerHTML = `<div class="guardar-barra" role="region" aria-label="Deshacer">${historia}</div>`; return; }
+  // Plegada (de partida): una pastilla pequeña en la esquina que no tapa nada. Se despliega al pulsarla.
+  let plegada = true;
+  try { plegada = sessionStorage.getItem('horarios.barraAbierta') !== '1'; } catch (e) { /* sin almacenamiento */ }
+  if (!hay) { caja.innerHTML = plegada ? '' : `<div class="guardar-barra" role="region" aria-label="Deshacer">${historia}<button type="button" class="btn mini" data-accion="barra-plegar" title="Ocultar esta barra">Ocultar</button></div>`; return; }
+  if (plegada) {
+    caja.innerHTML = `<div class="guardar-pastilla" role="region" aria-label="Cambios sin guardar">
+      <button type="button" class="btn mini" data-accion="barra-abrir" title="Ver deshacer, descartar y guardar">● Sin guardar</button>
+      ${estado.admin ? `<button type="button" class="btn mini primario" data-accion="guardar">${DEMO ? 'Guardar para todos' : 'Guardar'}</button>` : ''}</div>`;
+    return;
+  }
+  const plegar = '<button type="button" class="btn mini" data-accion="barra-plegar" title="Dejar solo un aviso pequeño en la esquina">Ocultar</button>';
   caja.innerHTML = estado.admin
     ? `<div class="guardar-barra" role="region" aria-label="Cambios sin guardar">${historia}<span>Hay cambios que todavía no están en el servidor.</span>
-        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-accion="guardar">${DEMO ? 'Guardar para todos' : 'Guardar en el servidor'}</button></span></div>`
+        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-accion="guardar">${DEMO ? 'Guardar para todos' : 'Guardar en el servidor'}</button>${plegar}</span></div>`
     : DEMO ? `<div class="guardar-barra" role="region" aria-label="Cambios sin publicar">${historia}<span>Cambios <b>sin publicar</b>, guardados en este ordenador. Los demás ven la versión publicada.</span>
-        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-ir="ajustes">Guardar para todos…</button></span></div>`
+        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Descartar</button><button type="button" class="btn primario" data-ir="ajustes">Guardar para todos…</button>${plegar}</span></div>`
     : `<div class="guardar-barra" role="region" aria-label="Cambios de prueba">${historia}<span>Cambios de prueba: no se guardan y al recargar vuelve la versión publicada, la única que ve todo el mundo. Para cambiarla, entra como administración en Ajustes.</span>
-        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Volver a la versión publicada</button></span></div>`;
+        <span class="fila-acciones" style="margin:0"><button type="button" class="btn" data-accion="descartar">Volver a la versión publicada</button>${plegar}</span></div>`;
 }
 
 // Ctrl+Z / Ctrl+Mayús+Z (o Ctrl+Y): deshace o rehace. Dentro de un cuadro de texto manda el del navegador.
@@ -274,6 +284,10 @@ document.addEventListener('click', async (e) => {
   const a = b.dataset.accion;
   if (a === 'guardar') return guardar();
   if (a === 'deshacer' || a === 'rehacer') return hacerHistoria(a === 'deshacer');
+  if (a === 'barra-abrir' || a === 'barra-plegar') {
+    try { sessionStorage.setItem('horarios.barraAbierta', a === 'barra-abrir' ? '1' : '0'); } catch (e) { /* sin almacenamiento */ }
+    return pintarBarraGuardar();
+  }
   if (a === 'descartar') {
     if (!(await confirmar('¿Descartar los cambios?', 'Vuelves a la configuración publicada en el servidor. Si te arrepientes, «Deshacer» la recupera mientras no recargues la página.', 'Descartar cambios'))) return;
     descartarCambios(); return pintar();
