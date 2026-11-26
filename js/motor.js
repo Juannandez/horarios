@@ -200,6 +200,11 @@ export function generar(cfgEntrada, opciones = {}) {
   const maxEntradas = reg('maxEntradas', 4);             // horas de entrada distintas en el año
   const minLibresSemana = reg('minLibresSemana', 2);     // días libres como mínimo cada semana (lunes a domingo)
   const PUESTOS = Math.max(0, Number(cfg.puestos) || 0);  // puestos operativos en sala (0 = sin tope)
+  // Fines de semana con bolsa (Cobertura y bolsa): el ajuste no pone a trabajar a nadie un sábado o domingo que libra;
+  // lo que falte se deja en disponibilidad para la bolsa (código DB: localizable, no trabaja).
+  const FINDES_BOLSA = !!(cfg.cobertura && cfg.cobertura.findesBolsa === true);
+  // Los fijos discontinuos (refuerzo contratado para sus periodos) sí pueden ir en fin de semana, salvo que se diga que no.
+  const FINDES_BOLSA_FD = !(cfg.cobertura && cfg.cobertura.findesBolsaFD === false);
   const descansoTrasNoche = reg('descansoTrasNoche', 3) || 0;
   const ajusteActivo = !R.ajuste || R.ajuste.activo !== false;
   // Cobertura y bolsa (Parámetros › Cobertura y bolsa): cesión de noches, bolsa de horas, margen, ausencias y aguante.
@@ -222,6 +227,7 @@ export function generar(cfgEntrada, opciones = {}) {
   asegura('AP', 'Asunto propio', '#E6D8F0', false);
   asegura('VS', 'Día suelto de vacaciones', '#B9DDB6', false);
   asegura('AJ', 'Día AJ (permiso del 24 y el 31 de diciembre)', '#F4D9A8', false);
+  asegura('DB', 'Disponibilidad para bolsa (localizable, no trabaja)', '#FFE08A', false);
   const idx = new Map(lista.map((t, i) => [t.codigo, i]));
   const turnosMap = new Map(lista.map(t => [t.codigo, t]));
   const T = lista;
@@ -642,7 +648,7 @@ export function generar(cfgEntrada, opciones = {}) {
   // Fin de semana coherente con su semana: si de lunes a viernes va más de mañana, el fin de semana trabajado no va de
   // tarde (y al revés). quita: un día de lunes a viernes que se va a quitar (para comprobarlo antes de quitarlo).
   const semanaCoherente = (pi, d, quita = -1) => {
-    if (!finesCoherentes) return true;
+    if (!finesCoherentes || personas[pi].horarioLibre) return true;   // los fijos discontinuos no tienen «semana de»
     const l = d - dias[d].dow; let m = 0, t = 0;
     for (let x = Math.max(0, l); x < Math.min(D, l + 5); x++) { if (x === quita) continue; const tt = T[grid[pi * D + x]]; if (!tt.trabaja) continue; if (tt.franja === 'manana') m++; else if (tt.franja === 'tarde') t++; }
     for (let x = l + 5; x <= l + 6; x++) {
@@ -655,6 +661,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const puede = (pi, d, ti) => {
     const nuevo = T[ti], viejo = T[grid[pi * D + d]];
     if (!nuevo.trabaja) return true;
+    if (FINDES_BOLSA && dias[d].finde && !viejo.trabaja && !(FINDES_BOLSA_FD && personas[pi].horarioLibre)) return false;   // nadie más a trabajar en fin de semana
     // Puestos en sala: el ajuste no pone a nadie más en una franja si ya están todos los puestos ocupados.
     if (PUESTOS && (!viejo.trabaja || viejo.franja !== nuevo.franja)) {
       const f = franjaIdx[ti]; let n = 0; for (let c = 0; c < COL.length; c++) n += cob[c][f][d];
@@ -787,6 +794,7 @@ export function generar(cfgEntrada, opciones = {}) {
   };
   const libre = (pi, d) => {
     const t = T[grid[pi * D + d]];
+    if (FINDES_BOLSA && dias[d].finde && !(FINDES_BOLSA_FD && personas[pi].horarioLibre)) return false;   // el fin de semana libre no se toca
     return !t.trabaja && t.disponible !== false && origen[pi * D + d] !== ORIGEN.MANUAL;
   };
   const movible = (pi, d) => origen[pi * D + d] !== ORIGEN.MANUAL && origen[pi * D + d] !== ORIGEN.CUBRE;
@@ -1104,7 +1112,7 @@ export function generar(cfgEntrada, opciones = {}) {
     if (!mejor) return false;
     const { pi, e } = mejor, antes = [];
     for (let x = d; x <= e; x++) { antes.push([grid[pi * D + x], origen[pi * D + x]]); poner(pi, x, prefDe(pi, x, FR[f]), ORIGEN.CUBRE); }
-    if (valida(pi, Math.max(0, d - 1), Math.min(D - 1, e + 1))) return true;
+    if (valida(pi, Math.max(0, d - 1), Math.min(D - 1, e + 1)) && semanaCoherente(pi, d)) return true;
     for (let x = d; x <= e; x++) poner(pi, x, antes[x - d][0], antes[x - d][1]);
     return false;
   };
@@ -1302,6 +1310,40 @@ export function generar(cfgEntrada, opciones = {}) {
     stats.relevosLlamados = puestos;
   };
 
+  // 3 bis e. Fines de semana: lo que falte (por franja o por cuartos) se deja en disponibilidad para la bolsa. Se marca
+  // con DB a quien libra ese día y podría hacer ese turno (sin vacaciones, sin noches justo antes ni después), repartido
+  // entre la plantilla (primero quien menos disponibilidades lleva). No trabaja ni suma horas: es la lista de la bolsa.
+  const disponibilidad = [];
+  const dejarDisponibilidad = () => {
+    if (!FINDES_BOLSA || !ajusteActivo) return;
+    const iDB = idx.get('DB'), nDisp = new Int16Array(P);
+    for (let d = 0; d < D; d++) {
+      if (!dias[d].finde) continue;
+      for (let c = 0; c < COL.length; c++) for (let f = 0; f < FR.length; f++) {
+        // Lo que falta en la franja, o en el peor cuarto de hora de esa franja.
+        let falta = real[c][f][d] - cob[c][f][d];
+        if (MC && Array.isArray(MC[COL[c]])) {
+          const tf = turnoFranja(COL[c], FR[f]);
+          for (const q of tf ? cqT[idx.get(tf.codigo)] || [] : []) { const v = minCuarto(c, d, q); if (v != null) falta = Math.max(falta, v - cobQ[c][d * 96 + q]); }
+        }
+        for (let k = 0; k < falta; k++) {
+          let mejor = -1;
+          for (const pi of porColectivo[c]) {
+            const kk = pi * D + d, t = T[grid[kk]];
+            if (t.trabaja || t.codigo !== 'L' || origen[kk] === ORIGEN.MANUAL) continue;
+            if (FR[f] === 'noche' ? !franjasDe(personas[pi], d).includes('noche') : !franjasDe(personas[pi], d).includes(FR[f])) continue;
+            if (!permitidoDia(personas[pi], d) || (d > 0 && T[grid[kk - 1]].franja === 'noche') || (d < D - 1 && T[grid[kk + 1]].franja === 'noche')) continue;
+            if (mejor < 0 || nDisp[pi] < nDisp[mejor]) mejor = pi;
+          }
+          if (mejor < 0) break;
+          grid[mejor * D + d] = iDB; origen[mejor * D + d] = ORIGEN.CUBRE; nDisp[mejor]++;
+          disponibilidad.push({ d, fecha: dias[d].fecha, colectivo: COL[c], franja: FR[f], persona: personas[mejor].id });
+        }
+      }
+    }
+    stats.disponibilidad = disponibilidad.length;
+  };
+
   // 3 bis a. Librar festivos donde sobra gente: un festivo entre semana tiene un mínimo más bajo (el de festivo), así
   // que sobra gente. Quien más festivos lleva libra ese festivo (D) y hace un turno de la misma franja otro día entre
   // semana que libraba, donde menos gente haya y si puede (descansos, 2 días libres a la semana, fines…). Mismas horas; en el festivo nunca baja del
@@ -1414,6 +1456,7 @@ export function generar(cfgEntrada, opciones = {}) {
   festivosRepartidos();
   cubrirRelevos();
   cubrirCuartos();
+  dejarDisponibilidad();
 
   // 4. Equidad: intercambios de semanas enteras entre dos personas del mismo grupo (como el paso de equidad de
   // Calabrio o la búsqueda local de Timefold). Cada día sigue con la misma gente en cada franja (la cobertura no
@@ -1693,7 +1736,7 @@ export function generar(cfgEntrada, opciones = {}) {
   return {
     dias, personas: filas, turnos: T, turnosMap, idx, grid, origen, D, P,
     cobertura: cob, necesidad: real, necesidadPlan: necesidad, aguante, margen, absentismo: ABS, cesion, bolsa: bolsaCfg, colectivos: COL, franjas: FR, huecos, stats, vacaciones, mejora,
-    patrones, ms: Date.now() - t0, semanaCiclo0, repartoFestivos: RF, aj: AJ, repeticiones, porHoras, puestos,
+    patrones, ms: Date.now() - t0, semanaCiclo0, repartoFestivos: RF, aj: AJ, repeticiones, porHoras, puestos, disponibilidad,
     codigo: (pi, d) => T[grid[pi * D + d]].codigo, inicioCuadrante: inicioCuad,
     // Meses del cuadrante, en orden (con el año de 15 a 15 de enero hay 13: enero partido en dos).
     meses: [...new Map(dias.map(x => [x.mc, { mc: x.mc, mes: x.mes, anio: x.anio }])).values()],

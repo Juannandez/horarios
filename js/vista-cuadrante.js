@@ -255,6 +255,9 @@ function tablaMes(lista) {
   // Cobertura: personas en sala frente al mínimo
   const cols = u.colectivo === 'todos' ? ['TA', 'SUP'] : [u.colectivo];
   const pie = [];
+  // Disponibilidades para la bolsa (fines de semana): quién queda localizable por cada día, colectivo y franja.
+  const disp = new Map();
+  for (const x of res.disponibilidad || []) { const k = `${x.d}|${x.colectivo}|${x.franja}`; disp.set(k, [...(disp.get(k) || []), x.persona]); }
   for (const c of cols) {
     const ci = res.colectivos.indexOf(c);
     res.franjas.forEach((f, fi) => {
@@ -267,6 +270,8 @@ function tablaMes(lista) {
         const rz = u.resaltarDia === d.i ? ' resaltado' : '';
         // Personas por encima (+) o por debajo (−, en rojo) del mínimo de ese día.
         const tp = sobre ? ` · ${enSala} en sala con todos los colectivos: más que los ${P} puestos` : '';
+        const db = disp.get(`${d.i}|${c}|${f}`);
+        if (n < m && db && db.length >= m - n) return `<td class="c bolsa${rz}" title="${n} en sala, mínimo ${m}: faltan ${m - n}. En disponibilidad para la bolsa: ${esc(db.join(', '))}">B${m - n}</td>`;
         return n < m ? `<td class="c falta${rz}" title="${n} en sala, mínimo ${m}: faltan ${m - n}${tp}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}${rz}${sobre}" title="${n} en sala, mínimo ${m}: ${n - m ? `sobran ${n - m}` : 'justo el mínimo'}${tp}">${n - m ? `+${n - m}` : '0'}</td>`;
       }).join('');
       // Lo que se ve en cada casilla es la gente EN SALA ese día; el mínimo va al lado del nombre de la franja.
@@ -284,6 +289,8 @@ function tablaMes(lista) {
       const l = porDia.get(d.i); const rz = u.resaltarDia === d.i ? ' resaltado' : '';
       if (!l) return `<td class="c${rz}" title="Todos los cuartos de hora cubiertos">✓</td>`;
       const peor = Math.max(...l.map(h => h.falta));
+      const db = (res.disponibilidad || []).filter(x => x.d === d.i && x.colectivo === 'TA');
+      if (db.length >= peor) return `<td class="c bolsa${rz}" title="Faltan: ${esc(l.map(h => `${hm(h)} → ${h.falta}`).join(' · '))}. En disponibilidad para la bolsa: ${esc(db.map(x => x.persona).join(', '))}">B${peor}</td>`;
       return `<td class="c falta${rz}" title="Faltan: ${esc(l.map(h => `${hm(h)} → ${h.falta}`).join(' · '))}">−${peor}</td>`;
     }).join('');
     pie.splice(Math.min(3, pie.length), 0, `<tr><th scope="row" class="fija" title="Con los mínimos por cuartos de hora: lo que falta en el peor cuarto de cada día (relevos)">Relevos (cuartos de hora)</th><td class="fija2"><small class="tenue">teleasistencia</small></td>${celdas}<td></td><td></td><td></td></tr>`);

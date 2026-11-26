@@ -509,6 +509,11 @@ export function seccionCobertura(cfg) {
     <div class="tabla-caja" style="max-height:340px"><table class="tabla-lista"><thead><tr><th scope="col">Persona</th><th scope="col" class="num">Saldo de partida</th><th scope="col" class="num">A favor en el cuadrante</th><th scope="col" class="num">Ya cogido</th><th scope="col" class="num">Saldo</th><th scope="col" class="num">Días devueltos</th></tr></thead><tbody>${filasBolsa}</tbody></table></div>
     <p class="tenue" style="margin-top:6px">Se ven las 60 con más saldo; busca para ver otras. CSV: «código;horas» (p. ej. «TA 017;12,5»).</p>
   </section>
+  <section class="panel"><h2>Fines de semana</h2>
+    <p class="tenue">Con esto marcado, el ajuste no pone a trabajar a nadie un sábado o un domingo que libra (tampoco a fijos discontinuos ni para cubrir noches). Si ese día falta gente, deja a alguien que libra en <b>disponibilidad para la bolsa</b> (código DB: localizable, no trabaja ni suma horas), repartido entre la plantilla.</p>
+    <div class="campos">${chk('cobertura.findesBolsa', !!cob.findesBolsa, 'Fines de semana sin llamar a nadie: lo que falte, en disponibilidad para la bolsa', 'data-estructura="1"')}</div>
+    ${cob.findesBolsa ? `<p>Ahora: <b>${fmtNum((res.disponibilidad || []).length)}</b> disponibilidades en fines de semana en el año${(res.disponibilidad || []).length ? ` (${fmtNum(new Set(res.disponibilidad.map(x => x.persona)).size)} personas distintas)` : ''}.</p>` : ''}
+  </section>
   <section class="panel"><h2>Bajas y ausencias</h2>
     <p class="tenue">Bajas, permisos o excedencias con fechas (sin diagnósticos ni motivos de salud). Esos días la persona no trabaja (código B), el ajuste cubre su hueco con otras personas y su jornada anual se prorratea.</p>
     ${aus.length ? `<div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Persona</th><th scope="col">Tipo</th><th scope="col">Desde</th><th scope="col">Hasta</th><th scope="col">Nota</th><th scope="col"></th></tr></thead><tbody>

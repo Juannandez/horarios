@@ -118,7 +118,7 @@ export function infracciones(res, cfg) {
         ultimo = k;
       });
     }
-    if (salida.finesCoherentes) {
+    if (salida.finesCoherentes && !p.horarioLibre) {   // los fijos discontinuos no tienen «semana de mañana o de tarde»
       for (const f of finde) {
         if (!f.trab) continue;
         let m = 0, ta = 0;

@@ -61,6 +61,7 @@ const LIBRES = () => [
   { codigo: 'AP', nombre: 'Asunto propio', inicio: '', fin: '', franja: 'libre', color: '#E6D8F0', disponible: false, fijo: true },
   { codigo: 'VS', nombre: 'Día suelto de vacaciones', inicio: '', fin: '', franja: 'libre', color: '#B9DDB6', disponible: false, fijo: true },
   { codigo: 'AJ', nombre: 'Día AJ (permiso del 24 y el 31 de diciembre)', inicio: '', fin: '', franja: 'libre', color: '#F4D9A8', disponible: false, fijo: true },
+  { codigo: 'DB', nombre: 'Disponibilidad para bolsa (localizable, no trabaja)', inicio: '', fin: '', franja: 'libre', color: '#FFE08A', disponible: false, fijo: true },
 ];
 // Turno partido (acuerdo de la Comisión): dos tramos el mismo día, sin noches. No lo usa el rotatorio de partida: se
 // pone en el patrón de un grupo de lunes a viernes o en un contrato.

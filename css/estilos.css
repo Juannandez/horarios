@@ -465,3 +465,6 @@ body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
 
 /* Más gente en sala que puestos. */
 .cuadrante tfoot td.sobre-puestos { background: color-mix(in srgb, var(--warn, #d98a00) 28%, var(--panel2)); font-weight: 700; }
+
+/* Falta gente pero queda cubierto con disponibilidad para la bolsa (fines de semana). */
+.cuadrante tfoot td.bolsa { background: color-mix(in srgb, #FFE08A 55%, var(--panel2)); color: #7a5a00; font-weight: 700; }

@@ -290,6 +290,7 @@ export function completarSede(cfg, base) {
       margen: { noche: 0, dia: 0, tipo: 'personas', ...dicc(b.margen), ...dicc(x.margen) },
       ausencias: Array.isArray(x.ausencias) ? x.ausencias : [],
       aguante: { avisar: true, ...dicc(b.aguante), ...dicc(x.aguante) },
+      findesBolsa: x.findesBolsa ?? b.findesBolsa ?? false,
     };
     c.cobertura.bolsa.inicial = dicc(c.cobertura.bolsa.inicial);
     c.cobertura.bolsa.consumida = dicc(c.cobertura.bolsa.consumida);
