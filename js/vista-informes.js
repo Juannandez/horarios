@@ -79,7 +79,7 @@ export function pintarInformes(raiz) {
     <section class="panel"><h2>${p.nombre ? `${esc(p.nombre)} · ` : ''}${esc(p.id)} · ${esc(p.grupoNombre)}</h2>
       ${p.nombre ? `<p class="tenue">Turno actual: ${esc(p.turnoActual || 'sin dato')} · ${p.horasSemana < 35 ? `jornada de ${p.horasSemana} h semanales` : 'jornada completa'}${p.exentoNoches ? ' · exenta de noches' : ''}. Informe con datos personales: no lo compartas fuera de quien corresponda.</p>` : ''}
       <div class="cifras" style="margin-top:12px">
-        <div class="cifra ${Math.abs(p.diferencia) > 7 || p.diferencia < 0 ? 'mal' : ''}"><b>${fmtH(p.horas)} h</b><span>de ${fmtH(p.objetivo)} h de jornada (${p.diferencia >= 0 ? '+' : '−'}${fmtH(Math.abs(p.diferencia))} h)</span></div>
+        <div class="cifra ${Math.abs(p.diferencia) > 7 || p.diferencia < 0 ? 'mal' : ''}"><b>${fmtH(p.horas)} h</b><span>de ${fmtH(p.objetivo)} h de jornada (${p.diferencia >= 0 ? '+' : '−'}${fmtH(Math.abs(p.diferencia))} h)${p.horasAJ ? `; incluye ${fmtH(p.horasAJ)} h de los días AJ` : ''}</span></div>
         <div class="cifra"><b>${c.trabajados}</b><span>días trabajados: ${c.mananas} mañanas, ${c.tardes} tardes y ${c.noches} noches</span></div>
         <div class="cifra"><b>${c.fines}</b><span>fines de semana con algún turno</span></div>
         <div class="cifra"><b>${c.vacaciones + c.libres + c.descansoExceso + c.salientes}</b><span>días sin trabajar: ${c.vacaciones} de vacaciones, ${c.libres} libres, ${c.descansoExceso} por exceso de jornada y ${c.salientes} salientes de noche</span></div>

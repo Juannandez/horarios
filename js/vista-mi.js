@@ -72,7 +72,7 @@ export function pintarMi(raiz) {
       <label class="campo"><span>Soy</span><select id="mi-yo">${res.personas.map(q => `<option value="${esc(q.id)}" ${q.id === yo ? 'selected' : ''}>${esc(q.id)}${q.nombre ? ` · ${esc(q.nombre)}` : ''}</option>`).join('')}</select></label>
       <button type="button" class="btn mini" data-mi="ics">Mi calendario (.ics)</button></div>
       <div class="cifras" style="margin-top:12px">
-        <div class="cifra"><b>${fmtH(p.horas)} h</b><span>de ${fmtH(p.objetivo)} h de jornada</span></div>
+        <div class="cifra"><b>${fmtH(p.horas)} h</b><span>de ${fmtH(p.objetivo)} h de jornada${p.horasAJ ? ` (con ${fmtH(p.horasAJ)} h de los días AJ)` : ''}</span></div>
         <div class="cifra"><b>${p.noches}</b><span>noches${p.nochesCedidas ? ` (${p.nochesCedidas} cedidas)` : ''}</span></div>
         <div class="cifra"><b>${p.fines}</b><span>fines de semana</span></div>
         <div class="cifra"><b>${fmtH(p.bolsa ? p.bolsa.saldo : 0)} h</b><span>saldo de bolsa</span></div>

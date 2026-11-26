@@ -1689,7 +1689,11 @@ export function generar(cfgEntrada, opciones = {}) {
     let devueltas = 0; for (let d = 0; d < D; d++) if (grid[pi * D + d] === iD) devueltas++;
     const aFavor = Math.max(0, horas[pi] - p.objetivo);
     const bolsa = { inicial, aFavor: Math.round(aFavor * 10) / 10, consumida, saldo: Math.round((inicial + aFavor - consumida) * 10) / 10, diasDevueltos: devueltas };
-    return { ...p, pi, festivosCuentan, especialesTrab, historialEspeciales: Number((RF.historial || {})[p.id]) || 0, horasEntrada: [...entradas].sort(), topeNoches: maxNoches == null ? null : topeNoches(pi), nochesCedidas: maxNoches == null ? 0 : Math.max(0, noches[pi] - maxNoches), bolsa, nochesSueltas: sueltas, horas: horas[pi], noches: noches[pi], fines: fines[pi], mananas: man, tardes: tar, trabajados: tra, ajustes, manuales, diferencia: horas[pi] - p.objetivo, alertas };
+    return { ...p, pi, festivosCuentan, especialesTrab, historialEspeciales: Number((RF.historial || {})[p.id]) || 0, horasEntrada: [...entradas].sort(), topeNoches: maxNoches == null ? null : topeNoches(pi), nochesCedidas: maxNoches == null ? 0 : Math.max(0, noches[pi] - maxNoches), bolsa, nochesSueltas: sueltas,
+      // Horas y jornada como se ven: con los días AJ, que cuentan como jornada (convenio art. 36.3). Así la jornada es la
+      // del convenio (1.480,5 h) y no la que queda por planificar. horasTrabajadas y objetivoPlan son sin los AJ.
+      horas: horas[pi] + (p.horasAJ || 0), objetivo: p.objetivo + (p.horasAJ || 0), horasTrabajadas: horas[pi], objetivoPlan: p.objetivo,
+      noches: noches[pi], fines: fines[pi], mananas: man, tardes: tar, trabajados: tra, ajustes, manuales, diferencia: horas[pi] - p.objetivo, alertas };
   });
 
   // Huecos por hora (solo con mínimos por horas): personas que faltan en cada hora de cada día frente a la tabla.
