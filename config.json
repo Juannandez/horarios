@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T12:25:58.255Z",
- "nota": "Sevilla: 3RM+2RT y 8 h en 3 + 1 (3 de mañana y 1 de tarde), 50 sin noches, 168 puestos; fuera los «repartido»",
+ "guardado": "2026-11-26T12:29:40.346Z",
+ "nota": "Sevilla: mejora del reparto",
  "config": {
   "version": 2,
   "tema": "day",
@@ -1814,11 +1814,99 @@
     "inicioCuadrante": "01-15",
     "escenarioAbierto": "esc-3rot-llamadas",
     "absentismo": {
-     "dia": 15,
+     "dia": 0,
      "noche": 0,
      "cuenta": "margen"
     },
-    "puestos": 168
+    "puestos": 168,
+    "mejora": {
+     "intercambios": [
+      {
+       "a": "SUP 04",
+       "b": "SUP 25",
+       "d": 80,
+       "n": 14
+      },
+      {
+       "a": "SUP 09",
+       "b": "SUP 27",
+       "d": 66,
+       "n": 7
+      },
+      {
+       "a": "SUP 04",
+       "b": "SUP 07",
+       "d": 122,
+       "n": 14
+      },
+      {
+       "a": "TA 305",
+       "b": "TA 263",
+       "d": 87,
+       "n": 7
+      },
+      {
+       "a": "TA 290",
+       "b": "TA 089",
+       "d": 87,
+       "n": 7
+      },
+      {
+       "a": "TA 197",
+       "b": "TA 128",
+       "d": 80,
+       "n": 14
+      },
+      {
+       "a": "TA 155",
+       "b": "TA 116",
+       "d": 87,
+       "n": 7
+      },
+      {
+       "a": "TA 099",
+       "b": "TA 242",
+       "d": 353,
+       "n": 7
+      },
+      {
+       "a": "TA 290",
+       "b": "TA 209",
+       "d": 80,
+       "n": 14
+      },
+      {
+       "a": "SUP 23",
+       "b": "SUP 08",
+       "d": 353,
+       "n": 7
+      },
+      {
+       "a": "TA 226",
+       "b": "TA 187",
+       "d": 346,
+       "n": 7
+      },
+      {
+       "a": "SUP 08",
+       "b": "SUP 18",
+       "d": 353,
+       "n": 7
+      },
+      {
+       "a": "SUP 10",
+       "b": "SUP 25",
+       "d": 346,
+       "n": 7
+      }
+     ],
+     "semilla": 9,
+     "coste0": 1351.4986280417759,
+     "coste": 619.3179579041633,
+     "fecha": "2026-11-26",
+     "base": "7ss5689k",
+     "auto": true
+    }
    },
    {
     "id": "malaga",
