@@ -1,5 +1,5 @@
 {
- "guardado": "2026-11-26T10:44:13.987Z",
+ "guardado": "2026-11-26T10:44:32.717Z",
  "nota": "Sin cambios en el cuadrante.",
  "config": {
   "version": 2,
@@ -1517,10 +1517,10 @@
       "activo": true,
       "colectivo": "TA",
       "franja": "noche",
-      "fecha": "12-24",
+      "fecha": "01-06",
       "modo": "suma",
       "valor": 1,
-      "nota": ""
+      "nota": "Reyes"
      }
     ],
     "repartoFestivos": {
