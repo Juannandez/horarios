@@ -25,7 +25,7 @@ export const estado = {
   vista: 'cuadrante',
   sub: '',               // apartado dentro de la vista (#parametros/turnos)
   ui: {
-    modo: 'mes', mesDesde: 0, mesHasta: 0, colectivo: 'todos', grupo: 'todos', resaltar: '', soloAvisos: false, buscar: '', infraccion: '',
+    modo: 'mes', mesDesde: 0, mesHasta: 0, colectivo: 'TA', grupo: 'todos', resaltar: '', soloAvisos: false, buscar: '', infraccion: '',
     orden: { campo: 'id', dir: 1 }, encuesta: '', editarEncuestas: false, resEncuesta: '', resFiltro: { pregunta: '', valor: '' }, resOrden: 'votos',
   },
   // Configuración de la sede activa. Cada sede tiene sus propios turnos, grupos, mínimos, reglas,

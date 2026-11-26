@@ -15,7 +15,7 @@ import { pintarEquidad, eventosEquidad } from './vista-equidad.js';
 import { programarMejoraAuto } from './mejorar.js';
 import { pintarNuevo, eventosNuevo } from './vista-nuevo.js';
 import { pintarMi, eventosMi, PORTAL_HORARIO } from './vista-mi.js';
-import { pintarEscenarios, eventosEscenarios, olvidarVersiones } from './vista-escenarios.js';
+import { pintarEscenarios, eventosEscenarios, olvidarVersiones, abrirEscenario, escenarioAbierto } from './vista-escenarios.js';
 import { pintarVacaciones, eventosVacaciones } from './vista-vacaciones.js';
 import { pintarPlantilla, eventosPlantilla } from './vista-plantilla.js';
 
@@ -167,6 +167,18 @@ function pintarSedes() {
     `<button type="button" data-sede="${esc(x.id)}" aria-pressed="${x.id === estado.sede}">${esc(x.nombre)}</button>`).join('');
   // En Encuestas y Resultados la sede no cambia nada: se atenúan para no confundir.
   $('#sedes').style.opacity = ['encuestas', 'resultados'].includes(estado.vista) ? '.45' : '';
+  pintarSelectorEscenario();
+}
+// Escenario abierto de la sede, a la vista en todas las pantallas; al elegir otro, se abre (lo de ahora se guarda en el suyo).
+function pintarSelectorEscenario() {
+  const caja = $('#escenario-sel'); if (!caja) return;
+  const cfg = estado.cfg, abierto = escenarioAbierto(cfg);
+  const lista = (estado.todo.escenarios || []).filter(e => e.sede === cfg.id).sort((x, y) => String(y.fecha || '').localeCompare(String(x.fecha || '')));
+  caja.innerHTML = lista.length ? `<label for="sel-escenario"><span class="tb-esc-et">Escenario</span>
+      <select id="sel-escenario" title="Escenario abierto. Elige otro para verlo: lo de ahora se guarda en el suyo.">
+        ${abierto ? '' : '<option value="" selected>Sin escenario abierto</option>'}
+        ${lista.map(e => `<option value="${esc(e.id)}" ${abierto && e.id === abierto.id ? 'selected' : ''}>${esc(e.nombre)}</option>`).join('')}
+      </select></label>` : '';
 }
 
 function pintarSesion() {
@@ -269,6 +281,11 @@ $('#menu').addEventListener('click', (e) => { if (e.target.closest('a[data-vista
 $('#abrir-menu').addEventListener('click', () => { const abierto = document.body.classList.toggle('menu-abierto'); $('#abrir-menu').setAttribute('aria-expanded', String(abierto)); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMenu(); });
 $('#sesion').addEventListener('click', () => ir('ajustes'));
+$('#escenario-sel').addEventListener('change', async (e) => {
+  if (e.target.id !== 'sel-escenario' || !e.target.value) return;
+  if (!(await abrirEscenario(e.target.value))) pintarSelectorEscenario();
+  pintar();
+});
 $('#sedes').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-sede]');
   if (!b) return;
@@ -409,6 +426,7 @@ estado.alAutoguardar = () => pintarBarraGuardar();
 estado.alMejoraAuto = () => { if (estado.vista === 'equidad') pintarEquidad(raiz); };
 alRegenerar(() => {
   programarMejoraAuto();
+  pintarSelectorEscenario();
   if (estado.vista === 'cuadrante') pintarCuadrante(raiz);
   else if (estado.vista === 'parametros') refrescarResumenParametros(raiz);
   else if (estado.vista === 'informes') pintarInformes(raiz);

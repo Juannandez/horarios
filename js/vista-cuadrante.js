@@ -5,6 +5,7 @@ import { pdfCuadrante } from './pdf.js';
 import { COLECTIVOS, FRANJA_NOMBRE } from './datos-base.js';
 import { infracciones, puntuacion, mapaCasillas } from './puntuacion.js';
 import { mejorarReparto } from './mejorar.js';
+import { escenarioAbierto } from './vista-escenarios.js';
 
 // Cómo se puede ordenar la lista de personas. «sube»/«baja»: cómo se lee cada sentido.
 const ORDENES = [
@@ -263,7 +264,9 @@ function tablaMes(lista) {
         const rz = u.resaltarDia === d.i ? ' resaltado' : '';
         return n < m ? `<td class="c falta${rz}" title="${n} de ${m}: faltan ${m - n}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}${rz}" title="${n} (mínimo ${m}): aguanta ${n - m} ${n - m === 1 ? 'baja' : 'bajas'}">${n}</td>`;
       }).join('');
-      pie.push(`<tr${fi === 0 && c !== cols[0] ? ' class="inicio-col"' : ''}><th scope="row" class="fija" title="Personas en sala; en rojo, las que faltan para el mínimo">${fi === 0 ? (c === 'TA' ? 'Teleasistencia' : 'Supervisión') : ''}</th><td class="fija2">${FRANJA_NOMBRE[f]}</td>${celdas}<td></td><td></td><td></td></tr>`);
+      // Lo que se ve en cada casilla es la gente EN SALA ese día; el mínimo va al lado del nombre de la franja.
+      const ms = dias.map(d => res.necesidad[ci][fi][d.i]), mMin = Math.min(...ms), mMax = Math.max(...ms);
+      pie.push(`<tr${fi === 0 && c !== cols[0] ? ' class="inicio-col"' : ''}><th scope="row" class="fija" title="Personas en sala cada día; en rojo, las que faltan para el mínimo">${fi === 0 ? `En sala · ${c === 'TA' ? 'Teleasistencia' : 'Supervisión'}` : ''}</th><td class="fija2" title="Mínimo de esta franja en los días que se ven">${FRANJA_NOMBRE[f]} <small class="tenue">mín. ${mMin === mMax ? mMin : `${mMin}–${mMax}`}</small></td>${celdas}<td></td><td></td><td></td></tr>`);
     });
   }
   const pieFijo = pie.slice(0, 3).join(''), pieResto = pie.slice(3).join('');
@@ -326,7 +329,8 @@ export function pintarCuadrante(raiz) {
   const lista = personasVisibles();
   const scroll = $('.tabla-caja', raiz);
   const pos = scroll ? [scroll.scrollLeft, scroll.scrollTop] : null;
-  raiz.innerHTML = `<div class="cabecera"><div><h1>Cuadrante ${esc(estado.cfg.anio)} · ${esc(estado.cfg.nombre)}</h1>
+  const escA = escenarioAbierto();
+  raiz.innerHTML = `<div class="cabecera"><div><h1>Cuadrante ${esc(estado.cfg.anio)} · ${esc(estado.cfg.nombre)}${escA ? ` · <span class="titulo-escenario">${esc(escA.nombre)}</span>` : ''}</h1>
     <p>${esc(estado.cfg.titulo || '')}. Personas anónimas por código. Cambia cualquier dato en Parámetros y el cuadrante se rehace al momento (${estado.res.ms} ms).</p></div>
     <div class="fila-acciones" style="margin:0">
       <button type="button" class="btn" data-pdf-col="TA">PDF teleasistentes</button>

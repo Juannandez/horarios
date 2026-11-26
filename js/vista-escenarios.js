@@ -28,6 +28,31 @@ async function cargarVersiones(repintar) {
   repintar();
 }
 
+// Abre un escenario en su sede. Lo que había abierto se guarda antes en su propio escenario (así no se pierde nada al
+// pasar de uno a otro); si no había ninguno abierto y hay cambios, se pregunta. Lo usan Escenarios y el selector de arriba.
+export async function abrirEscenario(id) {
+  const esc_ = (estado.todo.escenarios || []).find(x => x.id === id);
+  if (!esc_) return false;
+  const i = estado.todo.sedes.findIndex(s => s.id === esc_.sede);
+  if (i < 0) return false;
+  const sede = estado.todo.sedes[i];
+  if (sede.escenarioAbierto === id) return false;
+  const actual = (estado.todo.escenarios || []).find(x => x.id === sede.escenarioAbierto && x.sede === sede.id);
+  let guardadoEn = '';
+  if (actual) {
+    if (JSON.stringify(foto(sede)) !== JSON.stringify(actual.cfg)) { actual.cfg = foto(sede); actual.fecha = new Date().toISOString(); cifras.delete(actual.id); guardadoEn = actual.nombre; }
+  } else if (!(await confirmar(`¿Abrir «${esc_.nombre}»?`, `El cuadrante que hay ahora en ${sede.nombre} no está guardado como escenario: se sustituye por el de «${esc_.nombre}». Si quieres conservarlo, guárdalo antes como escenario. Se deshace con Ctrl+Z.`, 'Abrir', 'primario'))) return false;
+  const nueva = completar({ ...estado.todo, sedes: estado.todo.sedes.map((s, j) => (j === i ? clonar(esc_.cfg) : s)) });
+  estado.todo.sedes[i] = nueva.sedes[i];
+  estado.todo.sedes[i].escenarioAbierto = esc_.id;
+  // Lo que completar() rellena se guarda ya en el escenario, para que «con cambios» salga solo si se cambia algo.
+  esc_.cfg = foto(estado.todo.sedes[i]);
+  cambiado({ inmediato: true });
+  avisar(`Abierto «${esc(esc_.nombre)}».${guardadoEn ? ` Lo que tenías se ha guardado en «${esc(guardadoEn)}».` : ''} Lo que cambies se queda en este escenario. Ctrl+Z vuelve al de antes.`, 'bien', 8000);
+  return true;
+}
+export const escenarioAbierto = (cfg = estado.cfg) => (estado.todo.escenarios || []).find(x => x.id === cfg.escenarioAbierto && x.sede === cfg.id) || null;
+
 // ¿La sede tiene cambios frente al escenario que está abierto?
 const cambiosEsc = (e) => estado.cfg.escenarioAbierto === e.id && JSON.stringify(foto(estado.cfg)) !== JSON.stringify(e.cfg);
 
@@ -137,17 +162,7 @@ export function eventosEscenarios(raiz, repintar, irA) {
       if (cfg.escenarioAbierto === esc_.id) delete cfg.escenarioAbierto;
       cambiado({ inmediato: true }); return repintar();
     }
-    if (a === 'abrir' && esc_) {
-      if (!(await confirmar(`¿Abrir «${esc_.nombre}»?`, `Sustituye el cuadrante actual de ${cfg.nombre} por el del escenario. Si quieres conservar el actual, guárdalo antes como escenario. Se deshace con Ctrl+Z.`, 'Abrir', 'primario'))) return;
-      const i = estado.todo.sedes.findIndex(s => s.id === esc_.sede);
-      const nueva = completar({ ...estado.todo, sedes: estado.todo.sedes.map((s, j) => (j === i ? clonar(esc_.cfg) : s)) });
-      estado.todo.sedes[i] = nueva.sedes[i];
-      estado.todo.sedes[i].escenarioAbierto = esc_.id;
-      // Lo que completar() rellena se guarda ya en el escenario, para que «con cambios» salga solo si se cambia algo.
-      esc_.cfg = foto(estado.todo.sedes[i]);
-      cambiado({ inmediato: true }); repintar();
-      return avisar(`Abierto «${esc(esc_.nombre)}» para editar. Cámbialo en el cuadrante o en Parámetros y vuelve aquí a «Guardar cambios». Ctrl+Z vuelve al de antes.`, 'bien', 9000);
-    }
+    if (a === 'abrir' && esc_) { if (await abrirEscenario(esc_.id)) repintar(); return; }
     if (a === 'actualizar' && esc_) {
       esc_.cfg = foto(cfg); esc_.fecha = new Date().toISOString(); cifras.delete(esc_.id);
       cambiado({ inmediato: true }); repintar();

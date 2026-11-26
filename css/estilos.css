@@ -455,3 +455,10 @@ body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
 .mi-anio .mi-dia .muestra { min-width: 0; width: 100%; padding: 1px 0; font-size: .6rem; line-height: 1.2; overflow: hidden; }
 .mi-totales { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 12px; font-size: .85rem; }
 .mi-total { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+
+/* Selector del escenario abierto, arriba junto a la sede. */
+.titlebar .tb-escenario { margin-left: 10px; min-width: 0; }
+.titlebar .tb-escenario label { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; font-weight: 600; color: var(--muted); }
+.titlebar .tb-escenario select { max-width: 280px; min-width: 0; padding: 5px 8px; font-weight: 600; color: var(--ink); }
+.titulo-escenario { color: var(--gl-marca, var(--accent)); }
+@media (max-width: 900px) { .titlebar .tb-esc-et { display: none; } .titlebar .tb-escenario select { max-width: 170px; } }
