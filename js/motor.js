@@ -1124,7 +1124,9 @@ export function generar(cfgEntrada, opciones = {}) {
   // Festivos especiales (Nochebuena, Navidad, Nochevieja, Año Nuevo, Reyes…), sumando los de años anteriores
   // (cfg.repartoFestivos.historial): quien los trabajó el año pasado tiende a librarlos este.
   const PESOS = [1, 1, 0.5, 1];
-  const costePersona = (pi) => { const m = medias.get(personas[pi].grupo); return PESOS[0] * (fines[pi] - m[0]) ** 2 + PESOS[1] * (festivoTrab[pi] - m[1]) ** 2 + PESOS[2] * (domingoTrab[pi] - m[2]) ** 2 + PESOS[3] * (especialTrab[pi] - m[3]) ** 2; };
+  // Los fijos discontinuos (horario libre, solo en sus periodos de alta) no entran: no se comparan con la plantilla.
+  const fueraEquidad = (pi) => !!(personas[pi].horarioLibre || personas[pi].altaDias);
+  const costePersona = (pi) => { if (fueraEquidad(pi)) return 0; const m = medias.get(personas[pi].grupo); return PESOS[0] * (fines[pi] - m[0]) ** 2 + PESOS[1] * (festivoTrab[pi] - m[1]) ** 2 + PESOS[2] * (domingoTrab[pi] - m[2]) ** 2 + PESOS[3] * (especialTrab[pi] - m[3]) ** 2; };
   const costeTotal = () => { let c = 0; for (let pi = 0; pi < P; pi++) c += costePersona(pi); return c; };
   mejora.coste0 = mejora.coste = costeTotal();
   // Búsqueda (solo si se pide, desde el botón «Mejorar reparto»): Late Acceptance (Burke y Bykov, 2017), con semilla
@@ -1133,7 +1135,9 @@ export function generar(cfgEntrada, opciones = {}) {
     const { ms = 3000, semilla = 1, alProgreso, aceptaIgual = false } = opciones.buscarMejora;
     let r = (semilla >>> 0) || 1;
     const azar = () => { r |= 0; r = r + 0x6D2B79F5 | 0; let t = Math.imul(r ^ r >>> 15, 1 | r); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-    const gruposLista = [...porGrupo.values()].filter(l => l.length > 1);
+    const gruposLista = [...porGrupo.values()].filter(l => l.length > 1 && !l.every(fueraEquidad));
+    // Cada vuelta elige una persona al azar (los grupos grandes salen más) y otra de su mismo grupo.
+    const elegibles = gruposLista.flat().filter(pi => !fueraEquidad(pi));
     const lunes = dias.filter(d => d.dow === 0 && d.i + 7 <= D).map(d => d.i);
     const L = 500, hist = new Float64Array(L).fill(mejora.coste);
     let coste = mejora.coste, mejor = coste, nMejor = mejora.aplicados.length;
@@ -1143,8 +1147,8 @@ export function generar(cfgEntrada, opciones = {}) {
     while (gruposLista.length && lunes.length) {
       if ((it & 255) === 0) { if (Date.now() > fin) break; if (alProgreso && (it & 16383) === 0) alProgreso({ it, coste: mejor, coste0: mejora.coste0 }); }
       it++;
-      const lista = gruposLista[Math.floor(azar() * gruposLista.length)];
-      const pa = lista[Math.floor(azar() * lista.length)], pb = lista[Math.floor(azar() * lista.length)];
+      const pa = elegibles[Math.floor(azar() * elegibles.length)], lista = porGrupo.get(personas[pa].grupo);
+      const pb = lista[Math.floor(azar() * lista.length)];
       const n = azar() < 0.25 ? 14 : 7;
       const d0 = lunes[Math.floor(azar() * lunes.length)];
       if (d0 + n > D) continue;

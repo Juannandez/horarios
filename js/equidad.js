@@ -3,19 +3,22 @@
 // Los valores van prorrateados por los días de alta (y las horas, además, por la jornada). No toca la página.
 
 export const METRICAS_EQUIDAD = [
-  { k: 'fines', nombre: 'Fines de semana trabajados', corto: 'Fines de semana' },
-  { k: 'noches', nombre: 'Noches', corto: 'Noches' },
-  { k: 'festivos', nombre: 'Festivos trabajados', corto: 'Festivos' },
-  { k: 'domingos', nombre: 'Domingos trabajados', corto: 'Domingos' },
-  { k: 'horas', nombre: 'Horas del año', corto: 'Horas' },
+  { k: 'fines', nombre: 'Fines de semana trabajados', corto: 'Fines de semana', tolerancia: 1 },
+  { k: 'noches', nombre: 'Noches', corto: 'Noches', tolerancia: 2 },
+  { k: 'festivos', nombre: 'Festivos trabajados', corto: 'Festivos', tolerancia: 2 },
+  { k: 'domingos', nombre: 'Domingos trabajados', corto: 'Domingos', tolerancia: 1 },
+  { k: 'horas', nombre: 'Horas del año', corto: 'Horas', tolerancia: 7 },
 ];
 
 const media = (v) => (v.length ? v.reduce((s, x) => s + x, 0) / v.length : 0);
 
+// Fuera de la equidad: los fijos discontinuos (horario libre, solo en sus periodos de alta), que no se comparan con
+// la plantilla.
+export const fueraDeEquidad = (p) => !!(p.horarioLibre || p.altaDias);
 // Personas de un colectivo que trabajan de lunes a domingo, con sus valores por métrica.
 export function valoresEquidad(res, colectivo) {
   const { D, dias, turnos: T, grid } = res;
-  return res.personas.filter(p => p.colectivo === colectivo && !p.soloLaborables).map(p => {
+  return res.personas.filter(p => p.colectivo === colectivo && !p.soloLaborables && !fueraDeEquidad(p)).map(p => {
     let festivos = 0, domingos = 0;
     for (let d = 0; d < D; d++) {
       if (!T[grid[p.pi * D + d]].trabaja) continue;
@@ -32,7 +35,7 @@ export function valoresEquidad(res, colectivo) {
   });
 }
 
-// Resumen de cada métrica: media, desviación, mínimo, máximo, histograma y atípicos (a más de 1,5 desviaciones).
+// Resumen de cada métrica: media, desviación, mínimo, máximo, histograma y atípicos (a más de la tolerancia de la media).
 export function equidad(res, colectivo) {
   const filas = valoresEquidad(res, colectivo);
   return METRICAS_EQUIDAD.map(m => {
@@ -40,10 +43,9 @@ export function equidad(res, colectivo) {
     const mu = media(v), sd = Math.sqrt(media(v.map(x => (x - mu) ** 2)));
     const hist = new Map();
     for (const x of v) { const b = Math.round(x); hist.set(b, (hist.get(b) || 0) + 1); }
-    // Atípico: a más de 1,5 desviaciones y, además, a más de 1 unidad (7 h en horas): con todo muy igualado, 16 frente
-    // a 17 fines de semana no es «salirse de lo normal».
-    const umbral = Math.max(1.5 * sd, m.k === 'horas' ? 7 : 1);
-    const atipicos = sd > 0 ? filas.filter(f => Math.abs(f.n[m.k] - mu) > umbral) : [];
+    // Atípico: más lejos de la media que una tolerancia fija (1 fin de semana o domingo, 2 noches o festivos, 7 h).
+    // Fija y no en desviaciones: si no, al igualar el reparto la desviación baja y salían más atípicos, no menos.
+    const atipicos = filas.filter(f => Math.abs(f.n[m.k] - mu) > m.tolerancia);
     return {
       ...m, personas: filas.length, media: mu, sd, min: v.length ? Math.min(...v) : 0, max: v.length ? Math.max(...v) : 0,
       desequilibrio: v.reduce((s, x) => s + (x - mu) ** 2, 0),

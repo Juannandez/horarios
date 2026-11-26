@@ -346,11 +346,19 @@ function festivosCuadrante(cfgSede, delAnio) {
   return [...delAnio, ...(enero.length ? enero : fijos)];
 }
 
+// Lo que recibe el motor: la sede con los festivos de todo el cuadrante y la plantilla real si está abierta. Lo usan
+// regenerar() y la búsqueda de la mejora del reparto (js/mejorar.js), que tiene que partir exactamente de lo mismo.
+export function entradaMotor(cfg = estado.cfg) {
+  return {
+    cfg: { ...cfg, festivos: festivosCuadrante(cfg, estado.festivos.lista) },
+    plantilla: estado.plantilla ? estado.plantilla.personas.filter(p => p.sede === cfg.id) : null,
+  };
+}
 export function regenerar() {
   const cfg = estado.cfg, anio = Number(cfg.anio);
   estado.festivos = calcularFestivos(cfg.festivos, anio, estado.descargas[`${claveFuente(cfg.festivos.fuente)}|${anio}`]);
-  const reales = estado.plantilla ? estado.plantilla.personas.filter(p => p.sede === cfg.id) : null;
-  estado.res = nombrarPrueba(generar({ ...cfg, festivos: festivosCuadrante(cfg, estado.festivos.lista) }, { plantilla: reales }));
+  const e = entradaMotor(cfg);
+  estado.res = nombrarPrueba(generar(e.cfg, { plantilla: e.plantilla }));
   pedirFestivos(cfg);
   oyentes.forEach(fn => fn());
 }
@@ -362,8 +370,11 @@ const historial = { atras: [], adelante: [], foto: '', ultimo: 0, max: 50 };
 export function reiniciarHistorial() { historial.atras = []; historial.adelante = []; historial.foto = JSON.stringify(estado.todo); }
 export const puedeDeshacer = () => historial.atras.length > 0;
 export const puedeRehacer = () => historial.adelante.length > 0;
-function apuntarHistorial() {
+function apuntarHistorial(sinHistorial = false) {
   const ahora = JSON.stringify(estado.todo);
+  // Cambios que hace la app sola (la mejora automática del reparto): se suman a la foto actual, sin paso propio de
+  // deshacer; Ctrl+Z vuelve a antes del cambio de la persona.
+  if (sinHistorial) { historial.foto = ahora; return; }
   if (!historial.foto) { historial.foto = ahora; return; }
   if (ahora === historial.foto) return;
   const t = Date.now();
@@ -385,8 +396,8 @@ function irAFoto(de, a) {
 export const deshacer = () => irAFoto(historial.atras, historial.adelante);
 export const rehacer = () => irAFoto(historial.adelante, historial.atras);
 
-export function cambiado({ inmediato = false } = {}) {
-  apuntarHistorial();
+export function cambiado({ inmediato = false, sinHistorial = false } = {}) {
+  apuntarHistorial(sinHistorial);
   try { localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(estado.todo)); localStorage.setItem(CLAVE_BORRADOR + '.base', estado.guardado || ''); } catch (e) {}
   clearTimeout(temporizador);
   if (inmediato) regenerar();

@@ -12,6 +12,7 @@ import { pintarInformes, eventosInformes } from './vista-informes.js';
 import { pintarNormativa, eventosNormativa } from './vista-normativa.js';
 import { pintarComparativa, eventosComparativa } from './vista-comparativa.js';
 import { pintarEquidad, eventosEquidad } from './vista-equidad.js';
+import { programarMejoraAuto } from './mejorar.js';
 import { pintarNuevo, eventosNuevo } from './vista-nuevo.js';
 import { pintarMi, eventosMi, PORTAL_HORARIO } from './vista-mi.js';
 import { pintarEscenarios, eventosEscenarios, olvidarVersiones } from './vista-escenarios.js';
@@ -402,7 +403,10 @@ raiz.addEventListener('click', (e) => {
 // Al recalcular: el cuadrante se repinta entero; en Parámetros solo los resúmenes (para no perder el foco).
 // El guardado automático avisa aquí de cómo va (pastilla de la esquina).
 estado.alAutoguardar = () => pintarBarraGuardar();
+// La mejora del reparto se busca sola en segundo plano tras cada cálculo (js/mejorar.js); Equidad enseña cómo va.
+estado.alMejoraAuto = () => { if (estado.vista === 'equidad') pintarEquidad(raiz); };
 alRegenerar(() => {
+  programarMejoraAuto();
   if (estado.vista === 'cuadrante') pintarCuadrante(raiz);
   else if (estado.vista === 'parametros') refrescarResumenParametros(raiz);
   else if (estado.vista === 'informes') pintarInformes(raiz);

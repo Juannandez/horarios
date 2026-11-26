@@ -1,7 +1,7 @@
 // Vista «Equidad»: cómo quedan repartidos fines de semana, noches, festivos, domingos y horas entre las personas
 // (como el informe de reparto de Calabrio), quién se sale de lo normal y el botón «Mejorar reparto».
-import { estado, esc, fmtNum } from './nucleo.js';
-import { equidad } from './equidad.js';
+import { estado, esc, fmtNum, cambiado, avisar } from './nucleo.js';
+import { equidad, fueraDeEquidad } from './equidad.js';
 import { COLECTIVOS } from './datos-base.js';
 import { mejorarReparto, quitarMejora } from './mejorar.js';
 
@@ -45,24 +45,37 @@ export function pintarEquidad(raiz) {
     atipicos.set(f.pi, a);
   }
   const lista = [...atipicos.values()].sort(u.orden === 'codigo' ? (a, b) => a.f.id.localeCompare(b.f.id, 'es', { numeric: true }) : (a, b) => b.desvio - a.desvio);
+  const nFuera = res.personas.filter(p => p.colectivo === u.colectivo && fueraDeEquidad(p)).length;
+  const totalAtipicos = new Set(mets.flatMap(m => m.atipicos.map(f => f.pi))).size;
+  const auto = cfg.mejoraAuto !== false, ma = estado.mejoraAuto || {};
+  const estadoAuto = !auto ? 'apagada'
+    : estado.plantilla ? 'en pausa mientras la plantilla real está abierta'
+    : !estado.admin ? 'la hace quien tiene permiso para guardar'
+    : ma.estado === 'buscando' ? '<b>buscando…</b> (unos segundos, en segundo plano)'
+    : ma.estado === 'error' ? `no se ha podido (${esc(ma.error || '')})`
+    : 'al día';
   raiz.innerHTML = `<div class="cabecera"><div><h1>Equidad · ${esc(cfg.nombre)}</h1>
-      <p>Cómo quedan repartidos entre las personas los fines de semana, las noches, los festivos, los domingos y las horas. Los valores van en proporción a los días de alta y, las horas, también a la jornada. Quien se aleja de la media más de 1,5 desviaciones (y más de 1 fin de semana, noche, festivo o domingo, o de 7 h) sale abajo.</p></div>
+      <p>Cómo quedan repartidos entre las personas los fines de semana, las noches, los festivos, los domingos y las horas. Los valores van en proporción a los días de alta y, las horas, también a la jornada. Quien se aleja de la media más de 1 fin de semana o domingo, más de 2 noches o festivos, o más de 7 h, sale en la lista de abajo.${nFuera ? ` <b>Sin los ${fmtNum(nFuera)} fijos discontinuos</b>: solo están en sus periodos de alta y no se comparan con la plantilla.` : ''}</p></div>
     <div class="fila-acciones">
       ${mej ? '<button type="button" class="btn" data-eq="quitar">Quitar la mejora</button>' : ''}
       <button type="button" class="btn primario" data-eq="mejorar">${mej ? 'Mejorar más' : 'Mejorar reparto'}</button></div></div>
-    ${mej ? `<section class="panel"><p style="margin:0"><b>Mejora aplicada</b> (${esc(mej.fecha || '')}): ${fmtNum(aplicados)} intercambios de semanas${res.mejora && res.mejora.saltados ? ` (${fmtNum(res.mejora.saltados)} ya no valen y se han saltado)` : ''}. Desequilibrio ${fmtNum(Math.round(mej.coste0 || 0))} → ${fmtNum(Math.round(res.mejora ? res.mejora.costeFinal : 0))}. La cobertura y las horas de cada persona son las mismas que sin la mejora. Las semanas intercambiadas llevan un borde punteado azul en el cuadrante.</p></section>` : ''}
+    <section class="panel"><p style="margin:0">
+      <label class="chk-linea"><input type="checkbox" data-eq-auto ${auto ? 'checked' : ''}> <b>Mejorar el reparto solo, cada vez que se calcula el horario</b></label>
+      · ${estadoAuto}.
+      ${mej ? `<br>Mejora aplicada (${esc(mej.fecha || '')}${mej.auto ? ', automática' : ''}): ${fmtNum(aplicados)} intercambios de semanas entre personas del mismo grupo${res.mejora && res.mejora.saltados ? ` (${fmtNum(res.mejora.saltados)} ya no valen y se han saltado)` : ''}. Desequilibrio de fines de semana, festivos y domingos ${fmtNum(Math.round(mej.coste0 || 0))} → ${fmtNum(Math.round(res.mejora ? res.mejora.costeFinal : 0))}. La cobertura y las horas de cada persona no cambian. Las semanas intercambiadas llevan un borde punteado azul en el cuadrante.` : ''}</p></section>
     <div class="herramientas">
       <div class="grupo segmentado" role="group" aria-label="Colectivo">${COLECTIVOS.map(c => `<button type="button" data-eq-col="${c.id}" aria-pressed="${u.colectivo === c.id}">${esc(c.nombre)}</button>`).join('')}</div>
-      <div class="grupo" role="group" aria-label="Métrica"><span class="etiqueta">Atípicos de</span>
-        <button type="button" class="btn mini" data-eq-met="" aria-pressed="${!u.metrica}">Todas</button>
-        ${mets.map(m => `<button type="button" class="btn mini" data-eq-met="${m.k}" aria-pressed="${u.metrica === m.k}">${esc(m.corto)}</button>`).join('')}</div>
+      <div class="grupo" role="group" aria-label="Ver la lista de atípicos de"><span class="etiqueta">Ver atípicos de</span>
+        <button type="button" class="btn mini" data-eq-met="" aria-pressed="${!u.metrica}">Todas (${fmtNum(totalAtipicos)})</button>
+        ${mets.map(m => `<button type="button" class="btn mini" data-eq-met="${m.k}" aria-pressed="${u.metrica === m.k}">${esc(m.corto)} (${fmtNum(m.atipicos.length)})</button>`).join('')}</div>
+      <div class="grupo"><a class="enlace" href="#eq-lista" data-eq-ir-lista>Ir a la lista ↓</a></div>
     </div>
     <div class="eq-rejilla">${mets.map(m => `<section class="panel eq-tarjeta">
         <h2>${esc(m.nombre)}</h2>
-        <div class="eq-cifras"><span><b>${n1(Math.round(m.media * 10) / 10)}</b> media</span><span><b>${n1(Math.round(m.sd * 10) / 10)}</b> desviación</span><span><b>${n1(Math.round(m.min * 10) / 10)}–${n1(Math.round(m.max * 10) / 10)}</b> rango</span><span><b>${fmtNum(m.atipicos.length)}</b> atípicos</span></div>
+        <div class="eq-cifras"><span><b>${n1(Math.round(m.media * 10) / 10)}</b> media</span><span><b>${n1(Math.round(m.sd * 10) / 10)}</b> desviación</span><span><b>${n1(Math.round(m.min * 10) / 10)}–${n1(Math.round(m.max * 10) / 10)}</b> rango</span><span><button type="button" class="enlace" data-eq-met="${m.k}" title="Ver quiénes en la lista de abajo"><b>${fmtNum(m.atipicos.length)}</b> atípicos ↓</button></span></div>
         ${histograma(m)}
       </section>`).join('')}</div>
-    <section class="panel"><h2>Personas que se salen de lo normal (${fmtNum(lista.length)})</h2>
+    <section class="panel" id="eq-lista"><h2>Personas que se salen de lo normal${u.metrica ? ` en ${esc((mets.find(m => m.k === u.metrica) || {}).corto || '').toLowerCase()}` : ''} (${fmtNum(lista.length)})</h2>
       <div class="herramientas" style="margin:0 0 8px"><div class="grupo" role="group" aria-label="Ordenar"><span class="etiqueta">Ordenar</span>
         <button type="button" class="btn mini" data-eq-orden="desvio" aria-pressed="${u.orden === 'desvio'}">Más alejadas primero</button>
         <button type="button" class="btn mini" data-eq-orden="codigo" aria-pressed="${u.orden === 'codigo'}">Código</button></div></div>
@@ -73,12 +86,25 @@ export function pintarEquidad(raiz) {
 }
 
 export function eventosEquidad(raiz, repintar, irA) {
+  raiz.addEventListener('change', (e) => {
+    if (estado.vista !== 'equidad' || !e.target.matches('[data-eq-auto]')) return;
+    estado.cfg.mejoraAuto = e.target.checked;
+    cambiado({ inmediato: true });
+    avisar(e.target.checked ? 'Mejora automática encendida: en unos segundos se busca un reparto más igualado.' : 'Mejora automática apagada: se queda la mejora que hay; «Mejorar reparto» la busca a mano.', '', 6000);
+  });
   raiz.addEventListener('click', async (e) => {
     if (estado.vista !== 'equidad') return;
+    const ir = e.target.closest('[data-eq-ir-lista]');
+    if (ir) { e.preventDefault(); const l = document.getElementById('eq-lista'); if (l) l.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     const b = e.target.closest('button'); if (!b) return;
     const u = ui();
     if (b.dataset.eqCol) { u.colectivo = b.dataset.eqCol; return repintar(); }
-    if (b.dataset.eqMet != null) { u.metrica = b.dataset.eqMet; return repintar(); }
+    if (b.dataset.eqMet != null) {
+      // La lista está debajo de las gráficas: al elegir, se baja hasta ella.
+      u.metrica = b.dataset.eqMet; repintar();
+      const l = document.getElementById('eq-lista'); if (l) l.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     if (b.dataset.eqOrden) { u.orden = b.dataset.eqOrden; return repintar(); }
     if (b.dataset.eqInforme) { (estado.ui.informe ||= { pi: 0, buscar: '', comp: '' }).pi = Number(b.dataset.eqInforme); estado.ui.informe.buscar = ''; estado.ui.informe.comp = ''; return irA('informes'); }
     if (b.dataset.eq === 'mejorar') { if (await mejorarReparto()) repintar(); return; }
