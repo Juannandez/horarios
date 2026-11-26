@@ -1,5 +1,5 @@
 {
- "guardado": "2026-11-26T10:44:32.717Z",
+ "guardado": "2026-11-26T10:44:44.775Z",
  "nota": "Sin cambios en el cuadrante.",
  "config": {
   "version": 2,
@@ -1516,7 +1516,7 @@
      {
       "activo": true,
       "colectivo": "TA",
-      "franja": "noche",
+      "franja": "manana",
       "fecha": "01-06",
       "modo": "suma",
       "valor": 1,
