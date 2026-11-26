@@ -114,6 +114,20 @@ export async function guardarGithub(config, nota, conocido = '') {
   return JSON.parse(texto).guardado;
 }
 
+// La versión publicada ahora mismo en el repositorio (sin esperar a Pages): { guardado, nota, config }.
+export async function leerRemota() {
+  return JSON.parse(await gh(`/contents/${FICHERO}`, { crudo: true }));
+}
+// Las últimas versiones de config.json con su contenido (para encontrar sobre cuál se hizo un borrador antiguo).
+export async function versionesConContenido(n = 12) {
+  const lista = await gh(`/commits?path=${FICHERO}&per_page=${n}`);
+  const out = [];
+  for (const c of lista) {
+    try { const d = JSON.parse(await gh(`/contents/${FICHERO}?ref=${c.sha}`, { crudo: true })); out.push({ sha: c.sha, guardado: d.guardado || '', config: d.config }); } catch (e) { /* esa versión no se puede leer */ }
+  }
+  return out;
+}
+
 // El fichero que se sube a GitHub: el mismo formato que lee leerPublicada().
 export function ficheroPublicacion(config, nota) {
   return JSON.stringify({ guardado: new Date().toISOString(), nota, config }, null, 1);

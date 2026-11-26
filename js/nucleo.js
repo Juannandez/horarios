@@ -2,7 +2,7 @@
 import { CONFIG_BASE, SEDES_BASE, AJ_BASE, REPARTO_FESTIVOS, CICLO } from './datos-base.js';
 import { generar } from './motor.js';
 import { calcularFestivos, claveFuente } from './festivos.js';
-import { EN_GITHUB, leerPublicada, versionesGithub, versionGithub, tokenSesion, entrarConContrasena, cerrarSesionGithub, guardarGithub } from './github.js';
+import { EN_GITHUB, leerPublicada, versionesGithub, versionGithub, tokenSesion, entrarConContrasena, cerrarSesionGithub, guardarGithub, leerRemota, versionesConContenido } from './github.js';
 
 const API = 'api/api.php';
 const CLAVE_BORRADOR = 'horarios.borrador';
@@ -191,13 +191,35 @@ export async function cargar() {
   if (borrador && !estado.admin && !DEMO) { borrador = null; borrarBorrador(); }
   // En GitHub: si el borrador de este ordenador se hizo sobre una versión publicada más antigua que la de ahora (se ha
   // guardado desde otro ordenador), no se carga encima: se aparta y se avisa, para no pisar lo nuevo.
+  // Ahora se juntan: lo cambiado aquí se pone encima de la versión nueva (fusión a tres bandas con la versión de la que
+  // partía el borrador). Si no se sabe de cuál partía, se busca en el historial la que más se le parece.
   if (borrador && DEMO) {
-    let baseBorrador = null;
-    try { baseBorrador = localStorage.getItem(CLAVE_BORRADOR + '.base'); } catch (e) { /* sin almacenamiento */ }
+    let baseBorrador = null, baseJSON = null;
+    try { baseBorrador = localStorage.getItem(CLAVE_BORRADOR + '.base'); baseJSON = localStorage.getItem(CLAVE_BORRADOR + '.baseJSON'); } catch (e) { /* sin almacenamiento */ }
     if (baseBorrador != null && estado.guardado && baseBorrador < estado.guardado) {
-      try { localStorage.setItem(CLAVE_BORRADOR + '.apartado', JSON.stringify(borrador)); } catch (e) { /* sin almacenamiento */ }
-      borrador = null; borrarBorrador();
-      estado.borradorApartado = true;
+      let baseCfg = null;
+      try { baseCfg = baseJSON ? completar(JSON.parse(baseJSON)) : estado.admin ? await buscarBase(completar(borrador)) : null; } catch (e) { baseCfg = null; }
+      if (baseCfg) { borrador = fusionar(baseCfg, completar(borrador), base); estado.borradorJuntado = true; }
+      else {
+        try { localStorage.setItem(CLAVE_BORRADOR + '.apartado', JSON.stringify(borrador)); } catch (e) { /* sin almacenamiento */ }
+        borrador = null; borrarBorrador();
+        estado.borradorApartado = true;
+      }
+    }
+  }
+  // Lo que una versión anterior de la app apartó (sin juntarlo): se recupera juntándolo con la versión de ahora.
+  if (!borrador && DEMO && estado.admin) {
+    let ap = null;
+    try { ap = JSON.parse(localStorage.getItem(CLAVE_BORRADOR + '.apartado') || 'null'); } catch (e) { ap = null; }
+    if (ap) {
+      try {
+        const apCfg = completar(ap), baseCfg = await buscarBase(apCfg);
+        if (baseCfg) {
+          const junto = completar(fusionar(baseCfg, apCfg, base));
+          if (JSON.stringify(junto) !== estado.publicada) { borrador = junto; estado.borradorRecuperado = true; }
+          localStorage.removeItem(CLAVE_BORRADOR + '.apartado');
+        }
+      } catch (e) { /* se queda apartado */ }
     }
   }
   estado.todo = borrador ? completar(borrador) : base;
@@ -306,7 +328,58 @@ export function ponerSede(id) {
 }
 
 export function cambiosSinGuardar() { return JSON.stringify(estado.todo) !== estado.publicada; }
-export function borrarBorrador() { try { localStorage.removeItem(CLAVE_BORRADOR); localStorage.removeItem(CLAVE_BORRADOR + '.base'); } catch (e) {} }
+
+// ── Juntar cambios (fusión a tres bandas) ───────────────────────────────────────────────────────────────────────
+// base: la versión sobre la que se trabajaba; mio: lo de este ordenador; remoto: la versión más nueva guardada desde
+// otro sitio. Lo que solo ha cambiado uno, se queda; si han cambiado los dos lo mismo, gana lo de este ordenador. Los
+// objetos se juntan campo a campo y las listas con identificador (sedes, escenarios, grupos, turnos) elemento a elemento.
+const igualJSON = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const esObjeto = (x) => x != null && typeof x === 'object' && !Array.isArray(x);
+const claveDe = (x) => (esObjeto(x) ? x.id ?? x.codigo ?? null : null);
+const conClaves = (l) => Array.isArray(l) && l.length > 0 && l.every(x => claveDe(x) != null);
+export function fusionar(base, mio, remoto) {
+  if (igualJSON(mio, base)) return remoto;
+  if (igualJSON(remoto, base) || igualJSON(remoto, mio)) return mio;
+  if (esObjeto(mio) && esObjeto(remoto) && esObjeto(base)) {
+    const out = { ...remoto };
+    for (const k of new Set([...Object.keys(mio), ...Object.keys(remoto), ...Object.keys(base)])) {
+      const v = fusionar(base[k], mio[k], remoto[k]);
+      if (v === undefined) delete out[k]; else out[k] = v;
+    }
+    return out;
+  }
+  if (conClaves(mio) && conClaves(remoto) && (conClaves(base) || (Array.isArray(base) && !base.length))) {
+    const mapa = (l) => new Map(l.map(x => [claveDe(x), x]));
+    const B = mapa(base), M = mapa(mio), R = mapa(remoto), out = [];
+    for (const x of mio) {
+      const k = claveDe(x);
+      if (!R.has(k) && B.has(k) && igualJSON(B.get(k), x)) continue;      // lo borraron allí y aquí no se tocó
+      out.push(R.has(k) ? fusionar(B.get(k), x, R.get(k)) : x);
+    }
+    for (const x of remoto) { const k = claveDe(x); if (!M.has(k) && !B.has(k)) out.push(x); }   // nuevo de allí
+    return out;
+  }
+  return mio;
+}
+// Diferencia aproximada entre dos configuraciones (cuántas partes de cada sede y de lo general no coinciden).
+function distancia(a, b) {
+  let n = 0;
+  for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) if (k !== 'sedes' && !igualJSON(a[k], b[k])) n++;
+  for (const sa of a.sedes || []) {
+    const sb = (b.sedes || []).find(x => x.id === sa.id);
+    if (!sb) { n += 50; continue; }
+    for (const k of new Set([...Object.keys(sa), ...Object.keys(sb)])) if (!igualJSON(sa[k], sb[k])) n++;
+  }
+  return n;
+}
+// Sobre qué versión publicada se hizo un borrador antiguo: la del historial que más se le parece.
+async function buscarBase(borrador) {
+  const versiones = await versionesConContenido(12);
+  let mejor = null, d0 = Infinity;
+  for (const v of versiones) { if (!v.config) continue; const d = distancia(borrador, completar(v.config)); if (d < d0) { d0 = d; mejor = v; } }
+  return mejor ? completar(mejor.config) : null;
+}
+export function borrarBorrador() { try { for (const x of ['', '.base', '.baseJSON', '.baseGuardado']) localStorage.removeItem(CLAVE_BORRADOR + x); } catch (e) {} }
 
 let temporizador = 0;
 const oyentes = new Set();
@@ -398,11 +471,29 @@ export const rehacer = () => irAFoto(historial.adelante, historial.atras);
 
 export function cambiado({ inmediato = false, sinHistorial = false } = {}) {
   apuntarHistorial(sinHistorial);
-  try { localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(estado.todo)); localStorage.setItem(CLAVE_BORRADOR + '.base', estado.guardado || ''); } catch (e) {}
+  try {
+    localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(estado.todo)); localStorage.setItem(CLAVE_BORRADOR + '.base', estado.guardado || '');
+    // La versión sobre la que se trabaja: si mientras tanto se guarda otra desde otro sitio, se juntan las dos.
+    if (localStorage.getItem(CLAVE_BORRADOR + '.baseGuardado') !== (estado.guardado || '')) {
+      localStorage.setItem(CLAVE_BORRADOR + '.baseJSON', estado.publicada || ''); localStorage.setItem(CLAVE_BORRADOR + '.baseGuardado', estado.guardado || '');
+    }
+  } catch (e) {}
   clearTimeout(temporizador);
   if (inmediato) regenerar();
   else temporizador = setTimeout(regenerar, 180);
   programarAutoguardado();
+}
+
+// Trae la versión más nueva del repositorio y pone encima lo cambiado aquí (fusión a tres bandas).
+export async function juntarConRemota() {
+  const r = await leerRemota();
+  const remoto = completar(r.config), base = JSON.parse(estado.publicada);
+  const sede = estado.sede;
+  estado.todo = completar(fusionar(base, estado.todo, remoto));
+  estado.publicada = JSON.stringify(remoto); estado.guardado = r.guardado;
+  if (estado.todo.sedes.some(x => x.id === sede)) estado.sede = sede;
+  historial.foto = JSON.stringify(estado.todo);
+  regenerar();
 }
 
 // Guardado automático (versión de GitHub con la contraseña puesta): unos segundos después del último cambio, se guarda
@@ -421,9 +512,16 @@ export async function autoguardar() {
   if (!cambiosSinGuardar()) { estado.auto = { ...(estado.auto || {}), estado: estado.auto && estado.auto.hora ? 'hecho' : '' }; return avisarAuto(); }
   if (estado.auto && estado.auto.estado === 'guardando') return programarAutoguardado(3000);
   estado.auto = { ...(estado.auto || {}), estado: 'guardando' }; avisarAuto();
+  let juntado = false;
   try {
-    await guardarEnServidor();
-    estado.auto = { estado: 'hecho', hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) };
+    try { await guardarEnServidor(); }
+    catch (e) {
+      if (!e.nueva) throw e;
+      // Hay una versión más nueva (guardada desde otro ordenador o por la sección): se juntan las dos y se guarda.
+      await juntarConRemota(); juntado = true;
+      await guardarEnServidor();
+    }
+    estado.auto = { estado: 'hecho', juntado, hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) };
     // Si se cambió algo mientras se guardaba, otra vuelta.
     if (cambiosSinGuardar()) programarAutoguardado(3000);
   } catch (e) {

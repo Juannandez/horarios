@@ -180,7 +180,7 @@ function pintarSesion() {
 function pintarBarraGuardar() {
   const caja = $('#barra-guardar');
   const hay = cambiosSinGuardar();
-  const autoHecho = DEMO && estado.admin && estado.auto && (estado.auto.hora || estado.auto.estado === 'error' || estado.auto.estado === 'conflicto');
+  const autoHecho = DEMO && estado.admin && estado.auto && (estado.auto.hora || ['error', 'conflicto', 'pendiente', 'guardando'].includes(estado.auto.estado));
   if ((!hay && !puedeRehacer() && !autoHecho) || estado.vista === 'resultados') { caja.innerHTML = ''; return; }
   // Deshacer y rehacer (también con Ctrl+Z y Ctrl+Mayús+Z), como Sling o Deputy.
   const historia = `<span class="fila-acciones historia" style="margin:0">
@@ -192,9 +192,11 @@ function pintarBarraGuardar() {
   // Versión de GitHub con la contraseña puesta: se guarda sola. La pastilla solo dice cómo va.
   if (DEMO && estado.admin) {
     const au = estado.auto || {};
-    // Se guarda solo y sin avisos: la pastilla solo sale si hay un problema.
+    // Se guarda solo: la pastilla dice «Editando…» mientras hay cambios por guardar y «Guardado» cuando ya están.
     const txt = au.estado === 'conflicto' ? '⚠ Hay una versión más nueva de otro ordenador'
-      : au.estado === 'error' ? '⚠ No se ha podido guardar' : '';
+      : au.estado === 'error' ? '⚠ No se ha podido guardar'
+      : au.estado === 'pendiente' || au.estado === 'guardando' || hay ? '✎ Editando…'
+      : au.hora ? `✓ Guardado ${au.hora}${au.juntado ? ' (junto con la versión más nueva)' : ''}` : '';
     if (!txt) { caja.innerHTML = ''; return; }
     caja.innerHTML = `<div class="guardar-pastilla" role="status" aria-live="polite" title="${esc(au.error || 'Cada cambio se guarda solo para todos, unos segundos después.')}">
       <span class="pastilla-texto ${au.estado === 'error' || au.estado === 'conflicto' ? 'mal' : au.estado === 'hecho' && !hay ? 'bien' : ''}">${txt}</span>
@@ -424,6 +426,8 @@ const borrador = cambiosSinGuardar();
 ponerMenuCorto(document.documentElement.dataset.menu === 'corto', false);
 pintar();
 window.horariosListo = true; // js/arranque.js: la app ha arrancado
+if (estado.borradorRecuperado) avisar('Se han recuperado los cambios de este ordenador que se habían apartado (por una versión más nueva guardada desde otro sitio): se han juntado con la versión de ahora y se guardan solos.', 'bien', 12000);
+else if (estado.borradorJuntado) avisar('Mientras tanto se guardó una versión más nueva desde otro sitio: se ha juntado con lo que tenías aquí, sin perder nada.', 'bien', 9000);
 if (estado.borradorApartado) avisar('Desde otro ordenador se ha guardado una versión más nueva: se ha cargado esa. Lo que tenías sin guardar aquí se ha apartado (no se ha perdido, pero no se usa).', '', 12000);
 else if (borrador && DEMO && estado.admin) { const { programarAutoguardado } = await import('./nucleo.js'); programarAutoguardado(4000); }
 else if (borrador) avisar('Se ha recuperado lo que estabas cambiando en este navegador. Si no lo quieres, pulsa «Descartar» abajo.', '', 9000);
