@@ -1158,6 +1158,62 @@ export function generar(cfgEntrada, opciones = {}) {
   } else aplicarRatio();
   cesionActiva = true;   // desde aquí (mejora del reparto, avisos), cada persona con su tope propio
 
+  // 3 bis c. Relevos por cuartos de hora (con mínimos por cuartos): si en un cuarto de hora falta gente (p. ej. de 14:45
+  // a 15:00, cuando ya se ha ido la R1), se cambia ese día a alguien a otro turno de su misma franja y de las mismas
+  // horas (R1 → R2 o R3; T2 → T1) que sí cubre ese cuarto, si los cuartos que deja no se quedan por debajo del mínimo y
+  // puede (descansos, horas de entrada…). Solo turnos que esa persona ya hace en su ciclo. Se apaga con
+  // cfg.cubrirRelevos = false.
+  const cubrirRelevos = () => {
+    if (cfg.cubrirRelevos === false || !ajusteActivo || !MC) return;
+    let cambios = 0;
+    for (let c = 0; c < COL.length; c++) {
+      if (!Array.isArray(MC[COL[c]])) continue;
+      const cq = T.map(cuartosDeTurno);
+      const cob = new Int16Array((D + 1) * 96);
+      for (let pi = 0; pi < P; pi++) if (colIdx[pi] === c) for (let d = 0; d < D; d++) { const ti = grid[pi * D + d]; if (T[ti].trabaja) for (const q of cq[ti]) cob[d * 96 + q]++; }
+      // Turnos que hace cada grupo en su ciclo (las alternativas de cada uno: misma franja y mismas horas).
+      const delGrupo = new Map();
+      const alternativas = (pi, ti) => {
+        const g = personas[pi].grupo;
+        if (!delGrupo.has(g)) { const gr = grupos.find(x => x.id === g); delGrupo.set(g, new Set(gr ? resolverPatron(gr, cfg.grupos || []).filter(x => idx.has(x)).map(x => idx.get(x)) : [])); }
+        const t = T[ti];
+        return [...delGrupo.get(g)].filter(t2 => t2 !== ti && T[t2].trabaja && T[t2].franja === t.franja && Math.abs((T[t2].horas || 0) - (t.horas || 0)) < 1e-9);
+      };
+      const minQ = (d, q) => minCuarto(c, d, q);
+      for (let d = 0; d < D; d++) {
+        for (let q = 0; q < 96; q++) {
+          let falta = (minQ(d, q) ?? 0) - cob[d * 96 + q];
+          let vueltas = 0;
+          while (falta > 0 && vueltas++ < 20) {
+            let hecho = false;
+            for (const pi of porColectivo[c]) {
+              const k = pi * D + d, ti = grid[k];
+              if (!T[ti].trabaja || origen[k] === ORIGEN.MANUAL || origen[k] === ORIGEN.VACACIONES) continue;
+              if (cq[ti].includes(q)) continue;
+              for (const t2 of alternativas(pi, ti)) {
+                const nuevos = cq[t2];
+                if (!nuevos.includes(q)) continue;
+                // Lo que deja de cubrir no puede quedarse por debajo del mínimo.
+                const deja = cq[ti].filter(x => !nuevos.includes(x));
+                if (deja.some(x => { const dd = d + Math.floor(x / 96), qq = x % 96; return dd < D && cob[dd * 96 + qq] - 1 < (minQ(dd, qq) ?? 0); })) continue;
+                const o0 = origen[k];
+                poner(pi, d, t2, ORIGEN.CUBRE);
+                if (!valida(pi, Math.max(0, d - 1), Math.min(D - 1, d + 1)) || (maxEntradas != null && nEntradas[pi] > maxEntradas)) { poner(pi, d, ti, o0); continue; }
+                for (const x of cq[ti]) { const dd = d + Math.floor(x / 96); if (dd < D) cob[dd * 96 + (x % 96)]--; }
+                for (const x of nuevos) { const dd = d + Math.floor(x / 96); if (dd < D) cob[dd * 96 + (x % 96)]++; }
+                cambios++; hecho = true; break;
+              }
+              if (hecho) break;
+            }
+            if (!hecho) break;
+            falta = (minQ(d, q) ?? 0) - cob[d * 96 + q];
+          }
+        }
+      }
+    }
+    stats.relevos = cambios;
+  };
+
   // 3 bis a. Librar festivos donde sobra gente: un festivo entre semana tiene un mínimo más bajo (el de festivo), así
   // que sobra gente. Quien más festivos lleva libra ese festivo (D) y hace un turno de la misma franja otro día entre
   // semana que libraba, donde menos gente haya y si puede (descansos, 2 días libres a la semana, fines…). Mismas horas; en el festivo nunca baja del
@@ -1266,6 +1322,7 @@ export function generar(cfgEntrada, opciones = {}) {
   };
   librarFestivos();
   festivosRepartidos();
+  cubrirRelevos();
 
   // 4. Equidad: intercambios de semanas enteras entre dos personas del mismo grupo (como el paso de equidad de
   // Calabrio o la búsqueda local de Timefold). Cada día sigue con la misma gente en cada franja (la cobertura no
@@ -1505,6 +1562,7 @@ export function generar(cfgEntrada, opciones = {}) {
       if (MC && Array.isArray(MC[COL[c]])) {
         const faltaHora = new Float64Array(24), diasCon = new Set(); let total = 0;
         for (let d = 0; d < D; d++) for (let q = 0; q < 96; q++) {
+          if (d === 0 && q < 32) continue;   // la madrugada del primer día la cubre la noche del cuadrante anterior
           const v = minCuarto(c, d, q); if (v == null) continue;
           const falta = v - cobQ[c][d * 96 + q];
           if (falta > 0) { faltaHora[q >> 2] += falta / 4; total += falta / 4; diasCon.add(d); porHoras.huecos.push({ colectivo: COL[c], d, fecha: dias[d].fecha, hora: q >> 2, minuto: (q & 3) * 15, falta }); }
@@ -1515,6 +1573,7 @@ export function generar(cfgEntrada, opciones = {}) {
       if (!Array.isArray(MH[COL[c]])) continue;
       const faltaHora = new Float64Array(24), diasCon = new Set(); let total = 0;
       for (let d = 0; d < D; d++) for (let h = 0; h < 24; h++) {
+        if (d === 0 && h < 8) continue;   // la madrugada del primer día la cubre la noche del cuadrante anterior
         const v = minHora(c, d, h); if (v == null) continue;
         const falta = v - cobH[c][d * 24 + h];
         if (falta > 0) { faltaHora[h] += falta; total += falta; diasCon.add(d); porHoras.huecos.push({ colectivo: COL[c], d, fecha: dias[d].fecha, hora: h, falta }); }

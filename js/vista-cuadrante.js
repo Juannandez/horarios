@@ -274,6 +274,20 @@ function tablaMes(lista) {
       pie.push(`<tr${fi === 0 && c !== cols[0] ? ' class="inicio-col"' : ''}><th scope="row" class="fija" title="Personas por encima (+) o por debajo (− en rojo) del mínimo cada día; al pasar el ratón, cuántas hay en sala">${fi === 0 ? `${c === 'TA' ? 'Teleasistencia' : 'Supervisión'} sobre el mínimo` : ''}</th><td class="fija2" title="Mínimo de esta franja en los días que se ven">${FRANJA_NOMBRE[f]} <small class="tenue">mín. ${mMin === mMax ? mMin : `${mMin}–${mMax}`}</small></td>${celdas}<td></td><td></td><td></td></tr>`);
     });
   }
+  // Relevos por cuartos de hora (con mínimos por cuartos): lo que falta cada día en el peor cuarto, en rojo; al pasar el
+  // ratón, a qué horas.
+  if (res.porHoras && res.porHoras.cuartos && cols.includes('TA')) {
+    const porDia = new Map();
+    for (const h of res.porHoras.huecos) if (h.colectivo === 'TA') { const l = porDia.get(h.d) || []; l.push(h); porDia.set(h.d, l); }
+    const hm = (h) => `${String(h.hora).padStart(2, '0')}:${String(h.minuto || 0).padStart(2, '0')}`;
+    const celdas = dias.map(d => {
+      const l = porDia.get(d.i); const rz = u.resaltarDia === d.i ? ' resaltado' : '';
+      if (!l) return `<td class="c${rz}" title="Todos los cuartos de hora cubiertos">✓</td>`;
+      const peor = Math.max(...l.map(h => h.falta));
+      return `<td class="c falta${rz}" title="Faltan: ${esc(l.map(h => `${hm(h)} → ${h.falta}`).join(' · '))}">−${peor}</td>`;
+    }).join('');
+    pie.splice(Math.min(3, pie.length), 0, `<tr><th scope="row" class="fija" title="Con los mínimos por cuartos de hora: lo que falta en el peor cuarto de cada día (relevos)">Relevos (cuartos de hora)</th><td class="fija2"><small class="tenue">teleasistencia</small></td>${celdas}<td></td><td></td><td></td></tr>`);
+  }
   const pieFijo = pie.slice(0, 3).join(''), pieResto = pie.slice(3).join('');
   return `${hojaColores}<div class="tabla-caja"><table class="cuadrante">
     <caption class="oculto">Cuadrante de ${MESES[(res.meses[u.mesDesde] || {}).mes ?? 0].toLowerCase()}${u.mesHasta !== u.mesDesde ? ` a ${MESES[(res.meses[u.mesHasta] || {}).mes ?? 0].toLowerCase()}` : ''} de ${estado.cfg.anio}</caption>
