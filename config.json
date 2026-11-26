@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T12:02:00.793Z",
- "nota": "Sin cambios en el cuadrante.",
+ "guardado": "2026-11-26T12:09:52.817Z",
+ "nota": "Sevilla: contratos, mejora del reparto",
  "config": {
   "version": 2,
   "tema": "day",
@@ -999,39 +999,6 @@
        "tarde": "",
        "noche": ""
       }
-     },
-     {
-      "id": "r30",
-      "nombre": "Reducida 30 h",
-      "horasSemana": 30,
-      "sinNoches": true,
-      "turnos": {
-       "manana": "",
-       "tarde": "",
-       "noche": ""
-      }
-     },
-     {
-      "id": "r25",
-      "nombre": "Reducida 25 h",
-      "horasSemana": 25,
-      "sinNoches": true,
-      "turnos": {
-       "manana": "",
-       "tarde": "",
-       "noche": ""
-      }
-     },
-     {
-      "id": "r20",
-      "nombre": "Reducida 20 h",
-      "horasSemana": 20,
-      "sinNoches": true,
-      "turnos": {
-       "manana": "",
-       "tarde": "",
-       "noche": ""
-      }
      }
     ],
     "cobertura": {
@@ -1671,13 +1638,25 @@
        "b": "TA 126",
        "d": 353,
        "n": 7
+      },
+      {
+       "a": "TA 099",
+       "b": "TA 242",
+       "d": 353,
+       "n": 7
+      },
+      {
+       "a": "TA 290",
+       "b": "TA 209",
+       "d": 80,
+       "n": 14
       }
      ],
-     "semilla": 7,
+     "semilla": 8,
      "coste0": 1351.4986280417759,
-     "coste": 614.4865651589809,
+     "coste": 608.4865651589806,
      "fecha": "2026-11-26",
-     "base": "xwt2ez8jc",
+     "base": "1xjl47i89l",
      "auto": true
     }
    },
