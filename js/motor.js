@@ -233,6 +233,8 @@ export function generar(cfgEntrada, opciones = {}) {
   const sinNocheTrasTarde = !!usa('nocheTrasTarde');     // no se entra de noche el día después de una tarde            // el ajuste no mezcla mañana y tarde en una misma semana
   const minNoches = reg('minNoches', 14);                // noches como mínimo al año para quien hace noches
   const PUESTOS = Math.max(0, Number(cfg.puestos) || 0);  // puestos operativos en sala (0 = sin tope)
+  // Quién ocupa puesto: de partida solo teleasistencia (los supervisores no cuentan); cfg.puestosSupervision = true los suma.
+  const COL_PUESTO = COL.map(col => col === 'TA' || (col === 'SUP' && cfg.puestosSupervision === true));
   // Fines de semana con bolsa (Cobertura y bolsa): el ajuste no pone a trabajar a nadie un sábado o domingo que libra;
   // lo que falte se deja en disponibilidad para la bolsa (código DB: localizable, no trabaja).
   const FINDES_BOLSA = !!(cfg.cobertura && cfg.cobertura.findesBolsa === true);
@@ -740,8 +742,8 @@ export function generar(cfgEntrada, opciones = {}) {
     if (sinTardeEntre && nuevo.franja === 'tarde' && viejo.franja !== 'tarde' && !personas[pi].horarioLibre && tardeCerca(pi, d)) return false;
     // Puestos en sala: el ajuste no pone a nadie más en una franja si ya están todos los puestos ocupados.
     if (PUESTOS && (!viejo.trabaja || viejo.franja !== nuevo.franja)) {
-      const f = franjaIdx[ti]; let n = 0; for (let c = 0; c < COL.length; c++) n += cob[c][f][d];
-      if (f >= 0 && n + 1 > PUESTOS) return false;
+      const f = franjaIdx[ti]; let n = 0; for (let c = 0; c < COL.length; c++) if (COL_PUESTO[c]) n += cob[c][f][d];
+      if (f >= 0 && COL_PUESTO[colIdx[pi]] && n + 1 > PUESTOS) return false;
     }
     // Días libres cada semana: no se pone un turno en un día libre si la semana se queda con menos.
     if (minLibresSemana != null && !viejo.trabaja) { const n = libresSemana(pi, d); if (n != null && n - 1 < minLibresSemana) return false; }
@@ -1392,7 +1394,7 @@ export function generar(cfgEntrada, opciones = {}) {
 
   // Puestos en sala: si un día hay más gente en una franja que puestos, alguien de esa franja pasa su turno a otro día
   // de lunes a viernes de la misma semana en que libra y queda sitio (mismas horas; nunca vacaciones ni cambios a mano).
-  const enSala = (d, f) => { let n = 0; for (let c = 0; c < COL.length; c++) n += cob[c][f][d]; return n; };
+  const enSala = (d, f) => { let n = 0; for (let c = 0; c < COL.length; c++) if (COL_PUESTO[c]) n += cob[c][f][d]; return n; };
   const aliviarPuestos = () => {
     if (!PUESTOS || !ajusteActivo) return;
     for (let d = 0; d < D; d++) for (let f = 0; f < 2; f++) {
@@ -1400,7 +1402,7 @@ export function generar(cfgEntrada, opciones = {}) {
       while (enSala(d, f) > PUESTOS && vueltas++ < 40) {
         let hecho = false;
         const l = d - dias[d].dow;
-        for (const c of [0, 1]) for (const pi of porColectivo[c] || []) {
+        for (const c of [0, 1]) for (const pi of (COL_PUESTO[c] ? porColectivo[c] : []) || []) {
           if (hecho) break;
           const kd = pi * D + d, ti = grid[kd];
           if (franjaIdx[ti] !== f || origen[kd] === ORIGEN.MANUAL || origen[kd] === ORIGEN.VACACIONES || personas[pi].horarioLibre) continue;
@@ -1610,7 +1612,11 @@ export function generar(cfgEntrada, opciones = {}) {
       const codigos = new Map();
       const turnosDe = (pi, d) => {
         const p = personas[pi];
-        if (p.horarioLibre) return FR.map(f => prefDe(pi, d, f)).filter(x => x != null);
+        if (p.horarioLibre) {
+          // Fijos discontinuos: cualquier turno de día de los ciclos de su colectivo (para cubrir un relevo, el que lo cubra).
+          if (!codigos.has('__libre' + colIdx[pi])) { const u = new Set(); for (const g of grupos) if (g.colectivo === COL[colIdx[pi]]) for (const x of resolverPatron(g, cfg.grupos || [])) if (idx.has(x) && T[idx.get(x)].trabaja && T[idx.get(x)].franja !== 'noche' && franjasDe(p, d).includes(T[idx.get(x)].franja)) u.add(idx.get(x)); codigos.set('__libre' + colIdx[pi], [...u]); }
+          const l = codigos.get('__libre' + colIdx[pi]); return l.length ? l : FR.map(f => prefDe(pi, d, f)).filter(x => x != null);
+        }
         if (!codigos.has(p.grupo)) { const gr = grupos.find(x => x.id === p.grupo); codigos.set(p.grupo, [...new Set(gr ? resolverPatron(gr, cfg.grupos || []).filter(x => idx.has(x)).map(x => idx.get(x)) : [])].filter(t => T[t].trabaja && T[t].franja !== 'noche')); }
         return codigos.get(p.grupo);
       };
@@ -1860,6 +1866,8 @@ export function generar(cfgEntrada, opciones = {}) {
       if (!permitidoDia(p, d) || !franjasDe(p, d).includes(x.franja)) return false;
       if (contratoDe(p, d)[x.franja] && contratoDe(p, d)[x.franja] !== x.codigo) return false;
     }
+    // Semanas de tarde: entre dos, al menos sinTardeEntre semanas sin tardes (en las semanas tocadas y sus vecinas).
+    if (sinTardeEntre && !p.horarioLibre) for (let d = a; d <= b; d++) if (t(d).trabaja && t(d).franja === 'tarde' && tardeCerca(pi, d)) return false;
     for (let d = Math.max(0, a - 10); d <= Math.min(D - 1, b + 1); d++) {
       if (!esNoche(pi, d)) continue;
       if (bloques && !esNoche(pi, d - 1) && !esNoche(pi, d + 1) && d > 0 && d < D - 1) return false;
@@ -2084,7 +2092,7 @@ export function generar(cfgEntrada, opciones = {}) {
   // Puestos en sala: días y franjas con más gente que puestos (sumando los colectivos).
   const puestos = { valor: PUESTOS, max: 0, dias: [] };
   if (PUESTOS) for (let d = 0; d < D; d++) for (let f = 0; f < FR.length; f++) {
-    let n = 0; for (let c = 0; c < COL.length; c++) n += cob[c][f][d];
+    let n = 0; for (let c = 0; c < COL.length; c++) if (COL_PUESTO[c]) n += cob[c][f][d];
     puestos.max = Math.max(puestos.max, n);
     if (n > PUESTOS) puestos.dias.push({ d, franja: FR[f], fecha: dias[d].fecha, enSala: n });
   }

@@ -288,11 +288,11 @@ export function seccionMinimos(cfg) {
   ${seccionMinimosFecha(cfg)}`;
 }
 
-// Puestos operativos en sala: tope de personas a la vez (sumando teleasistencia y supervisión). 0 = sin tope.
+// Puestos operativos en sala: tope de teleasistentes a la vez (los supervisores no ocupan puesto). 0 = sin tope.
 function seccionPuestos(cfg) {
   const p = estado.res.puestos || { valor: 0, max: 0, dias: [] };
   return `<section class="panel" id="sec-puestos"><h2>Puestos en sala</h2>
-    <p class="tenue">Cuántas personas caben a la vez en la sala (puestos operativos), sumando teleasistencia y supervisión. El ajuste no pone a nadie más en una franja cuando ya están todos ocupados, y el cuadrante marca en naranja los días que el ciclo los pasa. 0 = sin tope.</p>
+    <p class="tenue">Cuántos teleasistentes caben a la vez en la sala (puestos operativos). Los supervisores no ocupan puesto. El ajuste no pone a nadie más en una franja cuando ya están todos ocupados, y el cuadrante marca en naranja los días que el ciclo los pasa. 0 = sin tope.</p>
     <div class="campos">${campo('Puestos operativos', num('puestos', cfg.puestos ?? 0, 'min="0" max="2000" style="width:100px" data-estructura="1"'))}</div>
     ${p.valor ? `<p>Máximo en sala: <b>${fmtNum(p.max)}</b> de ${fmtNum(p.valor)} puestos${p.dias.length ? ` · <span style="color:var(--bad)"><b>${fmtNum(p.dias.length)}</b> franjas en el año con más gente que puestos</span>` : ' · ningún día los pasa'}.</p>` : ''}
   </section>`;
