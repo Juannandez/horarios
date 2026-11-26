@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T10:49:21.676Z",
- "nota": "Sevilla: casos especiales",
+ "guardado": "2026-11-26T10:52:15.471Z",
+ "nota": "Sevilla: grupos y patrones",
  "config": {
   "version": 2,
   "tema": "day",
@@ -946,28 +946,6 @@
       "condiciones": {}
      },
      {
-      "id": "sup",
-      "colectivo": "SUP",
-      "nombre": "Supervisión",
-      "prefijo": "SUP",
-      "personas": 29,
-      "patron": [],
-      "patronDe": "ta",
-      "flexible": true,
-      "horasObjetivo": 1480.5,
-      "franjasAjuste": [
-       "manana",
-       "tarde",
-       "noche"
-      ],
-      "vacaciones": {
-       "activo": true,
-       "dias": 30,
-       "desde": "06-01",
-       "hasta": "09-30"
-      }
-     },
-     {
       "id": "fd",
       "colectivo": "TA",
       "nombre": "Fijos discontinuos",
@@ -1026,6 +1004,28 @@
       "condiciones": {
        "libreFines": true,
        "sinVacaciones": true
+      }
+     },
+     {
+      "id": "sup",
+      "colectivo": "SUP",
+      "nombre": "Supervisión",
+      "prefijo": "SUP",
+      "personas": 29,
+      "patron": [],
+      "patronDe": "ta",
+      "flexible": true,
+      "horasObjetivo": 1480.5,
+      "franjasAjuste": [
+       "manana",
+       "tarde",
+       "noche"
+      ],
+      "vacaciones": {
+       "activo": true,
+       "dias": 30,
+       "desde": "06-01",
+       "hasta": "09-30"
       }
      }
     ],
