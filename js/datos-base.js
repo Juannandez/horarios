@@ -89,7 +89,7 @@ export const NIVEL_DEFECTO = {
   descanso: 'bloquea', maxSeguidos: 'bloquea', maxNoches: 'bloquea', maxNochesSeguidas: 'bloquea', descansoTrasNoche: 'bloquea',
   bloquesNoche: 'bloquea', tope: 'bloquea', ratio: 'bloquea',
   maxFines: 'avisa', maxFinesSeguidos: 'avisa', minFinesLibresMes: 'avisa', minFinesLibresEntre: 'avisa', finesCoherentes: 'avisa',
-  finCompleto: 'avisa', maxEntradas: 'avisa', minLibresSemana: 'avisa', unaFranjaSemana: 'avisa',
+  finCompleto: 'avisa', maxEntradas: 'avisa', minLibresSemana: 'avisa', unaFranjaSemana: 'avisa', minNoches: 'avisa',
 };
 export const nivelRegla = (k, r) => (r && r.nivel) || NIVEL_DEFECTO[k] || 'avisa';
 
@@ -116,6 +116,7 @@ export const REGLAS_CATALOGO = [
   { k: 'minFinesLibresMes', texto: 'Fines de semana libres completos (sábado y domingo sin turno) como mínimo cada mes', unidad: 'fines de semana', defecto: 1, normas: ['finLibreCadaMes'], decision: 'Decisión de la sección (20-11-2026): «un fin de semana al mes como el horario que tenemos ahora». En el horario de 2027 lo cumple el 99 % en Sevilla y el 100 % en Málaga.' },
   { k: 'finCompleto', texto: 'Fin de semana completo: si se trabaja, sábado y domingo (no uno suelto)', unidad: '', defecto: true, sinValor: true, normas: ['finesUnoDeTres'], decision: 'Petición de CGT: el fin de semana trabajado es completo. El rotatorio de partida ya los tiene completos; la regla impide que el ajuste los parta (no quita solo el sábado o solo el domingo, ni llama a alguien para uno solo). Si el otro día no está disponible (vacaciones, baja, AJ) no cuenta como partido.' },
   { k: 'maxEntradas', texto: 'Máximo de horas de entrada distintas en el año por persona', unidad: 'horas de entrada', defecto: 4, normas: ['rotacionIrregular'], sinFuente: true, decision: 'Petición de CGT al nuevo modelo de la consultora: limitar las horas de entrada distintas. 4 = mañana, tarde, noche y un solape.' },
+  { k: 'minNoches', texto: 'Noches como mínimo al año, para quien hace noches', unidad: 'noches', defecto: 14, normas: ['turnosConNoches'], decision: 'Decisión de la sección (26-11-2026): quien hace noches hace como mínimo 14 al año (con las 50 personas sin noches, el resto cubre las noches con 14 o 15).' },
   { k: 'unaFranjaSemana', texto: 'Una sola franja de día por semana: en una semana de mañana no hay tardes (ni al revés)', unidad: '', defecto: true, sinValor: true, normas: ['rotacion3M1T'], decision: 'Petición de la sección (26-11-2026): el ajuste no mete una tarde en una semana de mañana. Al completar horas o cubrir un hueco, solo usa la franja de esa semana.' },
   { k: 'minLibresSemana', texto: 'Días libres como mínimo cada semana (de lunes a domingo)', unidad: 'días', defecto: 2, normas: ['dosDiasDescansoSemana'], decision: 'Reivindicación sindical: dos días de descanso cada semana. El rotatorio ya los da; la regla impide que el ajuste, al completar la jornada o cubrir un hueco, ponga un turno que deje una semana con menos.' },
   { k: 'descanso',          texto: 'Descanso mínimo entre el fin de un turno y el inicio del siguiente', unidad: 'horas', defecto: 12, normas: ['descansoEntreJornadas'] },

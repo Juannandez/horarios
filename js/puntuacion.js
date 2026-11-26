@@ -30,6 +30,7 @@ const TITULOS = {
   maxEntradas: (v) => `Más de ${v} horas de entrada distintas en el año`,
   minLibresSemana: (v) => `Semana con menos de ${v} días libres`,
   unaFranjaSemana: () => 'Semana con mañanas y tardes mezcladas',
+  minNoches: (v) => `Menos de ${v} noches al año (quien hace noches)`,
   tope: (v) => `Más de ${v} h por encima de la jornada`,
 };
 
@@ -135,6 +136,10 @@ export function infracciones(res, cfg) {
         const [a, b] = f.dias;
         if (trab(a) !== trab(b) && t(trab(a) ? b : a).disponible !== false) caso('finCompleto', [trab(a) ? a : b], trab(a) ? 'solo el sábado' : 'solo el domingo');
       }
+    }
+    if (salida.minNoches && !p.horarioLibre && !p.altaDias && !p.exentoNoches && !p.tramo && !(p.desde > 0) && !(p.hasta < D) && !(Array.isArray(p.franjas) && !p.franjas.includes('noche'))) {
+      let n = 0; for (let d = 0; d < D; d++) if (noche(d)) n++;
+      if (n < val('minNoches')) caso('minNoches', [], `${n} noches`);
     }
     if (salida.unaFranjaSemana && !p.horarioLibre) {
       for (let l = 0; l + 6 < D; l++) {

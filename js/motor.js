@@ -200,6 +200,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const maxEntradas = reg('maxEntradas', 4);             // horas de entrada distintas en el año
   const minLibresSemana = reg('minLibresSemana', 2);     // días libres como mínimo cada semana (lunes a domingo)
   const unaFranja = !!usa('unaFranjaSemana');            // el ajuste no mezcla mañana y tarde en una misma semana
+  const minNoches = reg('minNoches', 14);                // noches como mínimo al año para quien hace noches
   const PUESTOS = Math.max(0, Number(cfg.puestos) || 0);  // puestos operativos en sala (0 = sin tope)
   // Fines de semana con bolsa (Cobertura y bolsa): el ajuste no pone a trabajar a nadie un sábado o domingo que libra;
   // lo que falte se deja en disponibilidad para la bolsa (código DB: localizable, no trabaja).
@@ -988,6 +989,57 @@ export function generar(cfgEntrada, opciones = {}) {
     return movidos;
   };
 
+  // Quien hace noches y no llega al mínimo de noches del año (regla minNoches) recibe bloques de 2 noches entre semana
+  // (lunes-martes o miércoles-jueves, sin festivos), donde menos gente de noche hay, si puede: días del bloque libres o
+  // con un turno de día que sobra, y su descanso después libre. Las horas las reajustan luego recortar() y completar().
+  const tomarBloqueNoche = (c, q, d, b) => {
+    const fin = Math.min(D - 1, b + (descansoTrasNoche || 0)), ti = idx.get(personas[q].pref.noche);
+    // Su fin de semana de esa semana (y de la siguiente si el descanso llega) tiene que estar libre.
+    for (let x = Math.max(0, d - dias[d].dow); x <= Math.min(D - 1, fin + 6 - dias[fin].dow); x++) if (dias[x].finde && trabajaEn(q, x)) return false;
+    for (let x = d; x <= fin; x++) {
+      const k = q * D + x, t = T[grid[k]];
+      if (!t.trabaja) { if (x <= b && !libre(q, x)) return false; continue; }
+      if (!cambiable(k) || franjaIdx[grid[k]] === 2 || dias[x].festivo) return false;
+      const f = franjaIdx[grid[k]];
+      if (cob[c][f][x] - 1 < necesidad[c][f][x]) return false;
+    }
+    const antes = [];
+    for (let x = d; x <= fin; x++) antes.push([grid[q * D + x], origen[q * D + x]]);
+    for (let x = d; x <= fin; x++) {
+      if (x <= b) poner(q, x, ti, ORIGEN.CUBRE);
+      else if (T[grid[q * D + x]].trabaja) poner(q, x, iLibre, ORIGEN.RECORTE);
+    }
+    if (noches[q] <= topeNoches(q) && valida(q, Math.max(0, d - 1), Math.min(D - 1, fin + 1))) return true;
+    for (let x = d; x <= fin; x++) poner(q, x, antes[x - d][0], antes[x - d][1]);
+    return false;
+  };
+  const subirNoches = (c) => {
+    if (minNoches == null || !bloques) return 0;
+    const elegible = (pi) => { const p = personas[pi]; return p.pref && p.pref.noche && idx.has(p.pref.noche) && !p.exentoNoches && !p.horarioLibre && !p.altaDias && !p.tramo && !(p.desde > 0) && !(p.hasta < D) && franjasDe(p, 0).includes('noche'); };
+    const inicios = []; for (let d = 0; d + 1 < D; d++) if ((dias[d].dow === 0 || dias[d].dow === 2) && !dias[d].festivo && !dias[d + 1].festivo) inicios.push(d);
+    let puestos = 0;
+    for (const q of porColectivo[c].filter(elegible)) {
+      for (let vueltas = 0; noches[q] < minNoches && vueltas < 10; vueltas++) {
+        const cand = inicios.map(d => [d, cob[c][2][d] + cob[c][2][d + 1]]).sort((a, b) => a[1] - b[1]);
+        let ok = false;
+        for (const [d] of cand) if (tomarBloqueNoche(c, q, d, d + 1)) { ok = true; puestos++; break; }
+        if (!ok) break;
+      }
+      // Si le falta una sola noche: se alarga uno de sus bloques de 2 a 3 (el esquema 2-2-3 los admite), entre semana.
+      if (noches[q] === minNoches - 1) {
+        for (let d = 1; d < D - 1 && noches[q] < minNoches; d++) {
+          if (!esNoche(q, d) || esNoche(q, d - 1) || !esNoche(q, d + 1) || esNoche(q, d + 2)) continue;   // bloque de 2: d, d+1
+          for (const x of [d + 2, d - 1]) {
+            if (x < 0 || x >= D || dias[x].finde || dias[x].festivo) continue;
+            if (tomarBloqueNoche(c, q, x, x) && esNoche(q, x)) { puestos++; break; }
+          }
+        }
+      }
+    }
+    stats.nochesSubidas = (stats.nochesSubidas || 0) + puestos;
+    return puestos;
+  };
+
   // Cubre la noche del día d con un bloque entero (p. ej. viernes a domingo) de una sola persona.
   // Cada día del bloque tiene que estar libre o en una franja que va sobrada ese día. Tras el bloque,
   // si el día siguiente choca con el descanso y sobra gente, ese día pasa a saliente de noche.
@@ -1199,9 +1251,9 @@ export function generar(cfgEntrada, opciones = {}) {
     const conCesion = (c) => { if (opciones.cesionDosPasadas) { cesionActiva = false; cubrir(c); } cesionActiva = true; cubrir(c); };
     // Margen para imprevistos: al final, con las noches de oficio y sin tocar lo ya cubierto.
     const conMargenFinal = (c) => { if (!hayMargen) return; aplicarMargen(c); cesionActiva = false; cubrir(c); recortar(c); completar(c); cesionActiva = true; };
-    recortarNoches(0); equilibrarNoches(0); recortar(0); conCesion(0); recortar(0); completar(0); conMargenFinal(0);
+    recortarNoches(0); equilibrarNoches(0); subirNoches(0); recortar(0); conCesion(0); recortar(0); completar(0); conMargenFinal(0);
     aplicarRatio();
-    recortarNoches(1); equilibrarNoches(1); recortar(1); conCesion(1); recortar(1); completar(1); conMargenFinal(1);
+    recortarNoches(1); equilibrarNoches(1); subirNoches(1); recortar(1); conCesion(1); recortar(1); completar(1); conMargenFinal(1);
   } else aplicarRatio();
   cesionActiva = true;   // desde aquí (mejora del reparto, avisos), cada persona con su tope propio
 
