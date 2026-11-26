@@ -261,9 +261,13 @@ function tablaMes(lista) {
       const celdas = dias.map(d => {
         const n = res.cobertura[ci][fi][d.i], m = res.necesidad[ci][fi][d.i];
         const justo = estado.cfg.cobertura.aguante.avisar && n === m && m > 0;
+        // Puestos: si entre todos los colectivos hay más gente en sala que puestos, la casilla sale en naranja.
+        const P = res.puestos && res.puestos.valor; let enSala = 0; if (P) for (let k = 0; k < res.colectivos.length; k++) enSala += res.cobertura[k][fi][d.i];
+        const sobre = P && c === cols[0] && enSala > P ? ` sobre-puestos" data-sobre="${enSala}` : '';
         const rz = u.resaltarDia === d.i ? ' resaltado' : '';
         // Personas por encima (+) o por debajo (−, en rojo) del mínimo de ese día.
-        return n < m ? `<td class="c falta${rz}" title="${n} en sala, mínimo ${m}: faltan ${m - n}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}${rz}" title="${n} en sala, mínimo ${m}: ${n - m ? `sobran ${n - m}` : 'justo el mínimo'}">${n - m ? `+${n - m}` : '0'}</td>`;
+        const tp = sobre ? ` · ${enSala} en sala con todos los colectivos: más que los ${P} puestos` : '';
+        return n < m ? `<td class="c falta${rz}" title="${n} en sala, mínimo ${m}: faltan ${m - n}${tp}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}${rz}${sobre}" title="${n} en sala, mínimo ${m}: ${n - m ? `sobran ${n - m}` : 'justo el mínimo'}${tp}">${n - m ? `+${n - m}` : '0'}</td>`;
       }).join('');
       // Lo que se ve en cada casilla es la gente EN SALA ese día; el mínimo va al lado del nombre de la franja.
       const ms = dias.map(d => res.necesidad[ci][fi][d.i]), mMin = Math.min(...ms), mMax = Math.max(...ms);

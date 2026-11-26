@@ -266,9 +266,20 @@ export function seccionMinimos(cfg) {
     <p class="tenue">Personas en sala por franja y día: cada día de la semana por separado y los festivos aparte (un festivo usa su columna aunque caiga entre semana). Valores de partida: Anexo 2 «Mínimos SAT 2013» de Sevilla. Si hay dos filas iguales, vale la más alta. En supervisión, el mínimo sube además con la ratio de Reglas. «L → M-V» copia el lunes al resto de la semana.</p>
     <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Colectivo</th><th scope="col">Franja</th>${DIAS_MIN.map((d, k) => `<th scope="col" class="num" title="${DIAS_MIN_LARGO[k]}">${d}</th>`).join('')}<th scope="col" class="num">Festivo</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="minimos">Añadir mínimo</button></div></section>
+  ${seccionPuestos(cfg)}
   ${seccionAbsentismo(cfg)}
   ${seccionMinimosHora(cfg)}
   ${seccionMinimosFecha(cfg)}`;
+}
+
+// Puestos operativos en sala: tope de personas a la vez (sumando teleasistencia y supervisión). 0 = sin tope.
+function seccionPuestos(cfg) {
+  const p = estado.res.puestos || { valor: 0, max: 0, dias: [] };
+  return `<section class="panel" id="sec-puestos"><h2>Puestos en sala</h2>
+    <p class="tenue">Cuántas personas caben a la vez en la sala (puestos operativos), sumando teleasistencia y supervisión. El ajuste no pone a nadie más en una franja cuando ya están todos ocupados, y el cuadrante marca en naranja los días que el ciclo los pasa. 0 = sin tope.</p>
+    <div class="campos">${campo('Puestos operativos', num('puestos', cfg.puestos ?? 0, 'min="0" max="2000" style="width:100px" data-estructura="1"'))}</div>
+    ${p.valor ? `<p>Máximo en sala: <b>${fmtNum(p.max)}</b> de ${fmtNum(p.valor)} puestos${p.dias.length ? ` · <span style="color:var(--bad)"><b>${fmtNum(p.dias.length)}</b> franjas en el año con más gente que puestos</span>` : ' · ningún día los pasa'}.</p>` : ''}
+  </section>`;
 }
 
 // Absentismo previsto: porcentaje sobre el mínimo, de día y de noche; como mínimo (cuenta en los huecos) o como margen.

@@ -462,3 +462,6 @@ body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
 .titlebar .tb-escenario select { max-width: 280px; min-width: 0; padding: 5px 8px; font-weight: 600; color: var(--ink); }
 .titulo-escenario { color: var(--gl-marca, var(--accent)); }
 @media (max-width: 900px) { .titlebar .tb-esc-et { display: none; } .titlebar .tb-escenario select { max-width: 170px; } }
+
+/* Más gente en sala que puestos. */
+.cuadrante tfoot td.sobre-puestos { background: color-mix(in srgb, var(--warn, #d98a00) 28%, var(--panel2)); font-weight: 700; }

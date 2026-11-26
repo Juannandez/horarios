@@ -189,6 +189,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const finCompleto = !!usa('finCompleto');             // fin de semana trabajado = sábado y domingo
   const maxEntradas = reg('maxEntradas', 4);             // horas de entrada distintas en el año
   const minLibresSemana = reg('minLibresSemana', 2);     // días libres como mínimo cada semana (lunes a domingo)
+  const PUESTOS = Math.max(0, Number(cfg.puestos) || 0);  // puestos operativos en sala (0 = sin tope)
   const descansoTrasNoche = reg('descansoTrasNoche', 3) || 0;
   const ajusteActivo = !R.ajuste || R.ajuste.activo !== false;
   // Cobertura y bolsa (Parámetros › Cobertura y bolsa): cesión de noches, bolsa de horas, margen, ausencias y aguante.
@@ -596,6 +597,11 @@ export function generar(cfgEntrada, opciones = {}) {
   const puede = (pi, d, ti) => {
     const nuevo = T[ti], viejo = T[grid[pi * D + d]];
     if (!nuevo.trabaja) return true;
+    // Puestos en sala: el ajuste no pone a nadie más en una franja si ya están todos los puestos ocupados.
+    if (PUESTOS && (!viejo.trabaja || viejo.franja !== nuevo.franja)) {
+      const f = franjaIdx[ti]; let n = 0; for (let c = 0; c < COL.length; c++) n += cob[c][f][d];
+      if (f >= 0 && n + 1 > PUESTOS) return false;
+    }
     // Días libres cada semana: no se pone un turno en un día libre si la semana se queda con menos.
     if (minLibresSemana != null && !viejo.trabaja) { const n = libresSemana(pi, d); if (n != null && n - 1 < minLibresSemana) return false; }
     if (personas[pi].soloLaborables && dias[d].tipo !== 'laborable') return false;
@@ -1475,6 +1481,13 @@ export function generar(cfgEntrada, opciones = {}) {
     }
   }
 
+  // Puestos en sala: días y franjas con más gente que puestos (sumando los colectivos).
+  const puestos = { valor: PUESTOS, max: 0, dias: [] };
+  if (PUESTOS) for (let d = 0; d < D; d++) for (let f = 0; f < FR.length; f++) {
+    let n = 0; for (let c = 0; c < COL.length; c++) n += cob[c][f][d];
+    puestos.max = Math.max(puestos.max, n);
+    if (n > PUESTOS) puestos.dias.push({ d, franja: FR[f], fecha: dias[d].fecha, enSala: n });
+  }
   const huecos = [];
   // Aguante: cuántas personas pueden faltar cada día y franja sin bajar del mínimo real.
   const aguante = COL.map((_, c) => FR.map((_, f) => Int32Array.from(cob[c][f], (n, d) => n - real[c][f][d])));
@@ -1486,7 +1499,7 @@ export function generar(cfgEntrada, opciones = {}) {
   return {
     dias, personas: filas, turnos: T, turnosMap, idx, grid, origen, D, P,
     cobertura: cob, necesidad: real, necesidadPlan: necesidad, aguante, margen, absentismo: ABS, cesion, bolsa: bolsaCfg, colectivos: COL, franjas: FR, huecos, stats, vacaciones, mejora,
-    patrones, ms: Date.now() - t0, semanaCiclo0, repartoFestivos: RF, aj: AJ, repeticiones, porHoras,
+    patrones, ms: Date.now() - t0, semanaCiclo0, repartoFestivos: RF, aj: AJ, repeticiones, porHoras, puestos,
     codigo: (pi, d) => T[grid[pi * D + d]].codigo, inicioCuadrante: inicioCuad,
     // Meses del cuadrante, en orden (con el año de 15 a 15 de enero hay 13: enero partido en dos).
     meses: [...new Map(dias.map(x => [x.mc, { mc: x.mc, mes: x.mes, anio: x.anio }])).values()],
