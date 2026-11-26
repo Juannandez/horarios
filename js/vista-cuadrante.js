@@ -31,7 +31,10 @@ function personasVisibles() {
   const { campo, dir } = u.orden;
   const valor = (p) => campo === 'grupo' ? ordenGrupo.get(p.grupo) * 10000 + p.orden
     : campo === 'id' ? null : campo === 'avisos' ? p.alertas.length : p[campo];
+  // Los fijos discontinuos (horario libre, solo en sus periodos) van siempre al final, se ordene como se ordene.
+  const alFinal = (p) => (p.horarioLibre || p.altaDias ? 1 : 0);
   lista.sort((a, b) => {
+    const f = alFinal(a) - alFinal(b); if (f) return f;
     if (campo === 'id') return dir * a.id.localeCompare(b.id, 'es', { numeric: true });
     return dir * (valor(a) - valor(b)) || a.id.localeCompare(b.id, 'es', { numeric: true });
   });
@@ -169,6 +172,45 @@ function cifras() {
   </div>`;
 }
 
+// Ancho de las columnas Persona y Grupo (se arrastra el borde de su cabecera; se recuerda en este navegador).
+const CLAVE_ANCHOS = 'horarios.cuadrante.anchos';
+const ANCHOS_PARTIDA = { persona: 92, grupo: 170 };
+function anchos() { try { return { ...ANCHOS_PARTIDA, ...JSON.parse(localStorage.getItem(CLAVE_ANCHOS) || '{}') }; } catch (e) { return { ...ANCHOS_PARTIDA }; } }
+function guardarAnchos(a) { try { localStorage.setItem(CLAVE_ANCHOS, JSON.stringify(a)); } catch (e) { /* sin almacenamiento */ } }
+
+// Mínimos por horas del día elegido (se elige pulsando el día en la cabecera): por tramos con el mismo mínimo, cuántos
+// hay en sala (lo más bajo del tramo) y la diferencia.
+function panelPorHoras() {
+  const { res } = estado, u = estado.ui;
+  if (!res.cuartos) return '';
+  const visibles = res.dias.filter(d => d.mc >= u.mesDesde && d.mc <= u.mesHasta);
+  if (!visibles.length) return '';
+  const dSel = visibles.some(d => d.i === u.resaltarDia) ? u.resaltarDia : visibles[0].i, dia = res.dias[dSel];
+  const cols = u.colectivo === 'todos' ? ['TA', 'SUP'] : [u.colectivo];
+  const hm = (q) => `${String(Math.floor(q / 4) % 24).padStart(2, '0')}:${String((q % 4) * 15).padStart(2, '0')}`;
+  const tablas = cols.map(col => {
+    const c = res.colectivos.indexOf(col);
+    const tramos = [];
+    for (let q = 0; q < 96; q++) {
+      const m = res.cuartos.min(c, dSel, q); if (m == null) continue;
+      const n = res.cuartos.cob[c][dSel * 96 + q];
+      const t = tramos[tramos.length - 1];
+      if (t && t.min === m && t.fin === q) { t.fin = q + 1; t.sala = Math.min(t.sala, n); } else tramos.push({ ini: q, fin: q + 1, min: m, sala: n });
+    }
+    if (!tramos.length) return '';
+    return `<div class="tabla-caja horas-dia" style="max-height:none"><table class="tabla-lista"><caption class="oculto">${col === 'TA' ? 'Teleasistencia' : 'Supervisión'}</caption>
+      <thead><tr><th scope="col">${col === 'TA' ? 'Teleasistencia' : 'Supervisión'}</th><th scope="col" class="num">Mínimo</th><th scope="col" class="num">En sala</th><th scope="col" class="num">Diferencia</th></tr></thead><tbody>
+      ${tramos.map(t => { const dif = t.sala - t.min; return `<tr><th scope="row">${hm(t.ini)}–${t.fin === 96 ? '24:00' : hm(t.fin)}</th><td class="num">${t.min}</td><td class="num">${t.sala}</td><td class="num ${dif < 0 ? 'mal' : ''}"><b>${dif > 0 ? '+' : ''}${dif}</b></td></tr>`; }).join('')}
+      </tbody></table></div>`;
+  }).join('');
+  const i = visibles.findIndex(d => d.i === dSel);
+  return `<section class="panel" id="horas-dia"><div class="mi-nav"><button type="button" class="btn mini" data-hdia="${i > 0 ? visibles[i - 1].i : ''}" ${i > 0 ? '' : 'disabled'} aria-label="Día anterior">←</button>
+      <h2>Mínimos por horas · ${DIAS_CORTOS[dia.dow]} ${fmtFecha(dia.fecha)}${dia.festivo ? ` · <span class="pildora">festivo</span>` : ''}</h2>
+      <button type="button" class="btn mini" data-hdia="${i < visibles.length - 1 ? visibles[i + 1].i : ''}" ${i < visibles.length - 1 ? '' : 'disabled'} aria-label="Día siguiente">→</button></div>
+    <p class="tenue">Pulsa un día en la cabecera del cuadrante para verlo. Cada tramo con el mismo mínimo; «en sala», lo más bajo del tramo; en rojo, lo que falta.</p>
+    <div class="horas-dia-tablas">${tablas}</div></section>`;
+}
+
 function herramientas() {
   const u = estado.ui, cfg = estado.cfg;
   const seg = (nombre, valor, opciones) => `<div class="segmentado" role="group" aria-label="${nombre}">${opciones.map(([v, t]) =>
@@ -278,6 +320,9 @@ function tablaMes(lista) {
       const ms = dias.map(d => res.necesidad[ci][fi][d.i]), mMin = Math.min(...ms), mMax = Math.max(...ms);
       pie.push(`<tr${fi === 0 && c !== cols[0] ? ' class="inicio-col"' : ''}><th scope="row" class="fija" title="Personas por encima (+) o por debajo (− en rojo) del mínimo cada día; al pasar el ratón, cuántas hay en sala">${fi === 0 ? `${c === 'TA' ? 'Teleasistencia' : 'Supervisión'} sobre el mínimo` : ''}</th><td class="fija2" title="Mínimo de esta franja en los días que se ven">${FRANJA_NOMBRE[f]} <small class="tenue">mín. ${mMin === mMax ? mMin : `${mMin}–${mMax}`}</small></td>${celdas}<td></td><td></td><td></td></tr>`);
     });
+    // Total de personas que trabajan ese día (mañana + tarde + noche que empieza ese día).
+    const totales = dias.map(d => { let n = 0; for (let fi = 0; fi < res.franjas.length; fi++) n += res.cobertura[ci][fi][d.i]; const rz = u.resaltarDia === d.i ? ' resaltado' : ''; return `<td class="c total${rz}" title="${n} ${c === 'TA' ? 'teleasistentes' : 'supervisores'} trabajan ese día (mañana, tarde y noche)">${n}</td>`; }).join('');
+    pie.push(`<tr class="fila-total"><th scope="row" class="fija" title="Personas que trabajan ese día, sumando mañana, tarde y noche">${c === 'TA' ? 'Teleasistentes' : 'Supervisores'} ese día</th><td class="fija2"><small class="tenue">en total</small></td>${totales}<td></td><td></td><td></td></tr>`);
   }
   // Relevos por cuartos de hora (con mínimos por cuartos): lo que falta cada día en el peor cuarto, en rojo; al pasar el
   // ratón, a qué horas.
@@ -293,12 +338,16 @@ function tablaMes(lista) {
       if (db.length >= peor) return `<td class="c bolsa${rz}" title="Faltan: ${esc(l.map(h => `${hm(h)} → ${h.falta}`).join(' · '))}. En disponibilidad para la bolsa: ${esc(db.map(x => x.persona).join(', '))}">B${peor}</td>`;
       return `<td class="c falta${rz}" title="Faltan: ${esc(l.map(h => `${hm(h)} → ${h.falta}`).join(' · '))}">−${peor}</td>`;
     }).join('');
-    pie.splice(Math.min(3, pie.length), 0, `<tr><th scope="row" class="fija" title="Con los mínimos por cuartos de hora: lo que falta en el peor cuarto de cada día (relevos)">Relevos (cuartos de hora)</th><td class="fija2"><small class="tenue">teleasistencia</small></td>${celdas}<td></td><td></td><td></td></tr>`);
+    pie.splice(Math.min(4, pie.length), 0, `<tr><th scope="row" class="fija" title="Con los mínimos por cuartos de hora: lo que falta en el peor cuarto de cada día (relevos)">Relevos (cuartos de hora)</th><td class="fija2"><small class="tenue">teleasistencia</small></td>${celdas}<td></td><td></td><td></td></tr>`);
   }
   const pieFijo = pie.slice(0, 3).join(''), pieResto = pie.slice(3).join('');
-  return `${hojaColores}<div class="tabla-caja"><table class="cuadrante">
+  // Los meses arriba, encima de sus días.
+  const grupoMes = []; for (const d of dias) { const k = `${d.mes}|${d.anio}`; if (!grupoMes.length || grupoMes[grupoMes.length - 1].k !== k) grupoMes.push({ k, mes: d.mes, anio: d.anio, n: 0 }); grupoMes[grupoMes.length - 1].n++; }
+  const filaMeses = `<tr class="fila-meses"><th scope="col" class="fija"></th><th scope="col" class="fija2"></th>${grupoMes.map(g => `<th scope="colgroup" colspan="${g.n}" class="mes-cab">${MESES[g.mes]} ${g.anio}</th>`).join('')}<th colspan="3"></th></tr>`;
+  const an = anchos();
+  return `${hojaColores}<div class="tabla-caja" id="caja-cuadrante"><table class="cuadrante" style="--ancho-persona:${an.persona}px;--ancho-grupo:${an.grupo}px">
     <caption class="oculto">Cuadrante de ${MESES[(res.meses[u.mesDesde] || {}).mes ?? 0].toLowerCase()}${u.mesHasta !== u.mesDesde ? ` a ${MESES[(res.meses[u.mesHasta] || {}).mes ?? 0].toLowerCase()}` : ''} de ${estado.cfg.anio}</caption>
-    <thead><tr><th scope="col" class="fija">Persona</th><th scope="col" class="fija2">${estado.plantilla || (estado.res && estado.res.personas.some(x => x.nombrePrueba)) ? 'Nombre' : 'Grupo'}</th>${cab}
+    <thead>${filaMeses}<tr class="fila-dias"><th scope="col" class="fija">Persona<span class="tirador" data-tirador="persona" title="Arrastra para cambiar el ancho (doble clic: el de partida)"></span></th><th scope="col" class="fija2">${estado.plantilla || (estado.res && estado.res.personas.some(x => x.nombrePrueba)) ? 'Nombre' : 'Grupo'}<span class="tirador" data-tirador="grupo" title="Arrastra para cambiar el ancho (doble clic: el de partida)"></span></th>${cab}
       <th scope="col" class="num" title="Horas en el año">Horas</th><th scope="col" class="num" title="Noches en el año">Noch.</th><th scope="col" class="num" title="Fines de semana trabajados en el año">FS</th></tr></thead>
     <tbody>${filas || `<tr><td colspan="${dias.length + 5}" style="padding:16px">No hay personas con estos filtros. Quita alguno o añade un grupo en Parámetros.</td></tr>`}</tbody>
     <tfoot>${pieFijo}${pieResto}</tfoot></table></div>`;
@@ -353,19 +402,21 @@ function tablaAnio(lista) {
 export function pintarCuadrante(raiz) {
   const u = estado.ui;
   const lista = personasVisibles();
-  const scroll = $('.tabla-caja', raiz);
+  const scroll = $('#caja-cuadrante', raiz) || $('.tabla-caja', raiz);
   const pos = scroll ? [scroll.scrollLeft, scroll.scrollTop] : null;
   const escA = escenarioAbierto();
   raiz.innerHTML = `<div class="cabecera"><div><h1>Cuadrante ${esc(estado.cfg.anio)} · ${esc(estado.cfg.nombre)}${escA ? ` · <span class="titulo-escenario">${esc(escA.nombre)}</span>` : ''}</h1>
     <p>${esc(estado.cfg.titulo || '')}. Personas anónimas por código. Cambia cualquier dato en Parámetros y el cuadrante se rehace al momento (${estado.res.ms} ms).</p></div>
     <div class="fila-acciones" style="margin:0">
+      <button type="button" class="btn" data-pantalla-completa="1" title="Ver el cuadrante a pantalla completa (Esc para salir)">${document.fullscreenElement ? 'Salir de pantalla completa' : 'Pantalla completa'}</button>
       <button type="button" class="btn" data-pdf-col="TA">PDF teleasistentes</button>
       <button type="button" class="btn" data-pdf-col="SUP">PDF supervisores</button>
       <button type="button" class="btn primario" data-mejorar="1" title="Intercambia semanas entre personas del mismo grupo para repartir mejor fines de semana, festivos y domingos, sin tocar la cobertura ni las horas">${estado.cfg.mejora ? 'Mejorar más el reparto' : 'Mejorar reparto'}</button></div></div>
     ${cifras()}${panelInfracciones()}${herramientas()}
     ${u.modo === 'mes' ? leyenda() + tablaMes(lista) : tablaAnio(lista)}
-    <p class="tenue" style="margin-top:8px">${fmtNum(lista.length)} de ${fmtNum(estado.res.P)} personas.</p>`;
-  const nuevo = $('.tabla-caja:last-of-type', raiz);
+    <p class="tenue" style="margin-top:8px">${fmtNum(lista.length)} de ${fmtNum(estado.res.P)} personas.</p>
+    ${u.modo === 'mes' ? panelPorHoras() : ''}`;
+  const nuevo = $('#caja-cuadrante', raiz) || $('.tabla-caja:last-of-type', raiz);
   if (pos && nuevo) { nuevo.scrollLeft = pos[0]; nuevo.scrollTop = pos[1]; }
   pintarBarraSeleccion(raiz);
   if (focoPendiente) {
@@ -382,7 +433,33 @@ export function pintarCuadrante(raiz) {
 }
 
 export function eventosCuadrante(raiz, repintar) {
+  // Ancho de Persona y Grupo: se arrastra el borde de la cabecera (doble clic vuelve al de partida).
+  raiz.addEventListener('pointerdown', (e) => {
+    const t = e.target.closest('[data-tirador]'); if (!t || estado.vista !== 'cuadrante') return;
+    e.preventDefault(); e.stopPropagation();
+    const tabla = t.closest('table'), cual = t.dataset.tirador, a = anchos(), x0 = e.clientX, w0 = a[cual];
+    const mover = (ev) => { a[cual] = Math.max(cual === 'persona' ? 50 : 0, Math.min(400, Math.round(w0 + ev.clientX - x0))); tabla.style.setProperty(cual === 'persona' ? '--ancho-persona' : '--ancho-grupo', `${a[cual]}px`); };
+    const soltar = () => { document.removeEventListener('pointermove', mover); document.removeEventListener('pointerup', soltar); guardarAnchos(a); };
+    document.addEventListener('pointermove', mover); document.addEventListener('pointerup', soltar);
+  });
+  raiz.addEventListener('dblclick', (e) => {
+    const t = e.target.closest('[data-tirador]'); if (!t) return;
+    const a = anchos(); a[t.dataset.tirador] = ANCHOS_PARTIDA[t.dataset.tirador]; guardarAnchos(a); repintar();
+  });
+  // Pantalla completa (Esc para salir): la página del cuadrante entera, con sus filtros.
+  document.addEventListener('fullscreenchange', () => { if (estado.vista === 'cuadrante') repintar(); });
   raiz.addEventListener('click', async (e) => {
+    if (estado.vista === 'cuadrante' && e.target.closest('[data-pantalla-completa]')) {
+      const el = document.getElementById('principal');
+      if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+      else if (el && el.requestFullscreen) await el.requestFullscreen().catch(() => {});
+      return;
+    }
+    // Un día de la cabecera: lo elige para ver sus mínimos por horas (debajo del cuadrante).
+    const thDia = estado.vista === 'cuadrante' && !e.target.closest('[data-tirador]') && e.target.closest('.cuadrante thead th.dia[data-d]');
+    if (thDia) { estado.ui.resaltarDia = Number(thDia.dataset.d); repintar(); const p = document.getElementById('horas-dia'); if (p) p.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return; }
+    const hd = estado.vista === 'cuadrante' && e.target.closest('[data-hdia]');
+    if (hd && hd.dataset.hdia !== '') { estado.ui.resaltarDia = Number(hd.dataset.hdia); return repintar(); }
     if (estado.vista !== 'cuadrante') return;
     const casilla = e.target.closest('.cuadrante .celda');
     if (casilla) {

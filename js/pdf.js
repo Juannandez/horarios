@@ -66,7 +66,9 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
     const xNom = M, wNom = 20, xGr = xNom + wNom, wGr = lista.some(p => p.nombre) ? 40 : 26, wRes = 9;
     const x0 = xGr + wGr, wDia = (W - M - x0 - 3 * wRes) / dias.length;
     const altoFila = 4.3, yCab = M + 9, yFilas = yCab + 7;
-    const filasCob = 3, yMax = H - M - 10 - (filasCob + 1) * altoFila;
+    // Al pie: sobre el mínimo (3 franjas), total ese día y, con mínimos por cuartos, relevos.
+    const conRelevos = !!(res.porHoras && res.porHoras.cuartos && colectivo === 'TA');
+    const filasCob = 4 + (conRelevos ? 1 : 0), yMax = H - M - 10 - (filasCob + 1) * altoFila;
     const porPagina = Math.max(1, Math.floor((yMax - yFilas) / altoFila));
     const paginas = Math.max(1, Math.ceil(lista.length / porPagina));
 
@@ -114,17 +116,31 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
       if (pg === paginas - 1 && ci >= 0) {
         let y = yFilas + trozo.length * altoFila + 1.5;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.setTextColor(...TITULO);
-        doc.text('En sala (rojo: falta para el mínimo)', xNom + 1, y + 3);
+        doc.text(`${nombreCol} sobre el mínimo (+ de más, - en rojo lo que falta; B: disponibilidad para la bolsa)`, xNom + 1, y + 3);
         y += altoFila;
+        const disp = new Map(); for (const x of res.disponibilidad || []) if (x.colectivo === colectivo) { const k = `${x.d}|${x.franja}`; disp.set(k, (disp.get(k) || 0) + 1); }
         res.franjas.forEach((f, fi) => {
-          doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRIS); doc.text(FRANJA[f], xGr + 1, y + 3);
+          const ms = dias.map(d => res.necesidad[ci][fi][d.i]), mMin = Math.min(...ms), mMax = Math.max(...ms);
+          doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRIS); doc.text(`${FRANJA[f]} (mín. ${mMin === mMax ? mMin : `${mMin}-${mMax}`})`, xGr + 1, y + 3);
           dias.forEach((d, j) => {
-            const n = res.cobertura[ci][fi][d.i], m = res.necesidad[ci][fi][d.i], x = x0 + j * wDia;
-            doc.setTextColor(...(n < m ? MAL : TINTA)); doc.setFont('helvetica', n < m ? 'bold' : 'normal');
-            doc.text(n < m ? `-${m - n}` : String(n), x + wDia / 2, y + 3, { align: 'center' });
+            const n = res.cobertura[ci][fi][d.i], m = res.necesidad[ci][fi][d.i], x = x0 + j * wDia, b = disp.get(`${d.i}|${f}`) || 0;
+            doc.setTextColor(...(n < m && b < m - n ? MAL : TINTA)); doc.setFont('helvetica', n < m ? 'bold' : 'normal');
+            doc.text(n < m ? (b >= m - n ? `B${m - n}` : `-${m - n}`) : n > m ? `+${n - m}` : '0', x + wDia / 2, y + 3, { align: 'center' });
           });
           y += altoFila;
         });
+        // Total de personas que trabajan ese día.
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(...TINTA); doc.text(`${nombreCol} ese día`, xNom + 1, y + 3);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(...GRIS); doc.text('en total', xGr + 1, y + 3);
+        dias.forEach((d, j) => { let n = 0; for (let fi = 0; fi < res.franjas.length; fi++) n += res.cobertura[ci][fi][d.i]; doc.setTextColor(...TINTA); doc.text(String(n), x0 + j * wDia + wDia / 2, y + 3, { align: 'center' }); });
+        y += altoFila;
+        // Relevos por cuartos de hora: lo que falta en el peor cuarto de cada día.
+        if (conRelevos) {
+          const peor = new Map(); for (const h of res.porHoras.huecos) if (h.colectivo === 'TA') peor.set(h.d, Math.max(peor.get(h.d) || 0, h.falta));
+          doc.setFont('helvetica', 'bold'); doc.setTextColor(...TINTA); doc.text('Relevos (cuartos de hora)', xNom + 1, y + 3);
+          dias.forEach((d, j) => { const v = peor.get(d.i); doc.setTextColor(...(v ? MAL : TINTA)); doc.setFont('helvetica', v ? 'bold' : 'normal'); doc.text(v ? `-${v}` : 'ok', x0 + j * wDia + wDia / 2, y + 3, { align: 'center' }); });
+          y += altoFila;
+        }
       }
       // Leyenda
       let lx = M, ly = H - M - 5;

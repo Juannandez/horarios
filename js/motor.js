@@ -1749,6 +1749,8 @@ export function generar(cfgEntrada, opciones = {}) {
     dias, personas: filas, turnos: T, turnosMap, idx, grid, origen, D, P,
     cobertura: cob, necesidad: real, necesidadPlan: necesidad, aguante, margen, absentismo: ABS, cesion, bolsa: bolsaCfg, colectivos: COL, franjas: FR, huecos, stats, vacaciones, mejora,
     patrones, ms: Date.now() - t0, semanaCiclo0, repartoFestivos: RF, aj: AJ, repeticiones, porHoras, puestos, disponibilidad,
+    // Gente en sala y mínimo por cuartos de hora (para ver los mínimos por horas de un día en el cuadrante).
+    cuartos: MH ? { cob: cobQ, min: (c, d, q) => (MC && Array.isArray(MC[COL[c]]) ? minCuarto(c, d, q) : minHora(c, d, Math.floor(q / 4))) } : null,
     codigo: (pi, d) => T[grid[pi * D + d]].codigo, inicioCuadrante: inicioCuad,
     // Meses del cuadrante, en orden (con el año de 15 a 15 de enero hay 13: enero partido en dos).
     meses: [...new Map(dias.map(x => [x.mc, { mc: x.mc, mes: x.mes, anio: x.anio }])).values()],

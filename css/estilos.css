@@ -468,3 +468,19 @@ body:has(#barra-guardar:not(:empty)) #principal { padding-bottom: 110px; }
 
 /* Falta gente pero queda cubierto con disponibilidad para la bolsa (fines de semana). */
 .cuadrante tfoot td.bolsa { background: color-mix(in srgb, #FFE08A 55%, var(--panel2)); color: #7a5a00; font-weight: 700; }
+
+/* Cuadrante: ancho de Persona y Grupo ajustable (variables en la tabla), meses arriba, total por día, pantalla completa. */
+.cuadrante .fija { min-width: var(--ancho-persona, 92px); max-width: var(--ancho-persona, 92px); width: var(--ancho-persona, 92px); overflow: hidden; text-overflow: ellipsis; }
+.cuadrante .fija2 { left: var(--ancho-persona, 92px); min-width: var(--ancho-grupo, 170px); max-width: var(--ancho-grupo, 170px); width: var(--ancho-grupo, 170px); }
+.cuadrante thead th.fija, .cuadrante thead th.fija2 { position: sticky; }
+.cuadrante .tirador { position: absolute; top: 0; right: 0; width: 7px; height: 100%; cursor: col-resize; z-index: 4; border-right: 2px solid transparent; }
+.cuadrante .tirador:hover { background: color-mix(in srgb, var(--gl-marca, #2a6) 35%, transparent); }
+.cuadrante thead tr.fila-meses th { top: 0; height: 22px; padding: 2px 6px; font-size: 11px; font-weight: 700; text-align: left; color: var(--ink); border-bottom: 1px solid var(--line2); }
+.cuadrante thead tr.fila-meses th.mes-cab { border-left: 2px solid var(--line2); }
+.cuadrante thead tr.fila-dias th { top: 22px; }
+.cuadrante tfoot tr.fila-total td.total { font-weight: 600; color: var(--ink); }
+.cuadrante tfoot tr.fila-total th.fija { font-weight: 700; }
+#principal:fullscreen { overflow: auto; background: var(--bg, #f4f6f8); padding: 12px 16px; }
+#principal:fullscreen #caja-cuadrante { max-height: calc(100vh - 260px); }
+.horas-dia-tablas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.horas-dia td.mal { color: var(--bad); }
