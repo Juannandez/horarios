@@ -1,7 +1,7 @@
 // PDF del cuadrante (por colectivo) y de los informes por persona, generados en el navegador con jsPDF
 // (js/vendor/jspdf-4.2.1.umd.min.js, licencia MIT). Nada sale del navegador: el PDF se descarga.
 // Las fuentes estándar del PDF solo tienen letras latinas: se evitan símbolos como ≥ o −.
-import { ORIGEN, horarioTurno } from './motor.js';
+import { ORIGEN, horarioTurno, margenDia } from './motor.js';
 import { analizarPersona } from './informe.js';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -50,9 +50,9 @@ function pie(doc, texto) {
 // Nombre del mes «k» del cuadrante (con el año de 15 a 15 de enero hay dos eneros: se añade el año).
 const nomMes = (res, k) => { const m = (res.meses || []).find(x => x.mc === k); return m ? `${MESES[m.mes]}${res.meses.length > 12 ? ` ${m.anio}` : ''}` : MESES[k]; };
 
-export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta = 11, personas }) {
+export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta = 11, personas, escenario = '' }) {
   const jsPDF = await cargarJsPDF();
-  const doc = conTextoLimpio(new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' }));
+  const doc = conTextoLimpio(new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true }));
   const W = 297, H = 210, M = 8;
   const nombreCol = colectivo === 'SUP' ? 'Supervisores' : 'Teleasistentes';
   const lista = (personas || res.personas).filter(p => p.colectivo === colectivo);
@@ -76,7 +76,7 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
       if (!primera) doc.addPage(); primera = false;
       // Título
       doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...TITULO);
-      doc.text(`Cuadrante ${cfg.anio} · ${cfg.nombre} · ${nombreCol} · ${nomMes(res, mes)}`, M, M + 4);
+      doc.text(`Cuadrante ${cfg.anio} · ${cfg.nombre}${escenario ? ` · ${escenario}` : ''} · ${nombreCol} · ${nomMes(res, mes)}`, M, M + 4);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...GRIS);
       doc.text(`${cfg.titulo || ''} · ${lista.some(p => p.nombrePrueba) ? 'Nombres de prueba (inventados)' : lista.some(p => p.nombre) ? 'CONFIDENCIAL: con nombres' : 'Personas anónimas por código'} · ${paginas > 1 ? `hoja ${pg + 1} de ${paginas} del mes` : ''}`, M, M + 7.5);
       // Cabecera de días
@@ -155,16 +155,86 @@ export async function pdfCuadrante({ res, cfg, colectivo, mesDesde = 0, mesHasta
         lx += ancho;
       });
     }
+    // Mínimos por horas de cada día del mes (con mínimos por horas o por cuartos de hora).
+    paginaHoras(doc, { res, cfg, ci, dias, titulo: `Mínimos por horas ${cfg.anio} · ${cfg.nombre}${escenario ? ` · ${escenario}` : ''} · ${nombreCol} · ${nomMes(res, mes)}` });
   }
   const conNombres = lista.some(p => p.nombre);
   pie(doc, `Generado el ${hoy()} · Punto azul: puesto por el ajuste · Punto rojo: cambio a mano · F: festivo${conNombres ? ' · CONFIDENCIAL: contiene datos personales' : ''}`);
-  doc.save(`cuadrante-${cfg.id || 'sede'}-${cfg.anio}-${colectivo === 'SUP' ? 'supervisores' : 'teleasistentes'}.pdf`);
+  const trozo = escenario ? `-${escenario.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}` : '';
+  doc.save(`cuadrante-${cfg.id || 'sede'}${trozo}-${cfg.anio}-${colectivo === 'SUP' ? 'supervisores' : 'teleasistentes'}.pdf`);
+}
+
+// Mínimos por horas de un mes: una fila por hora y una columna por día. En cada casilla, arriba el mínimo de esa hora
+// (el mayor de sus cuartos de hora) y abajo cuántas personas hay de más (+) o de menos (-, en rojo) en el peor cuarto
+// de hora de esa hora. En ámbar, por debajo del margen de Cobertura y bolsa (de 7:45 a 22:00). Sin mínimos, no sale.
+const AMBAR = [146, 90, 0], FONDO_MAL = [250, 222, 222], FONDO_AMBAR = [253, 238, 200], BOLSA = [31, 92, 153], FONDO_BOLSA = [222, 234, 248];
+function paginaHoras(doc, { res, cfg, ci, dias, titulo }) {
+  if (!res.cuartos || ci < 0 || !dias.length) return false;
+  const enMargen = (q) => q >= 31 && q < 88, mgLV = margenDia(cfg, { finde: false }), mgFS = margenDia(cfg, { finde: true });
+  // Casillas: { min, dif, ambar } por hora y día (null: sin mínimo, p. ej. la madrugada del primer día).
+  const casillas = Array.from({ length: 24 }, (_, h) => dias.map((d) => {
+    let min = null, dif = null, ambar = false; const mg = margenDia(cfg, d);
+    for (let q = h * 4; q < h * 4 + 4; q++) {
+      const m = res.cuartos.min(ci, d.i, q); if (m == null) continue;
+      const v = res.cuartos.cob[ci][d.i * 96 + q] - m;
+      min = min == null ? m : Math.max(min, m); dif = dif == null ? v : Math.min(dif, v);
+      if (mg && enMargen(q) && v < mg) ambar = true;
+    }
+    return min == null ? null : { min, dif, ambar: ambar && dif >= 0 };
+  }));
+  if (!casillas.some(f => f.some(Boolean))) return false;
+  // Disponibilidad para la bolsa (B) de cada día: quien libra y queda localizable para cubrir lo que falte.
+  const col = res.colectivos[ci], bDia = dias.map(d => (res.disponibilidad || []).filter(x => x.d === d.i && x.colectivo === col).length);
+  const W = 297, H = 210, M = 8, xNom = M, wNom = 20, x0 = xNom + wNom, wDia = (W - M - x0) / dias.length;
+  const alto = 6.4;
+  doc.addPage();
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...TITULO);
+  doc.text(titulo, M, M + 4);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...GRIS);
+  const sub = doc.splitTextToSize(`En cada casilla: arriba, el mínimo de esa hora; abajo, las personas en sala por encima (+) o por debajo (-, en rojo) del mínimo en el peor cuarto de hora de esa hora.${mgLV || mgFS ? ` En ámbar, por debajo del margen pedido de 7:45 a 22:00 (+${mgLV} de lunes a viernes; +${mgFS} en sábado, domingo y festivo).` : ''} En azul con B, lo que falta y queda cubierto con disponibilidad para la bolsa (personas que libran y están localizables).`, W - 2 * M);
+  doc.text(sub, M, M + 7.5);
+  const yCab = M + 7.5 + sub.length * 2.9 + 0.5, yFilas = yCab + 7;
+  // Cabecera de días
+  doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(...GRIS); doc.text('HORA', xNom + 1, yCab + 4.5);
+  dias.forEach((d, j) => {
+    const x = x0 + j * wDia;
+    if (d.finde || d.festivo) { doc.setFillColor(...(d.festivo ? [250, 228, 228] : [236, 236, 236])); doc.rect(x, yCab, wDia, 7 + 25 * alto, 'F'); }
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(...(d.festivo ? MAL : TINTA)); doc.text(String(d.dia), x + wDia / 2, yCab + 3, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.text(DIAS[d.dow] + (d.festivo ? 'F' : ''), x + wDia / 2, yCab + 6, { align: 'center' });
+  });
+  let faltan = 0, justas = 0, enBolsa = 0, sinMin = false;
+  for (let h = 0; h < 24; h++) {
+    const y = yFilas + h * alto;
+    doc.setDrawColor(...LINEA); doc.setLineWidth(0.1); doc.line(M, y + alto, W - M, y + alto);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...TINTA);
+    doc.text(`${String(h).padStart(2, '0')}:00-${String((h + 1) % 24).padStart(2, '0')}:00`, xNom + 1, y + alto / 2 + 1);
+    casillas[h].forEach((c, j) => {
+      const x = x0 + j * wDia;
+      if (!c) { sinMin = true; doc.setFillColor(245, 245, 245); doc.rect(x + 0.2, y + 0.2, wDia - 0.4, alto - 0.4, 'F'); return; }
+      const bolsa = c.dif < 0 && bDia[j] >= -c.dif;
+      if (bolsa) { enBolsa++; doc.setFillColor(...FONDO_BOLSA); doc.rect(x + 0.2, y + 0.2, wDia - 0.4, alto - 0.4, 'F'); }
+      else if (c.dif < 0) { faltan++; doc.setFillColor(...FONDO_MAL); doc.rect(x + 0.2, y + 0.2, wDia - 0.4, alto - 0.4, 'F'); }
+      else if (c.ambar) { justas++; doc.setFillColor(...FONDO_AMBAR); doc.rect(x + 0.2, y + 0.2, wDia - 0.4, alto - 0.4, 'F'); }
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(5); doc.setTextColor(...GRIS);
+      doc.text(String(c.min), x + wDia / 2, y + 2.4, { align: 'center' });
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(5.6); doc.setTextColor(...(bolsa ? BOLSA : c.dif < 0 ? MAL : c.ambar ? AMBAR : TINTA));
+      doc.text(bolsa ? `B${-c.dif}` : c.dif > 0 ? `+${c.dif}` : String(c.dif), x + wDia / 2, y + 5.1, { align: 'center' });
+    });
+  }
+  // Fila de la disponibilidad para la bolsa de cada día.
+  { const y = yFilas + 24 * alto;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.setTextColor(...BOLSA); doc.text('Disponib. (B)', xNom + 1, y + alto / 2 + 1);
+    dias.forEach((d, j) => { if (!bDia[j]) return; doc.text(String(bDia[j]), x0 + j * wDia + wDia / 2, y + alto / 2 + 1, { align: 'center' }); }); }
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...TINTA);
+  const yR = yFilas + 25 * alto + 3.5;
+  doc.text(`Este mes: ${faltan ? `${faltan} horas-día por debajo del mínimo` : 'ninguna hora por debajo del mínimo'}${enBolsa ? ` · ${enBolsa} cubiertas con disponibilidad para la bolsa` : ''}${mgLV || mgFS ? ` · ${justas} por debajo del margen` : ''}${sinMin ? ' · En gris: de 0:00 a 8:00 del primer día, la noche del cuadrante anterior.' : ''}`, M, yR);
+  return true;
 }
 
 // ── Informes por persona, A4 vertical, una persona por hoja ────────────────────
 export async function pdfInformes({ res, cfg, pis, nombreFichero }) {
   const jsPDF = await cargarJsPDF();
-  const doc = conTextoLimpio(new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' }));
+  const doc = conTextoLimpio(new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true }));
   const W = 210, H = 297, M = 14;
   const colores = res.turnos.map(t => rgb(t.color));
   pis.forEach((pi, n) => {

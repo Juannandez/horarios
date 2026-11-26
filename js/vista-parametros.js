@@ -1,6 +1,6 @@
 // Vista Parámetros: todo lo que define el cuadrante, en listas donde se añade y se quita.
 import { estado, esc, $, $$, DIAS_CORTOS, MESES, fmtNum, estiloTurno, confirmar, modal, cambiado, leerRuta, ponerRuta, nuevoId, tinta, sedeBase, clonar, avisar, pedirFestivos } from './nucleo.js';
-import { estimarPatron, prepararTurno, resolverPatron, aplicarSolapes, fmtH } from './motor.js';
+import { estimarPatron, prepararTurno, resolverPatron, aplicarSolapes, fmtH, margenDia } from './motor.js';
 import { COLECTIVOS, FRANJAS, FRANJA_NOMBRE, REGLAS_CATALOGO, TIPOS_FUENTE, nivelRegla, ROTATORIOS } from './datos-base.js';
 import { aplicarRotatorio, minimosHoraDesdeFranjas, tablaHoraConsultora } from './escenarios-plantilla.js';
 import { NIVELES } from './puntuacion.js';
@@ -516,10 +516,12 @@ export function seccionCobertura(cfg) {
   </section>
   <section class="panel"><h2>Margen sobre el mínimo por cuartos de hora</h2>
     <p class="tenue">Con mínimos por cuartos de hora: de 7:45 a 22:00 el ajuste intenta tener al menos el mínimo más estas personas en cada cuarto (cambiando turnos dentro de la franja, sin quitar a nadie de donde no sobra y, en fin de semana, con los fijos discontinuos). La noche va sin margen. Los huecos se siguen midiendo con el mínimo; donde no se llega al margen sale en amarillo en el cuadrante.</p>
-    <div class="campos">${campo('Personas por encima del mínimo', num('cobertura.margenCuartos', cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}</div>
+    <div class="campos">${campo('De lunes a viernes: personas por encima del mínimo', num('cobertura.margenCuartos', cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}
+      ${campo('Sábados, domingos y festivos', num('cobertura.margenCuartosFinde', cob.margenCuartosFinde ?? cob.margenCuartos ?? 0, 'min="0" max="20" style="width:90px" data-estructura="1"'))}</div>
+    ${res.cuartos && (cob.margenCuartos || cob.margenCuartosFinde) ? (() => { let lv = 0, fs = 0, neg = 0; for (let d = 0; d < res.D; d++) { const mg = margenDia(estado.cfg, res.dias[d]); let peor = Infinity; for (let q = 31; q < 88; q++) { const v = res.cuartos.min(0, d, q); if (v == null) continue; peor = Math.min(peor, res.cuartos.cob[0][d * 96 + q] - v); } if (peor < 0) neg++; else if (peor < mg) { if (res.dias[d].finde || res.dias[d].festivo) fs++; else lv++; } } return `<p>Ahora, en teleasistencia: <b>${fmtNum(neg)}</b> días con algún cuarto por debajo del mínimo; <b>${fmtNum(lv)}</b> días de lunes a viernes y <b>${fmtNum(fs)}</b> de fin de semana o festivo con algún cuarto por debajo del margen.</p>`; })() : ''}
   </section>
   <section class="panel"><h2>Fines de semana</h2>
-    <p class="tenue">Con esto marcado, el ajuste no pone a trabajar a nadie un sábado o un domingo que libra (tampoco a fijos discontinuos ni para cubrir noches). Si ese día falta gente, deja a alguien que libra en <b>disponibilidad para la bolsa</b> (código DB: localizable, no trabaja ni suma horas), repartido entre la plantilla.</p>
+    <p class="tenue">Con esto marcado, el ajuste no pone a trabajar de día a nadie un sábado o un domingo que libra (las noches sí se cubren: siempre el mínimo). Si ese día falta gente, deja a alguien que libra en <b>disponibilidad para la bolsa</b> (código DB: localizable, no trabaja ni suma horas), repartido entre la plantilla.</p>
     <div class="campos">${chk('cobertura.findesBolsa', !!cob.findesBolsa, 'Fines de semana sin llamar a nadie: lo que falte, en disponibilidad para la bolsa', 'data-estructura="1"')}</div>
     ${cob.findesBolsa ? `<p>Ahora: <b>${fmtNum((res.disponibilidad || []).length)}</b> disponibilidades en fines de semana en el año${(res.disponibilidad || []).length ? ` (${fmtNum(new Set(res.disponibilidad.map(x => x.persona)).size)} personas distintas)` : ''}.</p>` : ''}
   </section>

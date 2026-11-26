@@ -42,6 +42,13 @@ export function prepararTurno(t) {
   if (i2 != null && f2 != null && i2 >= fm && f2 > i2) { horas += (f2 - i2) / 60; fm = f2; partido = true; }
   return { ...t, trabaja, ini, fm, horas, partido };
 }
+// Margen pedido sobre el mínimo por cuartos de hora (Cobertura y bolsa) un día: de lunes a viernes, margenCuartos; en
+// sábado, domingo o festivo, margenCuartosFinde (si no está, el mismo). Vale de 7:45 a 22:00 (la noche, sin margen).
+export function margenDia(cfg, dia) {
+  const cob = (cfg && cfg.cobertura) || {}, lv = Math.max(0, Number(cob.margenCuartos) || 0);
+  if (!(dia && (dia.finde || dia.festivo))) return lv;
+  return cob.margenCuartosFinde != null && cob.margenCuartosFinde !== '' ? Math.max(0, Number(cob.margenCuartosFinde) || 0) : lv;
+}
 // Cuartos de hora en que un turno está entero (para los mínimos por cuartos de hora): 0-95 del día en que empieza,
 // 96-191 del día siguiente.
 export function cuartosDeTurno(t) {
@@ -548,7 +555,10 @@ export function generar(cfgEntrada, opciones = {}) {
   const minHora = (c, d, h) => {
     const tabla = MH && MH[COL[c]]; if (!Array.isArray(tabla)) return null;
     const dd = d + Math.floor(h / 24), hh = h % 24;
-    const fila = dd < D ? (dias[dd].festivo ? 7 : dias[dd].dow) : (dias[D - 1].dow + 1) % 7;
+    // Fuera del cuadrante no hay mínimo: la madrugada del primer día la cubre la noche del cuadrante anterior y lo
+    // que pasa del último día es del cuadrante siguiente.
+    if (dd >= D || (dd === 0 && hh < 8)) return null;
+    const fila = dias[dd].festivo ? 7 : dias[dd].dow;
     const v = Array.isArray(tabla[fila]) ? Number(tabla[fila][hh]) : NaN;
     return Number.isFinite(v) ? v : null;
   };
@@ -558,15 +568,23 @@ export function generar(cfgEntrada, opciones = {}) {
   const minCuarto = (c, d, q) => {
     const tabla = MC && MC[COL[c]]; if (!Array.isArray(tabla)) return null;
     const dd = d + Math.floor(q / 96), qq = q % 96;
-    const fila = dd < D ? (dias[dd].festivo ? 7 : dias[dd].dow) : (dias[D - 1].dow + 1) % 7;
+    if (dd >= D || (dd === 0 && qq < 32)) return null;   // fuera del cuadrante (como en minHora)
+    const fila = dias[dd].festivo ? 7 : dias[dd].dow;
     const v = Array.isArray(tabla[fila]) ? Number(tabla[fila][qq]) : NaN;
     return Number.isFinite(v) ? v : null;
   };
   // Margen sobre el mínimo por cuartos (Cobertura y bolsa): de 7:30 a 22:00, el ajuste intenta tener el mínimo + N en
   // cada cuarto (no quita a nadie de donde no sobra con ese margen y cambia turnos para llegar). Los huecos se siguen
   // midiendo con el mínimo. La noche (22:00 a 7:30) va sin margen: son 10 personas.
-  const MARGEN_Q = Math.max(0, Number((cfg.cobertura || {}).margenCuartos) || 0);
-  const margenQ = (q) => { const qq = q % 96; return MARGEN_Q && qq >= 31 && qq < 88 ? MARGEN_Q : 0; };   // de 7:45 a 22:00
+  // De lunes a viernes, cobertura.margenCuartos; sábados, domingos y festivos, cobertura.margenCuartosFinde (si no está,
+  // el mismo). margenQ(d, q): el margen del cuarto q (0-191, desde el día d) de 7:45 a 22:00.
+  const MARGEN_LV = margenDia(cfg, { finde: false }), MARGEN_FS = margenDia(cfg, { finde: true });
+  const MARGEN_Q = MARGEN_LV || MARGEN_FS;
+  const margenQ = (d, q) => {
+    const dd = d + Math.floor(q / 96), qq = q % 96;
+    if (!MARGEN_Q || dd >= D || qq < 31 || qq >= 88) return 0;
+    return dias[dd].finde || dias[dd].festivo ? MARGEN_FS : MARGEN_LV;
+  };
   // ¿Se puede quitar el turno tiQuita de pi el día d (poniendo tiPone, si se da) sin dejar un cuarto bajo el mínimo?
   const cuartosOk = (pi, d, tiQuita, tiPone = null) => {
     const c = colIdx[pi];
@@ -576,7 +594,7 @@ export function generar(cfgEntrada, opciones = {}) {
       if (pone && pone.has(q)) continue;
       if (d === 0 && q < 32) continue;
       const v = minCuarto(c, d, q);
-      if (v != null && cobQ[c][d * 96 + q] - 1 < v + margenQ(q)) return false;
+      if (v != null && cobQ[c][d * 96 + q] - 1 < v + margenQ(d, q)) return false;
     }
     return true;
   };
@@ -820,7 +838,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const movible = (pi, d) => origen[pi * D + d] !== ORIGEN.MANUAL && origen[pi * D + d] !== ORIGEN.CUBRE;
 
   const porColectivo = COL.map((_, c) => personas.map((p, i) => i).filter(i => colIdx[i] === c && personas[i].flexible));
-  const stats = { cubiertos: 0, movidos: 0, recortados: 0 };
+  const stats = { cubiertos: 0, movidos: 0, recortados: 0, diasCambiados: 0 };
 
   const recortar = (c) => {
     let hubo = true, vueltas = 0;
@@ -1125,7 +1143,8 @@ export function generar(cfgEntrada, opciones = {}) {
       for (let x = b + 1; x <= Math.min(D - 1, b + diasDescanso) && vale; x++) {
         const k2 = pi * D + x, t2 = T[grid[k2]], g2 = franjaIdx[grid[k2]];
         if (t2.trabaja) {
-          if (cambiable(k2) && cob[c][g2][x] - 1 >= necesidad[c][g2][x]) cambia(x, iSN); else vale = false;
+          // Una noche de otro bloque no se pisa (dejaría una noche suelta): este bloque no vale.
+          if (g2 !== 2 && cambiable(k2) && cob[c][g2][x] - 1 >= necesidad[c][g2][x]) cambia(x, iSN); else vale = false;
         } else if (libre(pi, x)) cambia(x, iSN);
       }
       if (vale && valida(pi, a, Math.min(D - 1, b + diasDescanso))) { stats.cubiertos++; return true; }
@@ -1267,9 +1286,65 @@ export function generar(cfgEntrada, opciones = {}) {
             if (modo) { mejorNota = nota; mejor = pi; mejorTi = ti; mejorModo = modo; }
           }
           if (mejor >= 0) { aplicar(mejor, d, mejorTi, mejorModo); stats.cubiertos++; hecho = true; }
+          else if (f !== 2 && cambiarDia(c, d, f)) { stats.diasCambiados++; hecho = true; }
         }
         if (!hecho) break;
         falta--;
+      }
+    }
+  };
+
+  // a3) Cambiar un día libre por otro de trabajo de la misma semana: quien libra el día d y no puede hacer un turno más
+  // (p. ej. porque viene de trabajar el fin de semana y llevaría más de 6 días seguidos) trabaja el día d en la franja que
+  // falta y libra otro día de lunes a viernes de esa semana en que en su franja sobra gente. No cambian sus horas, ni
+  // cuántos días libra la semana, ni su franja de la semana; los fines de semana, los festivos y las noches no se tocan.
+  // Es lo que cubre, p. ej., los lunes de verano por la tarde en los turnos de 8 h.
+  const quitarSinBajar = (pi, x, tx) => {
+    const c = colIdx[pi];
+    if (!MC || !Array.isArray(MC[COL[c]])) return true;
+    for (const q of cqT[tx]) { const v = minCuarto(c, x, q); if (v != null && cobQ[c][x * 96 + q] - 1 < v) return false; }
+    return true;
+  };
+  const cambiarDia = (c, d, f, ref = necesidad) => {   // ref: lo que tiene que quedar el otro día (planificado o el mínimo real)
+    if (f === 2 || dias[d].finde || !ajusteActivo) return false;
+    const l = d - dias[d].dow, cands = [];
+    for (const pi of porColectivo[c]) {
+      if (!libre(pi, d) || personas[pi].horarioLibre) continue;
+      const ti = prefDe(pi, d, FR[f]); if (ti == null) continue;
+      for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 4); x++) {
+        if (x === d || dias[x].festivo) continue;
+        const kx = pi * D + x, tx = grid[kx];
+        if (!T[tx].trabaja || franjaIdx[tx] !== f || origen[kx] === ORIGEN.MANUAL || origen[kx] === ORIGEN.VACACIONES) continue;
+        if (Math.abs((T[tx].horas || 0) - (T[ti].horas || 0)) > 1e-9) continue;
+        const sobra = cob[c][f][x] - ref[c][f][x];
+        if (sobra < 1 || !quitarSinBajar(pi, x, tx)) continue;
+        cands.push({ pi, ti, x, tx, sobra });
+      }
+    }
+    cands.sort((a, b) => b.sobra - a.sobra);
+    for (const { pi, ti, x, tx } of cands.slice(0, 300)) {
+      const kx = pi * D + x, kd = pi * D + d, ox = origen[kx], ld = grid[kd], od = origen[kd];
+      poner(pi, x, iLibre, ORIGEN.RECORTE);
+      if (puede(pi, d, ti)) {
+        poner(pi, d, ti, ORIGEN.CUBRE);
+        if (valida(pi, Math.max(0, l - 1), Math.min(D - 1, l + 7)) && semanaCoherente(pi, d) && (maxEntradas == null || nEntradas[pi] <= maxEntradas)) return true;
+        poner(pi, d, ld, od);
+      }
+      poner(pi, x, tx, ox);
+    }
+    return false;
+  };
+
+  // Al final del ajuste, lo que siga por debajo del mínimo real de día entre semana se cubre con cambios de día, tomando
+  // de los otros días de la semana lo que tengan por encima del mínimo real (aunque baje su margen): primero, que no
+  // falte nadie.
+  const huecosConCambios = (c) => {
+    for (let d = 0; d < D; d++) for (const f of [0, 1]) {
+      let vueltas = 0;
+      while (real[c][f][d] - cob[c][f][d] > 0 && vueltas++ < 80) {
+        if (cambiarDia(c, d, f, real)) stats.diasCambiados++;
+        else if (moverTramo(c, d, f, 5, real)) stats.semanasCambiadas = (stats.semanasCambiadas || 0) + 1;   // su semana entera a la otra franja
+        else break;
       }
     }
   };
@@ -1278,29 +1353,34 @@ export function generar(cfgEntrada, opciones = {}) {
   // siguiente día libre, entre semana y como mucho 3 días, si en su franja sobra gente todos esos días. No cambian ni
   // sus horas ni sus días libres (los dos días libres de la semana se mantienen) y entre turnos quedan las 12 h: de
   // mañana a tarde hay de sobra y tras la última tarde viene el descanso. Se prefiere el tramo más corto.
-  const moverTramo = (c, d, f) => {
-    let mejor = null;
+  const moverTramo = (c, d, f, maxLargo = 3, ref = necesidad) => {
+    // En la pasada final (ref = el mínimo real) también se mueven turnos que puso el propio ajuste (no los de a mano).
+    const final = ref !== necesidad, mueve = (pi, x) => (final ? origen[pi * D + x] !== ORIGEN.MANUAL : movible(pi, x));
+    const cands = [];
     for (const pi of porColectivo[c]) {
       const k = pi * D + d, g = franjaIdx[grid[k]];
-      if (g < 0 || g === 2 || g === f || !movible(pi, d) || dias[d].finde) continue;
+      if (g < 0 || g === 2 || g === f || !mueve(pi, d) || dias[d].finde) continue;
       let e = d; while (e + 1 < D && T[grid[pi * D + e + 1]].trabaja) e++;
       const largo = e - d + 1;
-      if (largo > 3 || (mejor && largo >= mejor.largo)) continue;
+      if (largo > maxLargo) continue;
       let ok = true;
       for (let x = d; x <= e && ok; x++) {
         const kx = pi * D + x;
-        if (dias[x].finde || dias[x].festivo || franjaIdx[grid[kx]] !== g || !movible(pi, x) || origen[kx] === ORIGEN.VACACIONES) ok = false;
-        else if (cob[c][g][x] - 1 < necesidad[c][g][x] || prefDe(pi, x, FR[f]) == null) ok = false;
+        if (dias[x].finde || dias[x].festivo || franjaIdx[grid[kx]] !== g || !mueve(pi, x) || origen[kx] === ORIGEN.VACACIONES) ok = false;
+        else if (cob[c][g][x] - 1 < ref[c][g][x] || prefDe(pi, x, FR[f]) == null) ok = false;
+        else if (final && (!quitarSinBajar(pi, x, grid[kx]) || Math.abs((T[prefDe(pi, x, FR[f])].horas || 0) - (T[grid[kx]].horas || 0)) > 1e-9)) ok = false;
       }
-      if (ok) mejor = { pi, e, largo };
-      if (mejor && mejor.largo === 1) break;
+      if (ok) { cands.push({ pi, e, largo }); if (!final && largo === 1) break; }
     }
-    if (!mejor) return false;
-    const { pi, e } = mejor, antes = [];
-    for (let x = d; x <= e; x++) { antes.push([grid[pi * D + x], origen[pi * D + x]]); poner(pi, x, prefDe(pi, x, FR[f]), ORIGEN.CUBRE); }
-    const sinMezcla = () => { if (!unaFranja) return true; const l = d - dias[d].dow; for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 6); x++) { const t = T[grid[pi * D + x]]; if (t.trabaja && (t.franja === 'manana' || t.franja === 'tarde') && t.franja !== FR[f]) return false; } return true; };
-    if (valida(pi, Math.max(0, d - 1), Math.min(D - 1, e + 1)) && semanaCoherente(pi, d) && sinMezcla()) return true;
-    for (let x = d; x <= e; x++) poner(pi, x, antes[x - d][0], antes[x - d][1]);
+    if (!cands.length) return false;
+    cands.sort((a, b) => a.largo - b.largo);
+    for (const { pi, e } of cands.slice(0, final ? 200 : 1)) {
+      const antes = [];
+      for (let x = d; x <= e; x++) { antes.push([grid[pi * D + x], origen[pi * D + x]]); poner(pi, x, prefDe(pi, x, FR[f]), ORIGEN.CUBRE); }
+      const sinMezcla = () => { if (!unaFranja) return true; const l = d - dias[d].dow; for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 6); x++) { const t = T[grid[pi * D + x]]; if (t.trabaja && (t.franja === 'manana' || t.franja === 'tarde') && t.franja !== FR[f]) return false; } return true; };
+      if (valida(pi, Math.max(0, d - 1), Math.min(D - 1, e + 1)) && semanaCoherente(pi, d) && sinMezcla() && (maxEntradas == null || nEntradas[pi] <= maxEntradas)) return true;
+      for (let x = d; x <= e; x++) poner(pi, x, antes[x - d][0], antes[x - d][1]);
+    }
     return false;
   };
 
@@ -1380,6 +1460,7 @@ export function generar(cfgEntrada, opciones = {}) {
     const conMargenFinal = (c) => { if (!hayMargen) return; aplicarMargen(c); cesionActiva = false; cubrir(c); recortar(c); completar(c); cesionActiva = true; };
     recortarNoches(0); equilibrarNoches(0); subirNoches(0); recortar(0); conCesion(0); recortar(0); completar(0); conMargenFinal(0);
     if (NOCHES_EXACTAS) { ajustarNoches(0); recortar(0); completar(0); }
+    huecosConCambios(0);   // lo que siga faltando de día: cambiar un día libre por otro de la semana en que sobre gente
     aplicarRatio();
     recortarNoches(1); equilibrarNoches(1); subirNoches(1); recortar(1); conCesion(1); recortar(1); completar(1); conMargenFinal(1);
   } else aplicarRatio();
@@ -1408,7 +1489,7 @@ export function generar(cfgEntrada, opciones = {}) {
         const t = T[ti];
         return [...delGrupo.get(g)].filter(t2 => t2 !== ti && T[t2].trabaja && T[t2].franja === t.franja && Math.abs((T[t2].horas || 0) - (t.horas || 0)) < 1e-9);
       };
-      const minQ = (d, q) => { const v = minCuarto(c, d, q); return v == null ? null : v + margenQ(q); };
+      const minQ = (d, q) => { const v = minCuarto(c, d, q); return v == null ? null : v + margenQ(d, q); };
       for (let d = 0; d < D; d++) {
         for (let q = 0; q < 96; q++) {
           let falta = (minQ(d, q) ?? 0) - cob[d * 96 + q];
@@ -1461,7 +1542,7 @@ export function generar(cfgEntrada, opciones = {}) {
       for (let d = 0; d < D; d++) for (let q = 0; q < 96; q++) {
         if (d === 0 && q < 32) continue;
         let vueltas = 0;
-        while ((minCuarto(c, d, q) ?? 0) + (soloMargen ? margenQ(q) : 0) - cobQ[c][d * 96 + q] > 0 && vueltas++ < 10) {
+        while ((minCuarto(c, d, q) ?? 0) + (soloMargen ? margenQ(d, q) : 0) - cobQ[c][d * 96 + q] > 0 && vueltas++ < 10) {
           let mejor = -1, mejorT = -1, nota = Infinity;
           for (const pi of porColectivo[c]) {
             if (soloMargen || !libre(pi, d)) continue;   // para el margen no se llama a nadie: solo cambios de fijos discontinuos
@@ -1502,18 +1583,31 @@ export function generar(cfgEntrada, opciones = {}) {
   // con DB a quien libra ese día y podría hacer ese turno (sin vacaciones, sin noches justo antes ni después), repartido
   // entre la plantilla (primero quien menos disponibilidades lleva). No trabaja ni suma horas: es la lista de la bolsa.
   const disponibilidad = [];
+  // Cuartos de hora (0-95) de cada franja: los de todos sus turnos en los ciclos del colectivo. Los que están en la
+  // mañana y en la tarde van a una sola: antes de las 15:00, a la mañana; desde las 15:00, a la tarde.
+  const cuartosFranja = COL.map((col) => {
+    const u = FR.map(() => new Set());
+    for (const g of grupos) {
+      if (g.colectivo !== col) continue;
+      for (const x of resolverPatron(g, cfg.grupos || [])) { if (!idx.has(x)) continue; const f = FR.indexOf(turnosMap.get(x).franja); if (f >= 0) for (const q of cqT[idx.get(x)]) if (q < 96) u[f].add(q); }
+    }
+    const fm = FR.indexOf('manana'), ft = FR.indexOf('tarde');
+    if (fm >= 0 && ft >= 0) for (const q of [...u[fm]]) if (u[ft].has(q)) { if (q >= 60) u[fm].delete(q); else u[ft].delete(q); }
+    return u.map(x => [...x].sort((a, b) => a - b));
+  });
   const dejarDisponibilidad = () => {
     if (!FINDES_BOLSA || !ajusteActivo) return;
     const iDB = idx.get('DB'), nDisp = new Int16Array(P);
     for (let d = 0; d < D; d++) {
       for (let c = 0; c < COL.length; c++) for (let f = 0; f < FR.length; f++) {
-        // Sábado y domingo; de noche, también el viernes (la noche del viernes al sábado es de fin de semana).
-        if (!(dias[d].finde || (FR[f] === 'noche' && dias[d].dow === 4))) continue;
-        // Lo que falta en la franja, o en el peor cuarto de hora de esa franja.
+        // Sábado y domingo, de día.
+        // De noche no: siempre 10, las pone el ajuste de las noches (si faltara alguien sería un hueco en rojo).
+        if (!dias[d].finde || FR[f] === 'noche') continue;
+        // Lo que falta en la franja, o en el peor cuarto de hora de esa franja para el mínimo más el margen del fin de
+        // semana (cuartos de cualquier turno de la franja; los que comparten mañana y tarde, desde las 15:00, a la tarde).
         let falta = real[c][f][d] - cob[c][f][d];
         if (MC && Array.isArray(MC[COL[c]])) {
-          const tf = turnoFranja(COL[c], FR[f]);
-          for (const q of tf ? cqT[idx.get(tf.codigo)] || [] : []) { const v = minCuarto(c, d, q); if (v != null) falta = Math.max(falta, v - cobQ[c][d * 96 + q]); }
+          for (const q of cuartosFranja[c][f]) { const v = minCuarto(c, d, q); if (v != null) falta = Math.max(falta, v + margenQ(d, q) - cobQ[c][d * 96 + q]); }
         }
         for (let k = 0; k < falta; k++) {
           let mejor = -1;

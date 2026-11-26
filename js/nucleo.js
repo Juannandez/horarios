@@ -293,6 +293,7 @@ export function completarSede(cfg, base) {
       findesBolsa: x.findesBolsa ?? b.findesBolsa ?? false,
       ...(x.findesBolsaFD != null ? { findesBolsaFD: x.findesBolsaFD } : {}),
       margenCuartos: Math.max(0, Number(x.margenCuartos ?? b.margenCuartos ?? 0) || 0),
+      ...((x.margenCuartosFinde ?? b.margenCuartosFinde) != null ? { margenCuartosFinde: Math.max(0, Number(x.margenCuartosFinde ?? b.margenCuartosFinde) || 0) } : {}),
       nochesExactas: x.nochesExactas ?? b.nochesExactas ?? false,
     };
     c.cobertura.bolsa.inicial = dicc(c.cobertura.bolsa.inicial);

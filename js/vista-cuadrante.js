@@ -1,6 +1,6 @@
 // Vista Cuadrante: el horario de cada persona, con filtros, orden, cobertura y cambios a mano.
 import { estado, esc, $, $$, MESES, DIAS_CORTOS, fmtNum, fmtFecha, estiloTurno, modal, cambiado, avisar } from './nucleo.js';
-import { ORIGEN, fmtH, horarioTurno } from './motor.js';
+import { ORIGEN, fmtH, horarioTurno, margenDia } from './motor.js';
 import { pdfCuadrante } from './pdf.js';
 import { COLECTIVOS, FRANJA_NOMBRE } from './datos-base.js';
 import { infracciones, puntuacion, mapaCasillas } from './puntuacion.js';
@@ -202,14 +202,14 @@ function panelPorHoras() {
     if (!tramos.length) return '';
     return `<div class="tabla-caja horas-dia" style="max-height:none"><table class="tabla-lista"><caption class="oculto">${col === 'TA' ? 'Teleasistencia' : 'Supervisión'}</caption>
       <thead><tr><th scope="col">${col === 'TA' ? 'Teleasistencia' : 'Supervisión'}</th><th scope="col" class="num">Mínimo</th><th scope="col" class="num">En sala</th><th scope="col" class="num">Diferencia</th></tr></thead><tbody>
-      ${tramos.map(t => { const dif = t.sala - t.min, mg = (estado.cfg.cobertura || {}).margenCuartos || 0, enMargen = t.ini >= 31 && t.ini < 88; return `<tr><th scope="row">${hm(t.ini)}–${t.fin === 96 ? '24:00' : hm(t.fin)}</th><td class="num">${t.min}</td><td class="num">${t.sala}</td><td class="num ${dif < 0 ? 'mal' : mg && enMargen && dif < mg ? 'justo-margen' : ''}" ${mg && enMargen && dif >= 0 && dif < mg ? `title="Por debajo del margen de ${mg}"` : ''}><b>${dif > 0 ? '+' : ''}${dif}</b></td></tr>`; }).join('')}
+      ${tramos.map(t => { const dif = t.sala - t.min, mg = margenDia(estado.cfg, dia), enMargen = t.ini >= 31 && t.ini < 88; return `<tr><th scope="row">${hm(t.ini)}–${t.fin === 96 ? '24:00' : hm(t.fin)}</th><td class="num">${t.min}</td><td class="num">${t.sala}</td><td class="num ${dif < 0 ? 'mal' : mg && enMargen && dif < mg ? 'justo-margen' : ''}" ${mg && enMargen && dif >= 0 && dif < mg ? `title="Por debajo del margen de ${mg}"` : ''}><b>${dif > 0 ? '+' : ''}${dif}</b></td></tr>`; }).join('')}
       </tbody></table></div>`;
   }).join('');
   const i = visibles.findIndex(d => d.i === dSel);
   return `<section class="panel" id="horas-dia"><div class="mi-nav"><button type="button" class="btn mini" data-hdia="${i > 0 ? visibles[i - 1].i : ''}" ${i > 0 ? '' : 'disabled'} aria-label="Día anterior">←</button>
       <h2>Mínimos por horas · ${DIAS_CORTOS[dia.dow]} ${fmtFecha(dia.fecha)}${dia.festivo ? ` · <span class="pildora">festivo</span>` : ''}</h2>
       <button type="button" class="btn mini" data-hdia="${i < visibles.length - 1 ? visibles[i + 1].i : ''}" ${i < visibles.length - 1 ? '' : 'disabled'} aria-label="Día siguiente">→</button></div>
-    <p class="tenue">Pulsa un día en la cabecera del cuadrante para verlo. Cada tramo con el mismo mínimo; «en sala», lo más bajo del tramo; en rojo, lo que falta.</p>
+    <p class="tenue">Pulsa un día en la cabecera del cuadrante para verlo. Cada tramo con el mismo mínimo; «en sala», lo más bajo del tramo; en rojo, lo que falta.${dSel === 0 ? ' De 0:00 a 8:00 de este primer día está la noche del día anterior, que es del cuadrante anterior: no sale aquí.' : ''}</p>
     <div class="horas-dia-tablas">${tablas}</div></section>`;
 }
 
@@ -336,9 +336,9 @@ function tablaMes(lista) {
       const l = porDia.get(d.i); const rz = u.resaltarDia === d.i ? ' resaltado' : '';
       if (!l) {
         // Sin huecos: ¿llega al margen pedido de 7:45 a 22:00?
-        const mg = (estado.cfg.cobertura || {}).margenCuartos || 0;
+        const mg = margenDia(estado.cfg, d);
         if (mg && res.cuartos) { let peor = Infinity, cuando = ''; for (let q = 31; q < 88; q++) { const v = res.cuartos.min(0, d.i, q); if (v == null) continue; const x = res.cuartos.cob[0][d.i * 96 + q] - v; if (x < peor) { peor = x; cuando = hm({ hora: q >> 2, minuto: (q & 3) * 15 }); } } if (peor < mg) return `<td class="c justo-margen${rz}" title="Cubierto, pero con menos margen del pedido (${mg}): a las ${cuando} solo +${peor}">+${peor}</td>`; }
-        return `<td class="c${rz}" title="Todos los cuartos de hora cubiertos${(estado.cfg.cobertura || {}).margenCuartos ? ', con el margen pedido' : ''}">✓</td>`;
+        return `<td class="c${rz}" title="Todos los cuartos de hora cubiertos${mg ? `, con el margen pedido (+${mg})` : ''}">✓</td>`;
       }
       const peor = Math.max(...l.map(h => h.falta));
       const db = (res.disponibilidad || []).filter(x => x.d === d.i && x.colectivo === 'TA');
@@ -528,7 +528,7 @@ export function eventosCuadrante(raiz, repintar) {
       if (!personas.length) return avisar(`No hay ${col === 'SUP' ? 'supervisores' : 'teleasistentes'} con los filtros actuales. Quita algún filtro y vuelve a probar.`, 'mal');
       const texto = b.textContent; b.disabled = true; b.textContent = 'Generando PDF…';
       try {
-        await pdfCuadrante({ res: estado.res, cfg: estado.cfg, colectivo: col, mesDesde: u2.mesDesde, mesHasta: u2.mesHasta, personas });
+        await pdfCuadrante({ res: estado.res, cfg: estado.cfg, colectivo: col, mesDesde: u2.mesDesde, mesHasta: u2.mesHasta, personas, escenario: (escenarioAbierto() || {}).nombre || '' });
         avisar(`PDF descargado: ${personas.length} ${col === 'SUP' ? 'supervisores' : 'teleasistentes'}, de ${MESES[u2.mesDesde].toLowerCase()} a ${MESES[u2.mesHasta].toLowerCase()}.`, 'bien');
       } catch (err) { avisar(`No se ha generado el PDF. ${esc(err.message)}`, 'mal', 0); }
       b.disabled = false; b.textContent = texto;
