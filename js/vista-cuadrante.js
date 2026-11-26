@@ -262,11 +262,12 @@ function tablaMes(lista) {
         const n = res.cobertura[ci][fi][d.i], m = res.necesidad[ci][fi][d.i];
         const justo = estado.cfg.cobertura.aguante.avisar && n === m && m > 0;
         const rz = u.resaltarDia === d.i ? ' resaltado' : '';
-        return n < m ? `<td class="c falta${rz}" title="${n} de ${m}: faltan ${m - n}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}${rz}" title="${n} (mínimo ${m}): aguanta ${n - m} ${n - m === 1 ? 'baja' : 'bajas'}">${n}</td>`;
+        // Personas por encima (+) o por debajo (−, en rojo) del mínimo de ese día.
+        return n < m ? `<td class="c falta${rz}" title="${n} en sala, mínimo ${m}: faltan ${m - n}">−${m - n}</td>` : `<td class="c${justo ? ' justo' : ''}${rz}" title="${n} en sala, mínimo ${m}: ${n - m ? `sobran ${n - m}` : 'justo el mínimo'}">${n - m ? `+${n - m}` : '0'}</td>`;
       }).join('');
       // Lo que se ve en cada casilla es la gente EN SALA ese día; el mínimo va al lado del nombre de la franja.
       const ms = dias.map(d => res.necesidad[ci][fi][d.i]), mMin = Math.min(...ms), mMax = Math.max(...ms);
-      pie.push(`<tr${fi === 0 && c !== cols[0] ? ' class="inicio-col"' : ''}><th scope="row" class="fija" title="Personas en sala cada día; en rojo, las que faltan para el mínimo">${fi === 0 ? `En sala · ${c === 'TA' ? 'Teleasistencia' : 'Supervisión'}` : ''}</th><td class="fija2" title="Mínimo de esta franja en los días que se ven">${FRANJA_NOMBRE[f]} <small class="tenue">mín. ${mMin === mMax ? mMin : `${mMin}–${mMax}`}</small></td>${celdas}<td></td><td></td><td></td></tr>`);
+      pie.push(`<tr${fi === 0 && c !== cols[0] ? ' class="inicio-col"' : ''}><th scope="row" class="fija" title="Personas por encima (+) o por debajo (− en rojo) del mínimo cada día; al pasar el ratón, cuántas hay en sala">${fi === 0 ? `${c === 'TA' ? 'Teleasistencia' : 'Supervisión'} sobre el mínimo` : ''}</th><td class="fija2" title="Mínimo de esta franja en los días que se ven">${FRANJA_NOMBRE[f]} <small class="tenue">mín. ${mMin === mMax ? mMin : `${mMin}–${mMax}`}</small></td>${celdas}<td></td><td></td><td></td></tr>`);
     });
   }
   const pieFijo = pie.slice(0, 3).join(''), pieResto = pie.slice(3).join('');
