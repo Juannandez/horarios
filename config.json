@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T10:39:28.218Z",
- "nota": "Sevilla («3RM+2RT»): mínimos del Anexo 2 (Mínimos SAT 2013), por horas; noche en 10",
+ "guardado": "2026-11-26T10:41:10.867Z",
+ "nota": "Sevilla («3RM+2RT»): noche de 22 a 8 h con 10 teleasistentes",
  "config": {
   "version": 2,
   "tema": "day",
@@ -1699,7 +1699,7 @@
        37,
        31,
        31,
-       14,
+       10,
        10
       ],
       [
@@ -1725,7 +1725,7 @@
        37,
        31,
        31,
-       14,
+       10,
        10
       ],
       [
@@ -1751,7 +1751,7 @@
        37,
        31,
        31,
-       14,
+       10,
        10
       ],
       [
@@ -1777,7 +1777,7 @@
        37,
        31,
        31,
-       14,
+       10,
        10
       ],
       [
@@ -1803,7 +1803,7 @@
        37,
        31,
        31,
-       14,
+       10,
        10
       ],
       [
@@ -1829,7 +1829,7 @@
        29,
        26,
        26,
-       11,
+       10,
        10
       ],
       [
@@ -2095,7 +2095,7 @@
        1
       ]
      ],
-     "nota": "Anexo 2, Mínimos SAT 2013 (protocolo v09): cada hora, el tramo más alto; noche en 10 (decisión de la sección)"
+     "nota": "Anexo 2, Mínimos SAT 2013 (protocolo v09) de 8 a 22 h (cada hora, el tramo más alto); noche de 22 a 8 h con 10 teleasistentes (decisión de la sección)"
     },
     "inicioCuadrante": "01-15",
     "escenarioAbierto": "esc-3rot-llamadas",
@@ -8344,7 +8344,7 @@
     "id": "esc-3rot-llamadas",
     "sede": "sevilla",
     "nombre": "3RM+2RT",
-    "fecha": "2026-11-26T10:39:28.218Z",
+    "fecha": "2026-11-26T10:41:10.867Z",
     "nota": "308 teleasistentes en 3 rotatorios (mañana fija RM1, RM2 o RM3; tardes RT1/RT2), 3 + 1, fines 2 + 1, noches 2-2-3; 45 sin noches; 24 fijos discontinuos; año del 15-ene. Mínimos por horas: pico de llamadas simultáneas del mes mediano de 2025 + línea 900 + videollamada.",
     "cfg": {
      "id": "sevilla",
@@ -9884,7 +9884,7 @@
         37,
         31,
         31,
-        14,
+        10,
         10
        ],
        [
@@ -9910,7 +9910,7 @@
         37,
         31,
         31,
-        14,
+        10,
         10
        ],
        [
@@ -9936,7 +9936,7 @@
         37,
         31,
         31,
-        14,
+        10,
         10
        ],
        [
@@ -9962,7 +9962,7 @@
         37,
         31,
         31,
-        14,
+        10,
         10
        ],
        [
@@ -9988,7 +9988,7 @@
         37,
         31,
         31,
-        14,
+        10,
         10
        ],
        [
@@ -10014,7 +10014,7 @@
         29,
         26,
         26,
-        11,
+        10,
         10
        ],
        [
@@ -10280,7 +10280,7 @@
         1
        ]
       ],
-      "nota": "Anexo 2, Mínimos SAT 2013 (protocolo v09): cada hora, el tramo más alto; noche en 10 (decisión de la sección)"
+      "nota": "Anexo 2, Mínimos SAT 2013 (protocolo v09) de 8 a 22 h (cada hora, el tramo más alto); noche de 22 a 8 h con 10 teleasistentes (decisión de la sección)"
      },
      "inicioCuadrante": "01-15",
      "absentismo": {
