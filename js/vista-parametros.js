@@ -313,9 +313,27 @@ function seccionMinimosHora(cfg) {
       <div class="grupo"><button type="button" class="btn mini" data-accion="mh-franjas">Rellenar desde los mínimos por franja</button>
         ${col === 'TA' && ['sevilla', 'malaga'].includes(cfg.id) ? '<button type="button" class="btn mini" data-accion="mh-consultora" title="Demanda planificada por la consultora en su informe (Escenario 3): media anual del pico + 20 % de absentismo + 40 % de la otra central">Usar la demanda por horas de la consultora</button>' : ''}
         <button type="button" class="btn mini" data-accion="mh-lv">L → M-V</button></div></div>
-      ${falta ? `<p>${falta.total ? `En el año faltan <b>${fmtNum(Math.round(falta.total))}</b> personas-hora en ${fmtNum(falta.dias)} días (última columna: por hora).` : 'Todas las horas cubiertas.'}</p>` : ''}
+      ${cuartosTabla(mh, col)}
+      ${falta ? `<p>${falta.total ? `En el año faltan <b>${fmtNum(Math.round(falta.total))}</b> personas-hora en ${fmtNum(falta.dias)} días (última columna: por hora${falta.cuartos ? ', midiendo cuarto a cuarto' : ''}).` : 'Todas las horas cubiertas.'}</p>` : ''}
       <div class="tabla-caja" style="max-height:560px"><table class="tabla-lista tabla-horas"><thead><tr><th scope="col">Hora</th>${FILAS_HORA.map(f => `<th scope="col" class="num">${f}</th>`).join('')}<th scope="col" class="num" title="Personas-hora que faltan en el año">Faltan</th></tr></thead><tbody>${cuerpo}</tbody></table></div>` : ''}
   </section>`;
+}
+
+// Mínimos por cuartos de hora (la tabla de la empresa de 15 en 15 minutos): mandan sobre la de horas, que queda como el
+// mayor de cada hora. Se ven aquí (solo lectura) y se pueden quitar para volver a la tabla por horas.
+function cuartosTabla(mh, col) {
+  const t = mh && mh.cuartos && mh.cuartos[col];
+  if (!Array.isArray(t)) return '';
+  const hm = (q) => `${String(Math.floor(q / 4)).padStart(2, '0')}:${String((q % 4) * 15).padStart(2, '0')}`;
+  // Se juntan los cuartos seguidos con las mismas cifras en todas las columnas.
+  const filas = []; let a = 0;
+  for (let q = 1; q <= 96; q++) if (q === 96 || FILAS_HORA.some((_, f) => (t[f] || [])[q] !== (t[f] || [])[a])) { filas.push([a, q]); a = q; }
+  return `<div class="banda" style="margin:8px 0"><b>Mínimos por cuartos de hora${mh.cuartosNota ? ` (${esc(mh.cuartosNota)})` : ''}.</b> Mandan sobre la tabla de abajo, que muestra el mayor de cada hora. El mínimo de cada franja sale de los cuartos centrales de su turno, y los huecos se miden cuarto a cuarto.
+      <details style="margin-top:6px"><summary>Ver la tabla por cuartos</summary>
+      <div class="tabla-caja" style="max-height:420px"><table class="tabla-lista tabla-horas"><thead><tr><th scope="col">Desde</th><th scope="col">Hasta</th>${FILAS_HORA.map(f => `<th scope="col" class="num">${f}</th>`).join('')}</tr></thead><tbody>
+        ${filas.map(([x, y]) => `<tr><th scope="row">${hm(x)}</th><td>${y === 96 ? '24:00' : hm(y)}</td>${FILAS_HORA.map((_, f) => `<td class="num${f >= 5 ? ' finde' : ''}">${fmtNum((t[f] || [])[x] ?? 0)}</td>`).join('')}</tr>`).join('')}
+      </tbody></table></div></details>
+      <div class="fila-acciones" style="margin-top:6px"><button type="button" class="btn mini" data-accion="mh-quitar-cuartos">Quitar los cuartos y usar la tabla por horas</button></div></div>`;
 }
 
 // Mínimos de un día concreto (convenio: un teleasistente más en Nochebuena y Nochevieja).
@@ -843,6 +861,12 @@ export function eventosParametros(raiz, repintar) {
       cfg.minimosHora = { ...(cfg.minimosHora || {}), activo: true, [col]: t };
       cambiado({ inmediato: true }); repintar();
       return avisar(a === 'mh-franjas' ? 'Tabla rellenada con los mínimos de cada franja.' : 'Tabla con la demanda por horas de la consultora (Escenario 3). Mira la columna «Faltan».', 'bien');
+    }
+    if (a === 'mh-quitar-cuartos') {
+      const col = (estado.ui.minHora || {}).col || 'TA';
+      if (cfg.minimosHora && cfg.minimosHora.cuartos) { delete cfg.minimosHora.cuartos[col]; if (!Object.keys(cfg.minimosHora.cuartos).length) delete cfg.minimosHora.cuartos; }
+      cambiado({ inmediato: true }); repintar();
+      return avisar('Quitados los mínimos por cuartos de hora: ahora mandan los de la tabla por horas. Ctrl+Z lo deshace.', '', 7000);
     }
     if (a === 'mh-lv') {
       const col = (estado.ui.minHora || {}).col || 'TA', t = cfg.minimosHora && cfg.minimosHora[col];

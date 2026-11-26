@@ -42,6 +42,16 @@ export function prepararTurno(t) {
   if (i2 != null && f2 != null && i2 >= fm && f2 > i2) { horas += (f2 - i2) / 60; fm = f2; partido = true; }
   return { ...t, trabaja, ini, fm, horas, partido };
 }
+// Cuartos de hora en que un turno está entero (para los mínimos por cuartos de hora): 0-95 del día en que empieza,
+// 96-191 del día siguiente.
+export function cuartosDeTurno(t) {
+  if (!t || !t.trabaja) return [];
+  const min = (x) => { const r = /^(\d{1,2}):(\d{2})$/.exec(x || ''); return r ? Number(r[1]) * 60 + Number(r[2]) : null; };
+  const tramos = t.partido ? [[t.ini, min(t.fin)], [min(t.inicio2), t.fm]] : [[t.ini, t.fm]];
+  const out = [];
+  for (let q = 0; q < 192; q++) if (tramos.some(([a, b]) => a <= q * 15 && b >= (q + 1) * 15)) out.push(q);
+  return out;
+}
 // Horas del reloj que cubre un turno (para los mínimos por horas): las horas en las que está al menos 30 minutos.
 // 0-23 son del día en que empieza; 24-47, del día siguiente (la noche de 22 a 8 cubre 22, 23 y 24-31).
 export function horasDeTurno(t) {
@@ -525,15 +535,34 @@ export function generar(cfgEntrada, opciones = {}) {
     const v = Array.isArray(tabla[fila]) ? Number(tabla[fila][hh]) : NaN;
     return Number.isFinite(v) ? v : null;
   };
+  // Mínimos por cuartos de hora (MH.cuartos[colectivo]: 8 filas × 96 cuartos, como la tabla de la empresa de 15 en 15
+  // minutos). Si están, mandan sobre la tabla por horas, que queda solo para ver (el mayor de cada hora).
+  const MC = MH && MH.cuartos && typeof MH.cuartos === 'object' ? MH.cuartos : null;
+  const minCuarto = (c, d, q) => {
+    const tabla = MC && MC[COL[c]]; if (!Array.isArray(tabla)) return null;
+    const dd = d + Math.floor(q / 96), qq = q % 96;
+    const fila = dd < D ? (dias[dd].festivo ? 7 : dias[dd].dow) : (dias[D - 1].dow + 1) % 7;
+    const v = Array.isArray(tabla[fila]) ? Number(tabla[fila][qq]) : NaN;
+    return Number.isFinite(v) ? v : null;
+  };
+  const turnoFranja = (col, f) => {
+    for (const g of grupos) { if (g.colectivo !== col) continue; const c = resolverPatron(g, cfg.grupos || []).find(x => idx.has(x) && turnosMap.get(x).franja === f); if (c) return turnosMap.get(c); }
+    return T.find(x => x.franja === f) || null;
+  };
   // Horas de cada franja: las que cubre el turno preferido del colectivo en esa franja.
-  const horasFranja = COL.map((col) => FR.map((f) => {
-    for (const g of grupos) { if (g.colectivo !== col) continue; const c = resolverPatron(g, cfg.grupos || []).find(x => idx.has(x) && turnosMap.get(x).franja === f); if (c) return horasDeTurno(turnosMap.get(c)); }
-    const t = T.find(x => x.franja === f); return t ? horasDeTurno(t) : [];
-  }));
+  const horasFranja = COL.map((col) => FR.map((f) => horasDeTurno(turnoFranja(col, f))));
   // Las horas de los extremos del turno (la primera y la última) no cuentan para la franja: las cubre a medias el turno
   // de al lado o un solape. Si ahí falta gente, sale como hueco por hora (hace falta otra hora de entrada o un solape).
   const nucleo = (hs) => (hs.length >= 4 ? hs.slice(1, -1) : hs);
   if (MH) for (let c = 0; c < COL.length; c++) {
+    if (MC && Array.isArray(MC[COL[c]])) {
+      // Por cuartos: el núcleo del turno de la franja (sin la primera ni la última hora).
+      for (let f = 0; f < FR.length; f++) {
+        const qs = cuartosDeTurno(turnoFranja(COL[c], FR[f])), nq = qs.length >= 16 ? qs.slice(4, -4) : qs;
+        for (let d = 0; d < D; d++) { let m = 0; for (const q of nq) { const v = minCuarto(c, d, q); if (v != null && v > m) m = v; } tablaDia[c][f][d] = m; }
+      }
+      continue;
+    }
     if (!Array.isArray(MH[COL[c]])) continue;
     for (let f = 0; f < FR.length; f++) for (let d = 0; d < D; d++) {
       let m = 0; for (const h of nucleo(horasFranja[c][f])) { const v = minHora(c, d, h); if (v != null && v > m) m = v; }
@@ -1468,8 +1497,21 @@ export function generar(cfgEntrada, opciones = {}) {
     const cobH = COL.map(() => new Int16Array((D + 1) * 24));
     const horasT = T.map(horasDeTurno);
     for (let pi = 0; pi < P; pi++) for (let d = 0; d < D; d++) { const ti = grid[pi * D + d]; if (!T[ti].trabaja) continue; for (const h of horasT[ti]) cobH[colIdx[pi]][d * 24 + h]++; }
-    porHoras = { colectivos: {}, huecos: [] };
+    porHoras = { colectivos: {}, huecos: [], cuartos: !!MC };
+    // Con mínimos por cuartos de hora, los huecos se miden cuarto a cuarto (en personas·hora: cada cuarto cuenta 1/4).
+    const cobQ = MC ? COL.map(() => new Int16Array((D + 1) * 96)) : null;
+    if (MC) { const cq = T.map(cuartosDeTurno); for (let pi = 0; pi < P; pi++) for (let d = 0; d < D; d++) { const ti = grid[pi * D + d]; if (!T[ti].trabaja) continue; for (const q of cq[ti]) cobQ[colIdx[pi]][d * 96 + q]++; } }
     for (let c = 0; c < COL.length; c++) {
+      if (MC && Array.isArray(MC[COL[c]])) {
+        const faltaHora = new Float64Array(24), diasCon = new Set(); let total = 0;
+        for (let d = 0; d < D; d++) for (let q = 0; q < 96; q++) {
+          const v = minCuarto(c, d, q); if (v == null) continue;
+          const falta = v - cobQ[c][d * 96 + q];
+          if (falta > 0) { faltaHora[q >> 2] += falta / 4; total += falta / 4; diasCon.add(d); porHoras.huecos.push({ colectivo: COL[c], d, fecha: dias[d].fecha, hora: q >> 2, minuto: (q & 3) * 15, falta }); }
+        }
+        porHoras.colectivos[COL[c]] = { total, dias: diasCon.size, porHora: [...faltaHora], cuartos: true };
+        continue;
+      }
       if (!Array.isArray(MH[COL[c]])) continue;
       const faltaHora = new Float64Array(24), diasCon = new Set(); let total = 0;
       for (let d = 0; d < D; d++) for (let h = 0; h < 24; h++) {
