@@ -276,6 +276,7 @@ export function completarSede(cfg, base) {
   c.aj = { ...AJ_BASE(), ...dicc(base.aj), ...dicc(cfg.aj) }; c.aj.elegidos = dicc(c.aj.elegidos);
   if (!Array.isArray(c.aj.fechas)) c.aj.fechas = AJ_BASE().fechas;
   c.minimosHora = { activo: false, ...dicc(c.minimosHora) };
+  c.absentismo = { dia: 0, noche: 0, cuenta: 'margen', ...dicc(c.absentismo) };
   if (!Array.isArray(c.minimosFecha)) c.minimosFecha = Array.isArray(base.minimosFecha) ? clonar(base.minimosFecha) : [];
   c.repartoFestivos = { ...REPARTO_FESTIVOS(), ...dicc(base.repartoFestivos), ...dicc(cfg.repartoFestivos) };
   c.repartoFestivos.historial = dicc(c.repartoFestivos.historial);

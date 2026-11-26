@@ -266,8 +266,25 @@ export function seccionMinimos(cfg) {
     <p class="tenue">Personas en sala por franja y día: cada día de la semana por separado y los festivos aparte (un festivo usa su columna aunque caiga entre semana). Valores de partida: Anexo 2 «Mínimos SAT 2013» de Sevilla. Si hay dos filas iguales, vale la más alta. En supervisión, el mínimo sube además con la ratio de Reglas. «L → M-V» copia el lunes al resto de la semana.</p>
     <div class="tabla-caja" style="max-height:none"><table class="tabla-lista"><thead><tr><th scope="col">Colectivo</th><th scope="col">Franja</th>${DIAS_MIN.map((d, k) => `<th scope="col" class="num" title="${DIAS_MIN_LARGO[k]}">${d}</th>`).join('')}<th scope="col" class="num">Festivo</th><th scope="col"></th></tr></thead><tbody>${filas}</tbody></table></div>
     <div class="fila-acciones"><button type="button" class="btn" data-accion="anadir" data-lista="minimos">Añadir mínimo</button></div></section>
+  ${seccionAbsentismo(cfg)}
   ${seccionMinimosHora(cfg)}
   ${seccionMinimosFecha(cfg)}`;
+}
+
+// Absentismo previsto: porcentaje sobre el mínimo, de día y de noche; como mínimo (cuenta en los huecos) o como margen.
+function seccionAbsentismo(cfg) {
+  const a = cfg.absentismo || { dia: 0, noche: 0, cuenta: 'margen' }, res = estado.res;
+  const d = res.dias.findIndex(x => !x.finde && !x.festivo && x.mes === 2);
+  const ej = (f) => (d >= 0 ? `${fmtNum(res.necesidadPlan[0][f][d])}` : '—');
+  return `<section class="panel" id="sec-absentismo"><h2>Absentismo previsto</h2>
+    <p class="tenue">Un porcentaje sobre el mínimo para cubrir bajas y ausencias. La consultora suma un 20 % fijo a todas las horas. Aquí se elige el porcentaje (0 = nada) y cómo cuenta:</p>
+    <div class="campos">
+      ${campo('De día (mañana y tarde), %', num('absentismo.dia', a.dia ?? 0, 'min="0" max="100" step="1" style="width:90px" data-estructura="1"'))}
+      ${campo('De noche, %', num('absentismo.noche', a.noche ?? 0, 'min="0" max="100" step="1" style="width:90px" data-estructura="1"'))}
+      ${campo('Cómo cuenta', sel('absentismo.cuenta', a.cuenta || 'margen', [['margen', 'Como margen: gente de más si se puede (los huecos se miden con el mínimo)'], ['minimo', 'Como mínimo: sube el mínimo (los huecos se miden con él)']], 'data-estructura="1"'))}
+    </div>
+    <p>Teleasistencia, un martes de marzo: se planifica para <b>${ej(0)}</b> de mañana, <b>${ej(1)}</b> de tarde y <b>${ej(2)}</b> de noche${a.cuenta === 'minimo' ? ' (mínimo con el absentismo)' : ' (mínimo + margen de absentismo)'}.</p>
+  </section>`;
 }
 
 // Mínimos por horas: una tabla por colectivo (24 horas × lunes … domingo y festivo).
@@ -634,6 +651,7 @@ const NUEVOS = {
     return { codigo: `X${n}`, nombre: 'Nuevo turno', inicio: '09:00', fin: '16:00', franja: 'manana', color: '#B9D7EA' };
   },
   minimos: () => ({ colectivo: 'TA', franja: 'manana', laborable: 0, sabado: 0, domingo: 0, dias: [0, 0, 0, 0, 0, 0, 0], festivo: 0 }),
+  absentismo: () => ({ dia: 0, noche: 0, cuenta: 'margen' }),
   minimosFecha: () => ({ activo: true, colectivo: 'TA', franja: 'noche', fecha: '12-24', modo: 'suma', valor: 1, nota: '' }),
   solapes: (cfg) => {
     const t = cfg.turnos.filter(x => x.franja !== 'libre');

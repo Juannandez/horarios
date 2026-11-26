@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T10:17:32.612Z",
- "nota": "Sevilla («3RM+2RT»): noche de 22 a 8 h con 10 teleasistentes",
+ "guardado": "2026-11-26T10:24:08.503Z",
+ "nota": "Sevilla («3RM+2RT»): días AJ repartidos del 20 al 31 de diciembre (las noches de Navidad quedan cubiertas) y absentismo configurable (0 %)",
  "config": {
   "version": 2,
   "tema": "day",
@@ -1484,7 +1484,7 @@
     },
     "aj": {
      "activo": true,
-     "modo": "fijo",
+     "modo": "reparto",
      "fechas": [
       "12-24",
       "12-31"
@@ -2097,7 +2097,12 @@
      ]
     },
     "inicioCuadrante": "01-15",
-    "escenarioAbierto": "esc-3rot-llamadas"
+    "escenarioAbierto": "esc-3rot-llamadas",
+    "absentismo": {
+     "dia": 0,
+     "noche": 0,
+     "cuenta": "margen"
+    }
    },
    {
     "id": "malaga",
@@ -8338,7 +8343,7 @@
     "id": "esc-3rot-llamadas",
     "sede": "sevilla",
     "nombre": "3RM+2RT",
-    "fecha": "2026-11-26T10:17:32.612Z",
+    "fecha": "2026-11-26T10:24:08.503Z",
     "nota": "308 teleasistentes en 3 rotatorios (mañana fija RM1, RM2 o RM3; tardes RT1/RT2), 3 + 1, fines 2 + 1, noches 2-2-3; 45 sin noches; 24 fijos discontinuos; año del 15-ene. Mínimos por horas: pico de llamadas simultáneas del mes mediano de 2025 + línea 900 + videollamada.",
     "cfg": {
      "id": "sevilla",
@@ -9663,7 +9668,7 @@
      },
      "aj": {
       "activo": true,
-      "modo": "fijo",
+      "modo": "reparto",
       "fechas": [
        "12-24",
        "12-31"
@@ -10275,7 +10280,12 @@
        ]
       ]
      },
-     "inicioCuadrante": "01-15"
+     "inicioCuadrante": "01-15",
+     "absentismo": {
+      "dia": 0,
+      "noche": 0,
+      "cuenta": "margen"
+     }
     }
    }
   ],

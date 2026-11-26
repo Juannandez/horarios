@@ -534,19 +534,30 @@ export function generar(cfgEntrada, opciones = {}) {
     const v = Math.floor(Number(m.valor) || 0);
     tablaDia[c][f][d] = m.modo === 'fija' ? Math.max(0, v) : Math.max(0, tablaDia[c][f][d] + v);
   }
+  // Absentismo previsto (Parámetros › Mínimos): un porcentaje sobre el mínimo, de día y de noche por separado.
+  //   cuenta: 'minimo' → el mínimo sube (y los huecos se miden con él, como hace la consultora con su 20 %);
+  //           'margen' → solo se planifica gente de más si se puede (los huecos se siguen midiendo con el mínimo).
+  const ABS = { dia: 0, noche: 0, cuenta: 'margen', ...(cfg.absentismo || {}) };
+  const pctAbs = (f) => Math.max(0, Number(f === 2 ? ABS.noche : ABS.dia) || 0);
+  if (ABS.cuenta === 'minimo') for (let c = 0; c < COL.length; c++) for (let f = 0; f < FR.length; f++) {
+    const p = pctAbs(f); if (!p) continue;
+    for (let d = 0; d < D; d++) tablaDia[c][f][d] = Math.ceil(tablaDia[c][f][d] * (1 + p / 100));
+  }
   // «real»: el mínimo (y, en supervisión, la ratio). «necesidad»: lo que se planifica = mínimo + margen para imprevistos.
   // Los huecos se miden frente al mínimo real; el margen solo hace que el ajuste ponga gente de más si puede.
   const conMargen = (m, f) => {
     const x = Number(f === 2 ? margen.noche : margen.dia) || 0;
-    if (!x || !m) return m;
-    return margen.tipo === 'porcentaje' ? Math.ceil(m * (1 + x / 100)) : m + x;
+    let v = !x || !m ? m : margen.tipo === 'porcentaje' ? Math.ceil(m * (1 + x / 100)) : m + x;
+    // El absentismo como margen: el mayor de los dos.
+    if (ABS.cuenta !== 'minimo' && pctAbs(f) && m) v = Math.max(v, Math.ceil(m * (1 + pctAbs(f) / 100)));
+    return v;
   };
   const real = COL.map((_, c) => FR.map((_, f) => Int32Array.from(tablaDia[c][f])));
   // Primero se planifica contra el mínimo real; el margen se añade en una pasada final (aplicarMargen), para que no
   // gaste noches ni fines de semana antes de tiempo.
   const necesidad = COL.map((_, c) => FR.map((_, f) => Int32Array.from(real[c][f])));
   const aplicarMargen = (c) => { for (let f = 0; f < FR.length; f++) for (let d = 0; d < D; d++) necesidad[c][f][d] = conMargen(real[c][f][d], f); };
-  const hayMargen = (Number(margen.noche) || 0) > 0 || (Number(margen.dia) || 0) > 0;
+  const hayMargen = (Number(margen.noche) || 0) > 0 || (Number(margen.dia) || 0) > 0 || (ABS.cuenta !== 'minimo' && (pctAbs(0) > 0 || pctAbs(2) > 0));
   const aplicarRatio = () => {
     if (!ratio || ratio <= 0) return;
     for (let f = 0; f < FR.length; f++) for (let d = 0; d < D; d++) {
@@ -1228,7 +1239,7 @@ export function generar(cfgEntrada, opciones = {}) {
 
   return {
     dias, personas: filas, turnos: T, turnosMap, idx, grid, origen, D, P,
-    cobertura: cob, necesidad: real, necesidadPlan: necesidad, aguante, margen, cesion, bolsa: bolsaCfg, colectivos: COL, franjas: FR, huecos, stats, vacaciones, mejora,
+    cobertura: cob, necesidad: real, necesidadPlan: necesidad, aguante, margen, absentismo: ABS, cesion, bolsa: bolsaCfg, colectivos: COL, franjas: FR, huecos, stats, vacaciones, mejora,
     patrones, ms: Date.now() - t0, semanaCiclo0, repartoFestivos: RF, aj: AJ, repeticiones, porHoras,
     codigo: (pi, d) => T[grid[pi * D + d]].codigo, inicioCuadrante: inicioCuad,
     // Meses del cuadrante, en orden (con el año de 15 a 15 de enero hay 13: enero partido en dos).
