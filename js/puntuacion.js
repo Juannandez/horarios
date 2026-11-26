@@ -137,7 +137,7 @@ export function infracciones(res, cfg) {
         if (trab(a) !== trab(b) && t(trab(a) ? b : a).disponible !== false) caso('finCompleto', [trab(a) ? a : b], trab(a) ? 'solo el sábado' : 'solo el domingo');
       }
     }
-    if (salida.minNoches && !p.horarioLibre && !p.altaDias && !p.exentoNoches && !p.tramo && !(p.desde > 0) && !(p.hasta < D) && !(Array.isArray(p.franjas) && !p.franjas.includes('noche'))) {
+    if (salida.minNoches && !p.nochesVoluntarias && !p.horarioLibre && !p.altaDias && !p.exentoNoches && !p.tramo && !(p.desde > 0) && !(p.hasta < D) && !(Array.isArray(p.franjas) && !p.franjas.includes('noche'))) {
       let n = 0; for (let d = 0; d < D; d++) if (noche(d)) n++;
       if (n < val('minNoches')) caso('minNoches', [], `${n} noches`);
     }

@@ -359,6 +359,8 @@ export function generar(cfgEntrada, opciones = {}) {
         horarioLibre: !patronBase.some(c => turnosMap.get(c).franja !== 'libre'),
         // Condiciones propias del grupo (refuerzos flexibles): sin reglas de fines de semana o sin vacaciones.
         exentoFines: !!(g.condiciones && g.condiciones.libreFines), sinVacaciones: !!(g.condiciones && g.condiciones.sinVacaciones),
+        // Noches voluntarias (condición del grupo): sin tope ni mínimo de noches al año; el resto de grupos puede ir sin noches.
+        nochesVoluntarias: !!(g.condiciones && g.condiciones.nochesVoluntarias),
         // Noches que puede hacer por encima de las de oficio (cesión): «todos», o «voluntaria» si lo ha aceptado.
         extraNoches: maxNoches == null || exentoNoches ? 0 : (cesion.modo === 'todos' || (cesion.modo === 'voluntaria' && esp.cedeNoches))
           ? Math.max(0, Number(cesion.tope) - maxNoches) : 0,
@@ -666,7 +668,7 @@ export function generar(cfgEntrada, opciones = {}) {
 
   // Tope de noches de cada persona. Mientras «cesionActiva» es false, solo las de oficio; después, también las cedidas.
   let cesionActiva = false;
-  const topeNoches = (pi) => (maxNoches == null ? Infinity : maxNoches + (cesionActiva ? personas[pi].extraNoches : 0));
+  const topeNoches = (pi) => (maxNoches == null || personas[pi].nochesVoluntarias ? Infinity : maxNoches + (cesionActiva ? personas[pi].extraNoches : 0));
   // ¿Puede la persona pi hacer el turno ti el día d (en lugar de lo que tiene)?
   const trabajaEn = (pi, d) => d >= 0 && d < D && T[grid[pi * D + d]].trabaja;
   // Días sin turno de la semana (lunes a domingo) del día d; null si la semana no cae entera en el cuadrante.
@@ -955,7 +957,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const equilibrarNoches = (c) => {
     if (cfg.equilibrarNoches === false || !bloques) return 0;
     // Solo quien está todo el año: un refuerzo de unos meses tiene menos noches por estar menos tiempo, no por reparto.
-    const elegible = (pi) => { const p = personas[pi]; return p.pref && p.pref.noche && idx.has(p.pref.noche) && !p.exentoNoches && !p.horarioLibre && !p.altaDias && !p.tramo && !(p.desde > 0) && !(p.hasta < D); };
+    const elegible = (pi) => { const p = personas[pi]; return p.pref && p.pref.noche && idx.has(p.pref.noche) && !p.exentoNoches && !p.nochesVoluntarias && !p.horarioLibre && !p.altaDias && !p.tramo && !(p.desde > 0) && !(p.hasta < D); };
     const lista = porColectivo[c].filter(elegible);
     if (lista.length < 2) return 0;
     const media = lista.reduce((s, pi) => s + noches[pi], 0) / lista.length, tol = 1;
@@ -1045,7 +1047,7 @@ export function generar(cfgEntrada, opciones = {}) {
   };
   const subirNoches = (c) => {
     if (minNoches == null || !bloques) return 0;
-    const elegible = (pi) => { const p = personas[pi]; return p.pref && p.pref.noche && idx.has(p.pref.noche) && !p.exentoNoches && !p.horarioLibre && !p.altaDias && !p.tramo && !(p.desde > 0) && !(p.hasta < D) && franjasDe(p, 0).includes('noche'); };
+    const elegible = (pi) => { const p = personas[pi]; return p.pref && p.pref.noche && idx.has(p.pref.noche) && !p.exentoNoches && !p.nochesVoluntarias && !p.horarioLibre && !p.altaDias && !p.tramo && !(p.desde > 0) && !(p.hasta < D) && franjasDe(p, 0).includes('noche'); };
     const inicios = []; for (let d = 0; d + 1 < D; d++) if ((dias[d].dow === 0 || dias[d].dow === 2) && !dias[d].festivo && !dias[d + 1].festivo) inicios.push(d);
     let puestos = 0;
     for (const q of porColectivo[c].filter(elegible)) {
