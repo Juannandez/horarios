@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T09:40:27.578Z",
- "nota": "Sevilla: 3 rotatorios 3 + 1 con los 5 turnos, 308 teleasistentes, 45 sin noches, 24 fijos discontinuos, año del 15 de enero y mínimos por horas desde las llamadas de 2025",
+ "guardado": "2026-11-26T09:57:30.516Z",
+ "nota": "Sin cambios en el cuadrante.",
  "config": {
   "version": 2,
   "tema": "day",
@@ -8337,9 +8337,9 @@
    {
     "id": "esc-3rot-llamadas",
     "sede": "sevilla",
-    "nombre": "3 rotatorios 3+1 · mínimos por llamadas",
+    "nombre": "3RM+2RT",
     "fecha": "2026-11-26T09:40:27.578Z",
-    "nota": "308 teleasistentes en 3 rotatorios (mañana fija RM1, RM3 o RM2; tardes RT1/RT2), 3 + 1, fines 2 + 1, noches 2-2-3; 45 sin noches; 24 fijos discontinuos; año del 15-ene. Mínimos por horas: pico de llamadas simultáneas del mes mediano de 2025 + línea 900 + videollamada.",
+    "nota": "308 teleasistentes en 3 rotatorios (mañana fija RM1, RM2 o RM3; tardes RT1/RT2), 3 + 1, fines 2 + 1, noches 2-2-3; 45 sin noches; 24 fijos discontinuos; año del 15-ene. Mínimos por horas: pico de llamadas simultáneas del mes mediano de 2025 + línea 900 + videollamada.",
     "cfg": {
      "id": "sevilla",
      "nombre": "Sevilla",
