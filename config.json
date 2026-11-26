@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T09:18:39.866Z",
- "nota": "Sevilla: turnos, grupos y patrones",
+ "guardado": "2026-11-26T09:19:12.858Z",
+ "nota": "Sevilla: turnos",
  "config": {
   "version": 2,
   "tema": "day",
@@ -222,7 +222,7 @@
       "fin": "",
       "franja": "libre",
       "color": "#FFFFFF",
-      "disponible": true,
+      "disponible": false,
       "fijo": true
      },
      {
