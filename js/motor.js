@@ -199,6 +199,7 @@ export function generar(cfgEntrada, opciones = {}) {
   const finCompleto = !!usa('finCompleto');             // fin de semana trabajado = sábado y domingo
   const maxEntradas = reg('maxEntradas', 4);             // horas de entrada distintas en el año
   const minLibresSemana = reg('minLibresSemana', 2);     // días libres como mínimo cada semana (lunes a domingo)
+  const unaFranja = !!usa('unaFranjaSemana');            // el ajuste no mezcla mañana y tarde en una misma semana
   const PUESTOS = Math.max(0, Number(cfg.puestos) || 0);  // puestos operativos en sala (0 = sin tope)
   // Fines de semana con bolsa (Cobertura y bolsa): el ajuste no pone a trabajar a nadie un sábado o domingo que libra;
   // lo que falte se deja en disponibilidad para la bolsa (código DB: localizable, no trabaja).
@@ -662,6 +663,12 @@ export function generar(cfgEntrada, opciones = {}) {
     const nuevo = T[ti], viejo = T[grid[pi * D + d]];
     if (!nuevo.trabaja) return true;
     if (FINDES_BOLSA && dias[d].finde && !viejo.trabaja && !(FINDES_BOLSA_FD && personas[pi].horarioLibre)) return false;   // nadie más a trabajar en fin de semana
+    // Una sola franja de día por semana: en una semana de mañana no se pone una tarde (ni al revés).
+    if (unaFranja && !personas[pi].horarioLibre && (nuevo.franja === 'manana' || nuevo.franja === 'tarde')) {
+      const l = d - dias[d].dow; let mm = 0, tt = 0;
+      for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 6); x++) { if (x === d) continue; const t = T[grid[pi * D + x]]; if (!t.trabaja) continue; if (t.franja === 'manana') mm++; else if (t.franja === 'tarde') tt++; }
+      if ((nuevo.franja === 'tarde' && mm > 0) || (nuevo.franja === 'manana' && tt > 0)) return false;
+    }
     // Puestos en sala: el ajuste no pone a nadie más en una franja si ya están todos los puestos ocupados.
     if (PUESTOS && (!viejo.trabaja || viejo.franja !== nuevo.franja)) {
       const f = franjaIdx[ti]; let n = 0; for (let c = 0; c < COL.length; c++) n += cob[c][f][d];
@@ -1112,7 +1119,8 @@ export function generar(cfgEntrada, opciones = {}) {
     if (!mejor) return false;
     const { pi, e } = mejor, antes = [];
     for (let x = d; x <= e; x++) { antes.push([grid[pi * D + x], origen[pi * D + x]]); poner(pi, x, prefDe(pi, x, FR[f]), ORIGEN.CUBRE); }
-    if (valida(pi, Math.max(0, d - 1), Math.min(D - 1, e + 1)) && semanaCoherente(pi, d)) return true;
+    const sinMezcla = () => { if (!unaFranja) return true; const l = d - dias[d].dow; for (let x = Math.max(0, l); x <= Math.min(D - 1, l + 6); x++) { const t = T[grid[pi * D + x]]; if (t.trabaja && (t.franja === 'manana' || t.franja === 'tarde') && t.franja !== FR[f]) return false; } return true; };
+    if (valida(pi, Math.max(0, d - 1), Math.min(D - 1, e + 1)) && semanaCoherente(pi, d) && sinMezcla()) return true;
     for (let x = d; x <= e; x++) poner(pi, x, antes[x - d][0], antes[x - d][1]);
     return false;
   };

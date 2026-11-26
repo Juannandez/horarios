@@ -29,6 +29,7 @@ const TITULOS = {
   finCompleto: () => 'Fin de semana partido (solo el sábado o solo el domingo)',
   maxEntradas: (v) => `Más de ${v} horas de entrada distintas en el año`,
   minLibresSemana: (v) => `Semana con menos de ${v} días libres`,
+  unaFranjaSemana: () => 'Semana con mañanas y tardes mezcladas',
   tope: (v) => `Más de ${v} h por encima de la jornada`,
 };
 
@@ -133,6 +134,13 @@ export function infracciones(res, cfg) {
         if (f.dias.length < 2) continue;
         const [a, b] = f.dias;
         if (trab(a) !== trab(b) && t(trab(a) ? b : a).disponible !== false) caso('finCompleto', [trab(a) ? a : b], trab(a) ? 'solo el sábado' : 'solo el domingo');
+      }
+    }
+    if (salida.unaFranjaSemana && !p.horarioLibre) {
+      for (let l = 0; l + 6 < D; l++) {
+        if (dias[l].dow !== 0) continue;
+        const m = [], t2 = []; for (let x = l; x <= l + 6; x++) if (trab(x)) { if (t(x).franja === 'manana') m.push(x); else if (t(x).franja === 'tarde') t2.push(x); }
+        if (m.length && t2.length) caso('unaFranjaSemana', m.length >= t2.length ? t2 : m, `${m.length} de mañana y ${t2.length} de tarde`);
       }
     }
     if (salida.minLibresSemana) {
