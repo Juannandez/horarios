@@ -1,0 +1,572 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Gestlogix · Diseño de la v2, al estilo de Holded (Juan, 25/11/2026: «haz una
+   propuesta tipo Holded con tema claro y oscuro, fuentes, bordes, degradados;
+   mantienes el fondo personalizado de Gestlogix para el body»).
+
+   Va la última, encima de tokens.css y estilos.css. Se aplica a Light, Black y
+   Dark Blue (sin data-tema); Silver y Blue Manager conservan su propio diseño.
+   El fondo del body (capas, anillos o liso, en Preferencias) no se toca: ni
+   body::before ni el color de debajo.
+
+   Lo que se toma de Holded: cajas blancas con filo fino y 12 px de radio, sombra
+   casi invisible, cabeceras de caja con su icono en un cuadrito, letra del sistema
+   apretada en los títulos, cifras grandes con números tabulares, píldoras de estado
+   teñidas, campos con anillo de foco suave y una caja destacada en degradado
+   oscuro (su tarjeta del banco). Los botones, a 5 px (Juan).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+:root[data-interfaz="v2"]{
+  --d-letra: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --d-letra-titulo: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --d-radio-caja:12px; --d-radio-campo:8px; --d-radio-pildora:6px;
+  /* Estado: rojo caducado, ámbar vence pronto, verde al día (texto ≥ 4,5:1 sobre su fondo teñido). */
+  --estado-mal:#B3261E; --estado-pronto:#C27C00; --estado-bien:#1E7A4C;
+}
+/* Light */
+:root[data-interfaz="v2"][data-sf-theme="day"]:not([data-tema]){
+  --d-caja:#FFFFFF; --d-caja-2:#F8F9FB; --d-filo:#E9ECF0; --d-filo-2:#DCE1E7;
+  --d-tinta:#17202B; --d-tinta-2:#5B6675; --d-tinta-3:#8792A0;
+  --d-acento:#00354D; --d-acento-2:#0B5B7D; --d-acento-suave:#E8F0F4;
+  /* La sombra suave de los paneles que eligió Juan el 10/11/2026 («me gustan sus sombras»), recuperada el 25/11. */
+  --d-sombra-1:0 1px 2px rgba(0,0,0,.04), 0 6px 18px -6px rgba(0,0,0,.10);
+  --d-sombra-2:0 1px 2px rgba(0,0,0,.05), 0 12px 28px -10px rgba(0,0,0,.18);
+  --d-destacada:linear-gradient(140deg, #262D45 0%, #36406A 55%, #52608F 100%);
+  --d-destacada-brillo:radial-gradient(120% 90% at 100% 0%, rgba(124,147,247,.38), transparent 60%);
+  /* Los tokens que ya usa la aplicación, al mismo sitio. */
+  --panel:var(--d-caja); --panel2:var(--d-caja-2); --elev:var(--d-caja); --line:var(--d-filo); --line2:var(--d-filo-2);
+  --ink:var(--d-tinta); --muted:var(--d-tinta-2); --muted2:var(--d-tinta-3); --gl-titulo:var(--d-tinta);
+  --v2-hover:var(--d-caja-2); --v2-activo-fondo:var(--d-acento-suave); --v2-activo-tinta:var(--d-acento); --v2-ico:var(--d-tinta-3);
+  /* Botón principal en petróleo con un degradado leve; el secundario, blanco con filo. */
+  --gl-boton:#00354D; --gl-boton-hover:#0B4A66;
+  --gl-boton-fondo:linear-gradient(180deg, #0B4A66 0%, #00354D 100%);
+  --gl-boton-hover-fondo:linear-gradient(180deg, #13597A 0%, #0B4A66 100%);
+  --gl-boton-sombra:0 1px 2px rgba(0,37,54,.25), inset 0 1px 0 rgba(255,255,255,.10);
+  --gl-sec-fondo:#FFFFFF; --gl-sec-filo:var(--d-filo-2); --gl-sec-tinta:var(--d-tinta); --gl-sec-hover:var(--d-caja-2);
+}
+/* Black y Dark Blue: cajas oscuras con un brillo arriba y el naranja de la marca como acento (Studio Flow). */
+:root[data-interfaz="v2"]:is([data-sf-theme="night"], [data-sf-theme="midnight"]):not([data-tema]){
+  --d-caja:#1A1D23; --d-caja-2:#20242B; --d-filo:rgba(255,255,255,.07); --d-filo-2:rgba(255,255,255,.13);
+  --d-tinta:#ECEEF1; --d-tinta-2:#A3ACB8; --d-tinta-3:#7D8794;
+  --d-acento:#F08A4B; --d-acento-2:#F6A81E; --d-acento-suave:rgba(236,106,42,.14);
+  --d-sombra-1:0 1px 2px rgba(0,0,0,.35), 0 10px 24px -10px rgba(0,0,0,.60), inset 0 1px 0 rgba(255,255,255,.04);
+  --d-sombra-2:0 1px 2px rgba(0,0,0,.40), 0 16px 34px -12px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.05);
+  --d-destacada:linear-gradient(150deg, #23262E 0%, #1A1D23 100%);
+  --d-destacada-brillo:radial-gradient(110% 120% at 0% 100%, rgba(236,106,42,.34), transparent 58%);
+  --estado-mal:#FF7A70; --estado-pronto:#F2B652; --estado-bien:#6FD69A;
+  --panel:var(--d-caja); --panel2:var(--d-caja-2); --elev:#262A32; --line:var(--d-filo); --line2:var(--d-filo-2);
+  --ink:var(--d-tinta); --muted:var(--d-tinta-2); --muted2:var(--d-tinta-3);
+  --v2-hover:var(--d-caja-2); --v2-activo-fondo:var(--d-acento-suave); --v2-activo-tinta:var(--d-acento); --v2-ico:var(--d-tinta-3);
+}
+:root[data-interfaz="v2"][data-sf-theme="midnight"]:not([data-tema]){
+  --d-caja:#1A1F27; --d-caja-2:#212732; --elev:#27303C; --d-destacada:linear-gradient(150deg, #1C2B4A 0%, #1A2236 100%);
+  --d-destacada-brillo:radial-gradient(110% 120% at 100% 0%, rgba(56,189,248,.28), transparent 58%);
+  --d-acento:#5AA9FF; --d-acento-2:#38BDF8; --d-acento-suave:rgba(90,169,255,.14);
+}
+
+/* ── Silver y Blue Manager: los mismos tokens, con sus colores (Juan, 25/11/2026: «no cambies las fuentes, ni los
+   tamaños ni nada entre los temas, solo los colores»). Las formas (letra, tamaños, radios, sombras) son las de todos. ── */
+:root[data-interfaz="v2"][data-tema]{
+  --d-caja:var(--panel); --d-caja-2:var(--panel2); --d-filo:var(--line); --d-filo-2:var(--line2);
+  --d-tinta:var(--ink); --d-tinta-2:var(--muted); --d-tinta-3:var(--muted2);
+  --d-acento-suave:color-mix(in srgb, var(--d-acento) 14%, transparent);
+  --d-sombra-1:0 1px 2px rgba(0,0,0,.04), 0 6px 18px -6px rgba(0,0,0,.10);
+  --d-sombra-2:0 1px 2px rgba(0,0,0,.05), 0 12px 28px -10px rgba(0,0,0,.18);
+  --v2-ico:var(--muted2);
+}
+
+/* ── Letra ──────────────────────────────────────────────────────────────── */
+html:root[data-interfaz="v2"] body{ font-family:var(--d-letra); -webkit-font-smoothing:antialiased; }
+html:root[data-interfaz="v2"] :is(h1, h2, h3, .mt-cifra, .cad-cifra b){ font-family:var(--d-letra-titulo); }
+html:root[data-interfaz="v2"] h1{ font-size:1.65rem; font-weight:700; letter-spacing:-.022em; color:var(--d-tinta); }
+html:root[data-interfaz="v2"] h2{ font-size:1.08rem; font-weight:650; letter-spacing:-.01em; color:var(--d-tinta); }
+html:root[data-interfaz="v2"] :is(td, .mt-cifra, .mt-barra b, .cad-cifra b){ font-variant-numeric:tabular-nums; }
+
+/* ── Cabecera y menú ────────────────────────────────────────────────────── */
+/* La barra de arriba, en otro tono que las cajas: un degradado vertical muy leve, algo más oscuro arriba y más claro
+   abajo (Juan, 25/11/2026: «muy sutil, minimalismo puro»). */
+:root[data-interfaz="v2"]:not([data-tema]) .titlebar{ background:var(--d-barra); border-bottom:1px solid var(--d-filo); box-shadow:none; }
+:root[data-interfaz="v2"][data-sf-theme="day"]:not([data-tema]){ --d-barra:linear-gradient(180deg, #E9EDF2 0%, #F4F6F9 55%, #FBFCFD 100%); }
+:root[data-interfaz="v2"][data-sf-theme="night"]:not([data-tema]){ --d-barra:linear-gradient(180deg, #0F1114 0%, #15181C 55%, #1A1D23 100%); }
+:root[data-interfaz="v2"][data-sf-theme="midnight"]:not([data-tema]){ --d-barra:linear-gradient(180deg, #10141B 0%, #161B23 55%, #1A1F27 100%); }
+:root[data-interfaz="v2"]:not([data-tema]) .lateral{ background-color:var(--d-caja) !important; border-right:1px solid var(--d-filo); }
+:root[data-interfaz="v2"] .lateral h4{ text-transform:none; letter-spacing:0; font-size:12.5px; font-weight:600; color:var(--d-tinta-2, var(--muted)); }
+html:root[data-interfaz="v2"] .lateral details.bloque a{ border-radius:8px; font-size:13.5px; font-weight:500; }
+html:root[data-interfaz="v2"] .lateral details.bloque a .ico{ color:var(--v2-ico); }
+html:root[data-interfaz="v2"] .lateral details.bloque a.activa{ background:var(--d-acento-suave); color:var(--d-acento); font-weight:600; box-shadow:none; }
+html:root[data-interfaz="v2"] .lateral details.bloque a.activa .ico{ color:var(--d-acento); }
+/* Los atajos de arriba, solo con icono; su nombre sale debajo al pasar el ratón (o al llegar con el teclado). */
+:root[data-interfaz="v2"] .tb-atajo{ position:relative; }
+:root[data-interfaz="v2"] .tb-atajo-t{ position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%); z-index:60;
+  padding:4px 8px; border-radius:6px; background:#17202B; color:#FFFFFF; font-size:12px; font-weight:500; line-height:1.3;
+  white-space:nowrap; pointer-events:none; opacity:0; visibility:hidden; transition:opacity .12s; }
+:root[data-interfaz="v2"] .tb-atajo:is(:hover, :focus-visible) .tb-atajo-t{ opacity:1; visibility:visible; transition-delay:.25s; }
+
+/* ── Cajas ──────────────────────────────────────────────────────────────── */
+html:root[data-interfaz="v2"] :is(.tarjeta, .bloque-panel, .mosaico-t, .res-tarjeta, .cifra, .contador, .ficha-seccion, .cad-cifra),
+html:root[data-interfaz="v2"] :is(.viendo-ficha, .registro) .ficha-cab{
+  background:var(--d-caja); border:1px solid var(--d-filo) !important; border-radius:var(--d-radio-caja); box-shadow:var(--d-sombra-1); }
+html:root[data-interfaz="v2"] :is(a.mosaico-t, a.res-tarjeta, button.cad-cifra, a.cifra):hover{ border-color:var(--d-filo-2) !important; box-shadow:var(--d-sombra-2); }
+/* Las alertas: fondo teñido y filo del mismo tono, sin la raya gorda a la izquierda. */
+html:root[data-interfaz="v2"] .banda{ border:1px solid var(--d-filo); border-radius:10px; background:var(--d-caja-2); }
+:root[data-interfaz="v2"][data-sf-theme="day"]:not([data-tema]) .banda.aviso{ background:#FFF8E6; border-color:#F3DDA4; }
+:root[data-interfaz="v2"]:is([data-sf-theme="night"], [data-sf-theme="midnight"]):not([data-tema]) .banda.aviso{ background:rgba(242,182,82,.10); border-color:rgba(242,182,82,.28); }
+
+/* ── Tablas ─────────────────────────────────────────────────────────────── */
+html:root[data-interfaz="v2"] .tabla{ background:var(--d-caja); border:1px solid var(--d-filo) !important; border-radius:var(--d-radio-caja); box-shadow:var(--d-sombra-1); }
+html:root[data-interfaz="v2"] .tabla thead th{ background:var(--d-caja-2); color:var(--d-tinta-2); font-size:12.5px; font-weight:600;
+  text-transform:none; letter-spacing:0; border-bottom:1px solid var(--d-filo); }
+html:root[data-interfaz="v2"] .tabla td{ border-bottom:1px solid var(--d-filo); }
+html:root[data-interfaz="v2"] .tabla tbody tr:last-child td{ border-bottom:0; }
+html:root[data-interfaz="v2"] .tabla tbody tr:hover td{ background:var(--d-caja-2); }
+
+/* ── Campos ─────────────────────────────────────────────────────────────── */
+html:root[data-interfaz="v2"] :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea){
+  background:var(--d-caja); border:1px solid var(--d-filo-2); border-radius:var(--d-radio-campo); min-height:40px;
+  transition:border-color .12s, box-shadow .12s; }
+html:root[data-interfaz="v2"] :is(input, select, textarea):focus{ border-color:var(--d-acento); box-shadow:0 0 0 3px var(--d-acento-suave); }
+html:root[data-interfaz="v2"] .segmentos{ border-color:var(--d-filo-2); border-radius:var(--d-radio-campo); background:var(--d-caja); }
+
+/* ── Paletas de las gráficas, una por tema (Juan, 25/11/2026: «usa los mismos tonos que Holded y adapta los otros
+   temas con colores que concuerden con sus patrones; me gustan los degradados en las gráficas»). Cada serie va de su
+   tono fuerte (-a) a uno más claro (-b). ───────────────────────────────────────────────────────────────────────── */
+/* Light: los de Holded, índigo y azul pervinca, con su verde, ámbar y rojo. */
+:root[data-interfaz="v2"]{
+  --gr-a:#4F6BED; --gr-b:#8EA2F8; --gr-pista:#EEF1F6;
+  --gr-bien-a:#1F9D63; --gr-bien-b:#5CCB94; --gr-pronto-a:#F59E0B; --gr-pronto-b:#F8C661; --gr-mal-a:#E5484D; --gr-mal-b:#F58A8D;
+}
+/* Black: la familia naranja de la marca, como su botón principal. */
+:root[data-interfaz="v2"][data-sf-theme="night"]{
+  --gr-a:#EC6A2A; --gr-b:#F6A81E; --gr-pista:rgba(255,255,255,.08);
+  --gr-bien-a:#2FA56F; --gr-bien-b:#7BE0A8; --gr-pronto-a:#F2A93B; --gr-pronto-b:#F9CD6E; --gr-mal-a:#E5484D; --gr-mal-b:#FF8A80;
+}
+/* Dark Blue: azul a cian, el mismo frío del tema. */
+:root[data-interfaz="v2"][data-sf-theme="midnight"]{
+  --gr-a:#3B82F6; --gr-b:#38BDF8; --gr-pista:rgba(190,210,235,.10);
+  --gr-bien-a:#22A87A; --gr-bien-b:#5EE0B0; --gr-pronto-a:#F2A93B; --gr-pronto-b:#F9CD6E; --gr-mal-a:#E5484D; --gr-mal-b:#FF8A80;
+}
+/* Silver: el azul del sistema del Mac. Blue Manager: su naranja rojizo sobre azul marino. */
+:root[data-interfaz="v2"][data-tema="silver"]{ --gr-a:#0A84FF; --gr-b:#64D2FF; --gr-pista:#E5E5EA; }
+:root[data-interfaz="v2"][data-tema="bm"]{ --gr-a:#E8452C; --gr-b:#FF8A3D; --gr-pista:#E3E8F0; }
+
+/* ── Los apartados, cada uno con su degradado (como los recuadros de color de Creatio). El icono va en blanco sobre
+   el tono fuerte, que da al menos 3:1. ───────────────────────────────────────────────────────────────────────── */
+:root[data-interfaz="v2"] :is([data-bloque="inicio"], [data-ap="inicio"]){ --ap:linear-gradient(135deg, #4F6BED, #7B8FF3); }
+:root[data-interfaz="v2"] :is([data-bloque="deca"], [data-ap="deca"]){ --ap:linear-gradient(135deg, #D93A40, #F26B5B); }
+:root[data-interfaz="v2"] :is([data-bloque="cumplimiento"], [data-ap="cumplimiento"]){ --ap:linear-gradient(135deg, #C96A05, #F2A33A); }
+:root[data-interfaz="v2"] :is([data-bloque="trafico"], [data-ap="trafico"]){ --ap:linear-gradient(135deg, #2563EB, #4E9BF5); }
+:root[data-interfaz="v2"] :is([data-bloque="flota"], [data-ap="flota"]){ --ap:linear-gradient(135deg, #0B8584, #1FB5A8); }
+:root[data-interfaz="v2"] :is([data-bloque="telematica"], [data-ap="telematica"]){ --ap:linear-gradient(135deg, #0A7EA4, #22B5D6); }
+:root[data-interfaz="v2"] :is([data-bloque="personal"], [data-ap="personal"]){ --ap:linear-gradient(135deg, #6D4AE8, #9B82F5); }
+:root[data-interfaz="v2"] :is([data-bloque="clientes"], [data-ap="clientes"]){ --ap:linear-gradient(135deg, #17885A, #34B57B); }
+:root[data-interfaz="v2"] :is([data-bloque="proveedores"], [data-ap="proveedores"]){ --ap:linear-gradient(135deg, #4D7C0F, #7AB62A); }
+:root[data-interfaz="v2"] :is([data-bloque="documentos"], [data-ap="documentos"]){ --ap:linear-gradient(135deg, #4B5B7C, #7486AA); }
+:root[data-interfaz="v2"] :is([data-bloque="facturacion"], [data-ap="facturacion"]){ --ap:linear-gradient(135deg, #047857, #10B981); }
+:root[data-interfaz="v2"] :is([data-bloque="informes"], [data-ap="informes"]){ --ap:linear-gradient(135deg, #C2366F, #EC6FA8); }
+:root[data-interfaz="v2"] :is([data-bloque="integraciones"], [data-ap="integraciones"]){ --ap:linear-gradient(135deg, #3060D8, #60A5FA); }
+:root[data-interfaz="v2"] :is([data-bloque="app"], [data-ap="app"]){ --ap:linear-gradient(135deg, #D9561C, #F68C45); }
+:root[data-interfaz="v2"] :is([data-bloque="cuenta"], [data-ap="cuenta"]){ --ap:linear-gradient(135deg, #00354D, #13698C); }
+:root[data-interfaz="v2"] :is([data-bloque="ajustes"], [data-ap="ajustes"]){ --ap:linear-gradient(135deg, #556274, #8592A6); }
+:root[data-interfaz="v2"] :is([data-bloque="ayuda"], [data-ap="ayuda"]){ --ap:linear-gradient(135deg, #0E6E8A, #1597B5); }
+
+/* El menú: cada icono en su recuadro de 24 px con el degradado de su apartado; el título del apartado, con su punto. */
+html:root[data-interfaz="v2"] .lateral details.bloque a :is(.ico, .con-ico .ico){ width:24px; height:24px; padding:4px; box-sizing:border-box;
+  border-radius:7px; background:var(--ap); color:#FFFFFF; flex:none; }
+html:root[data-interfaz="v2"] .lateral details.bloque a .con-ico .ico{ vertical-align:-7px; }
+html:root[data-interfaz="v2"] .lateral details.bloque a.activa .ico{ color:#FFFFFF; }
+html:root[data-interfaz="v2"] .lateral details.bloque a:is(.proximamente, .no_contratado) .ico{ filter:grayscale(1); opacity:.45; }
+html:root[data-interfaz="v2"] .lateral details.bloque > summary h4::before{ content:""; display:inline-block; width:8px; height:8px;
+  margin-right:8px; border-radius:3px; background:var(--ap); vertical-align:1px; }
+
+/* ── Panel ──────────────────────────────────────────────────────────────── */
+html:root[data-interfaz="v2"] .mosaico{ gap:16px; }
+html:root[data-interfaz="v2"] .mosaico-t{ padding:16px 18px; min-height:150px; }
+/* El título de cada caja, con su icono en el recuadro de color de su apartado. */
+:root[data-interfaz="v2"] .mt-tit{ display:flex; align-items:center; gap:10px; margin-bottom:4px; text-transform:none; letter-spacing:0;
+  font-size:14px; font-weight:600; color:var(--d-tinta, var(--ink)); }
+:root[data-interfaz="v2"] .mt-ico{ flex:none; width:30px; height:30px; border-radius:8px; display:grid; place-items:center;
+  background:var(--ap, var(--panel2)); color:#FFFFFF; box-shadow:0 2px 6px -2px rgba(16,24,40,.30); }
+:root[data-interfaz="v2"] .mt-ico svg{ width:17px; height:17px; }
+:root[data-interfaz="v2"] .mt-ctx{ font-size:12.5px; color:var(--d-tinta-2, var(--muted)); }
+:root[data-interfaz="v2"] .mt-cifra{ font-size:2rem; font-weight:700; letter-spacing:-.025em; }
+:root[data-interfaz="v2"] .mt-cifra small{ letter-spacing:0; }
+
+/* Las barras, en degradado: la neutra con la paleta del tema y las de estado con la suya. */
+:root[data-interfaz="v2"] .mt-pista{ height:8px; border-radius:4px; background:var(--gr-pista); }
+:root[data-interfaz="v2"] .mt-pista.grande{ height:10px; margin-top:12px; border-radius:5px; }
+:root[data-interfaz="v2"] .mt-pista i{ border-radius:4px; background:linear-gradient(90deg, var(--gr-a), var(--gr-b)); }
+:root[data-interfaz="v2"] .mt-pista i:is(.mal){ background:linear-gradient(90deg, var(--gr-mal-a), var(--gr-mal-b)); }
+:root[data-interfaz="v2"] .mt-pista i:is(.pronto){ background:linear-gradient(90deg, var(--gr-pronto-a), var(--gr-pronto-b)); }
+:root[data-interfaz="v2"] .mt-pista i:is(.bien){ background:linear-gradient(90deg, var(--gr-bien-a), var(--gr-bien-b)); }
+:root[data-interfaz="v2"] .mt-apilada{ display:flex; gap:2px; }
+:root[data-interfaz="v2"] .mt-apilada i{ flex:none; }
+:root[data-interfaz="v2"] .mt-apilada i[data-w="0.0"]{ display:none; }
+
+/* El anillo: tres tramos en degradado (al día, vence pronto, caducado) y el hueco del color de la caja. */
+:root[data-interfaz="v2"] .mt-anillo{ display:flex; align-items:center; gap:16px; margin-top:8px; }
+:root[data-interfaz="v2"] .mt-rosco{ --a:100; --b:100; position:relative; flex:none; width:96px; height:96px; border-radius:50%; display:grid; place-items:center;
+  background:conic-gradient(var(--gr-bien-a) 0%, var(--gr-bien-b) calc(var(--a) * 1%), var(--gr-pronto-a) calc(var(--a) * 1%),
+    var(--gr-pronto-b) calc(var(--b) * 1%), var(--gr-mal-a) calc(var(--b) * 1%), var(--gr-mal-b) 100%); }
+:root[data-interfaz="v2"] .mt-rosco::before{ content:""; position:absolute; inset:12px; border-radius:50%; background:var(--d-caja, var(--panel)); }
+:root[data-interfaz="v2"] .mt-rosco span{ position:relative; font-size:13px; color:var(--d-tinta-2, var(--muted)); }
+:root[data-interfaz="v2"] .mt-rosco b{ font-size:22px; font-weight:700; letter-spacing:-.02em; color:var(--d-tinta, var(--ink)); font-variant-numeric:tabular-nums; }
+:root[data-interfaz="v2"] .mt-leyenda{ list-style:none; margin:0; padding:0; display:grid; gap:5px; font-size:12.5px; color:var(--d-tinta-2, var(--muted)); }
+:root[data-interfaz="v2"] .mt-leyenda.en-linea{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; }
+:root[data-interfaz="v2"] .mt-leyenda b{ color:var(--d-tinta, var(--ink)); font-variant-numeric:tabular-nums; }
+:root[data-interfaz="v2"] .mt-leyenda li::before{ content:""; display:inline-block; width:9px; height:9px; margin-right:7px; border-radius:3px; vertical-align:0; }
+:root[data-interfaz="v2"] .mt-leyenda .l-bien::before{ background:linear-gradient(135deg, var(--gr-bien-a), var(--gr-bien-b)); }
+:root[data-interfaz="v2"] .mt-leyenda .l-pronto::before{ background:linear-gradient(135deg, var(--gr-pronto-a), var(--gr-pronto-b)); }
+:root[data-interfaz="v2"] .mt-leyenda .l-mal::before{ background:linear-gradient(135deg, var(--gr-mal-a), var(--gr-mal-b)); }
+:root[data-interfaz="v2"] .mt-leyenda .l-prim::before{ background:linear-gradient(135deg, var(--gr-a), var(--gr-b)); }
+
+/* Las columnas (Flota): de abajo arriba, del tono fuerte al claro. */
+:root[data-interfaz="v2"] .mt-columnas{ display:flex; align-items:stretch; gap:12px; height:170px; margin-top:12px; }
+:root[data-interfaz="v2"] .mt-col{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:5px; }
+:root[data-interfaz="v2"] .mt-col b{ font-size:12.5px; font-variant-numeric:tabular-nums; }
+:root[data-interfaz="v2"] .mt-col-pista{ flex:1; width:100%; max-width:46px; display:flex; align-items:flex-end; }
+:root[data-interfaz="v2"] .mt-col-pista i{ display:block; width:100%; border-radius:7px 7px 3px 3px; background:linear-gradient(0deg, var(--gr-a), var(--gr-b)); }
+:root[data-interfaz="v2"] .mt-col-et{ max-width:100%; font-size:12px; color:var(--d-tinta-2, var(--muted)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* El medio anillo (Vacaciones). */
+:root[data-interfaz="v2"] .mt-semi{ --p:0; position:relative; width:180px; height:90px; margin:14px auto 0; overflow:hidden; }
+:root[data-interfaz="v2"] .mt-semi::before{ content:""; position:absolute; left:0; top:0; width:180px; height:180px; border-radius:50%;
+  background:conic-gradient(from -90deg, var(--gr-a) 0%, var(--gr-b) calc(var(--p) * .5%), var(--gr-pista) calc(var(--p) * .5%) 50%, transparent 50%);
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 16px), #000 calc(100% - 15px));
+  mask:radial-gradient(farthest-side, transparent calc(100% - 16px), #000 calc(100% - 15px)); }
+:root[data-interfaz="v2"] .mt-semi span{ position:absolute; left:0; right:0; bottom:0; text-align:center; font-size:13px; color:var(--d-tinta-2, var(--muted)); }
+:root[data-interfaz="v2"] .mt-semi b{ display:block; font-size:24px; font-weight:700; letter-spacing:-.02em; color:var(--d-tinta, var(--ink)); line-height:1.1; }
+
+/* La caja destacada, en degradado oscuro (la tarjeta del banco de Holded): Vencimientos, lo primero que hay que mirar. */
+html:root[data-interfaz="v2"] .mosaico-t[data-k="vencimientos"]{ background:var(--d-destacada-brillo), var(--d-destacada);
+  border-color:transparent !important; color:#FFFFFF; }
+html:root[data-interfaz="v2"] .mosaico-t[data-k="vencimientos"] :is(.mt-tit, .mt-cifra, .mt-barra b){ color:#FFFFFF; }
+html:root[data-interfaz="v2"] .mosaico-t[data-k="vencimientos"] :is(.mt-ctx, .mt-et, .mt-cifra small){ color:rgba(255,255,255,.75); }
+html:root[data-interfaz="v2"] .mosaico-t[data-k="vencimientos"] .mt-pista{ background:rgba(255,255,255,.12); }
+
+/* ── El cuerpo, como una caja con las esquinas de la izquierda redondeadas contra el menú, como en Frisbee (Juan,
+   25/11/2026: «donde pone Dashboard, la esquina de la izquierda arriba está redondeada, y abajo del cuerpo también»).
+   El menú es un marco de toda la altura; la barra de arriba se parte: lo que queda encima del menú (el logo) es marco, y
+   lo demás (empresa, buscador, usuario) es ya el cuerpo. La esquina de arriba va en lo alto de la ventana y la de abajo,
+   al pie. En Light, Black y Dark Blue el borde lleva un filo fino; en Blue Manager no hace falta (marco azul marino
+   sobre cuerpo claro). Silver, con su barra gris oscura y el logo en blanco, deja la esquina bajo su barra. Solo en
+   escritorio. ── */
+:root[data-interfaz="v2"]{ --d-radio-marco:40px; --d-marco:var(--d-caja); --d-marco-abajo:var(--d-marco); --d-filo-marco:var(--d-filo); }
+:root[data-interfaz="v2"][data-tema="silver"]{ --d-marco:#F2F2F4; --d-filo-marco:rgba(0,0,0,.10); }
+:root[data-interfaz="v2"][data-tema="bm"]{ --d-marco:#123A75; --d-marco-abajo:#0A1F44; --d-filo-marco:transparent; }
+@media (min-width:901px){
+  :root[data-interfaz="v2"]:not([data-tema="bm"]) .lateral{ border-right:1px solid var(--d-filo-marco); }
+  /* La esquina de abajo, al pie de la ventana, en todos. */
+  :root[data-interfaz="v2"] .lateral::after{ content:""; position:fixed; bottom:0; left:calc(var(--ancho-menu) - 1px); z-index:36;
+    width:var(--d-radio-marco); height:var(--d-radio-marco); pointer-events:none;
+    background:radial-gradient(circle at 100% 0, transparent calc(var(--d-radio-marco) - 1.5px), var(--d-filo-marco) calc(var(--d-radio-marco) - 1px),
+      var(--d-filo-marco) calc(var(--d-radio-marco) - .5px), var(--d-marco-abajo) var(--d-radio-marco)); }
+
+  /* La barra partida (todos menos Silver): marco sobre el menú y, en lo demás, el color del cuerpo, casi opaco y con
+     el degradado vertical leve, para que lo que pasa por debajo al desplazarse no se lea. */
+  :root[data-interfaz="v2"]:not([data-tema="silver"]) .titlebar{ border-bottom:0 !important; box-shadow:none !important;
+    background-color:color-mix(in srgb, var(--bg) 90%, transparent) !important;
+    background-image:linear-gradient(90deg, var(--d-marco) 0 var(--ancho-menu), transparent var(--ancho-menu)),
+      linear-gradient(180deg, rgba(0,0,0,.035), rgba(0,0,0,0)) !important;
+    -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+  /* La esquina de arriba, en lo alto de la ventana: encima de la barra, en la frontera entre el marco y el cuerpo. */
+  :root[data-interfaz="v2"]:not([data-tema="silver"]) .titlebar::before{ content:""; position:absolute; top:0; z-index:2; pointer-events:none;
+    left:calc(var(--ancho-menu) - 1px); width:var(--d-radio-marco); height:var(--d-radio-marco);
+    background:radial-gradient(circle at 100% 100%, transparent calc(var(--d-radio-marco) - 1.5px), var(--d-filo-marco) calc(var(--d-radio-marco) - 1px),
+      var(--d-filo-marco) calc(var(--d-radio-marco) - .5px), var(--d-marco) var(--d-radio-marco)); }
+  /* El filo del menú sigue por la barra hasta arriba. */
+  :root[data-interfaz="v2"]:not([data-tema="silver"]):not([data-tema="bm"]) .titlebar::after{ content:""; position:absolute; top:var(--d-radio-marco);
+    bottom:0; left:calc(var(--ancho-menu) - 1px); width:1px; background:var(--d-filo-marco); pointer-events:none; }
+  /* El logo, en la zona del marco; la empresa empieza ya dentro del cuerpo, pasada la curva. */
+  :root[data-interfaz="v2"]:not([data-tema="silver"]) .tb2-brand{ flex:0 0 max(120px, calc(var(--ancho-menu) - 72px)); }
+  :root[data-interfaz="v2"]:not([data-tema="silver"]) .tb2-sep{ display:none; }
+  :root[data-interfaz="v2"]:not([data-tema="silver"]) .tb2-empresa{ margin-left:18px; }
+  /* En Blue Manager, lo que queda en el cuerpo pasa a tinta oscura (el logo sigue en blanco, sobre el azul marino). */
+  :root[data-interfaz="v2"][data-tema="bm"] .titlebar :is(.tb2-empresa, .tb-atajo, .tb2-yo, .tb2-yo *, .tb-salir){ color:var(--ink) !important; }
+  :root[data-interfaz="v2"][data-tema="bm"] .titlebar .tb-busca input{ background:#FFFFFF !important; border-color:var(--line2) !important; color:var(--ink) !important; }
+  :root[data-interfaz="v2"][data-tema="bm"] .titlebar .tb-busca input::placeholder{ color:var(--muted) !important; }
+
+  /* Silver: la esquina de arriba bajo su barra, como estaba. */
+  :root[data-interfaz="v2"][data-tema="silver"] .lateral::before{ content:""; position:fixed; top:calc(var(--alto-barra) - 1px);
+    left:calc(var(--ancho-menu) - 1px); z-index:36; width:var(--d-radio-marco); height:var(--d-radio-marco); pointer-events:none;
+    background:radial-gradient(circle at 100% 100%, transparent calc(var(--d-radio-marco) - 1.5px), var(--d-filo-marco) calc(var(--d-radio-marco) - 1px),
+      var(--d-filo-marco) calc(var(--d-radio-marco) - .5px), var(--d-marco) var(--d-radio-marco)); }
+}
+
+/* ── Silver y Blue Manager, con lo mismo que los demás pero en sus colores (Juan, 25/11/2026: «en los temas que no son
+   claro y oscuro no has cambiado los colores de los iconos y otras cosas»). Silver, como los ajustes del Mac: iconos en
+   recuadros de color y la caja destacada en grafito con un brillo azul. Blue Manager: la caja en su azul marino con un
+   brillo naranja rojizo. ── */
+:root[data-interfaz="v2"][data-tema="silver"]{ --d-acento:#0A64D8;
+  --d-destacada:linear-gradient(140deg, #2C2C2E 0%, #3A3A3C 55%, #48484A 100%);
+  --d-destacada-brillo:radial-gradient(120% 90% at 100% 0%, rgba(10,132,255,.40), transparent 60%); }
+:root[data-interfaz="v2"][data-tema="bm"]{ --d-acento:#FF8A3D;
+  --d-destacada:linear-gradient(150deg, #0A1F44 0%, #123A75 100%);
+  --d-destacada-brillo:radial-gradient(110% 120% at 0% 100%, rgba(232,69,44,.38), transparent 58%); }
+/* Los iconos del menú en su recuadro de color, también en estos dos temas. */
+:root[data-interfaz="v2"][data-tema] .lateral details.bloque a :is(.ico, .con-ico .ico){ width:24px !important; height:24px !important; padding:4px;
+  box-sizing:border-box; border-radius:7px; background:var(--ap) !important; color:#FFFFFF !important; flex:none; opacity:1; }
+:root[data-interfaz="v2"][data-tema] .lateral details.bloque a .con-ico .ico{ vertical-align:-7px; }
+:root[data-interfaz="v2"][data-tema] .lateral details.bloque a:is(.proximamente, .no_contratado) .ico{ filter:grayscale(1); opacity:.5; }
+:root[data-interfaz="v2"][data-tema] .lateral details.bloque > summary h4::before{ content:""; display:inline-block; width:8px; height:8px;
+  margin-right:8px; border-radius:3px; background:var(--ap); vertical-align:1px; }
+/* La caja destacada (Vencimientos), también aquí. */
+:root[data-interfaz="v2"][data-tema] #app #vista .mosaico-t[data-k="vencimientos"]{ background:var(--d-destacada-brillo), var(--d-destacada) !important;
+  border-color:transparent !important; color:#FFFFFF; }
+:root[data-interfaz="v2"][data-tema] #app #vista .mosaico-t[data-k="vencimientos"] :is(.mt-tit, .mt-cifra, .mt-barra b){ color:#FFFFFF !important; }
+:root[data-interfaz="v2"][data-tema] #app #vista .mosaico-t[data-k="vencimientos"] :is(.mt-ctx, .mt-et, .mt-cifra small){ color:rgba(255,255,255,.75) !important; }
+:root[data-interfaz="v2"][data-tema] #app #vista .mosaico-t[data-k="vencimientos"] .mt-pista{ background:rgba(255,255,255,.12); }
+
+/* ── Lo que Silver y Blue Manager fijaban con !important o con #app #vista: también igual en todos (medido el 25/11/2026). ── */
+html:root[data-interfaz="v2"][data-tema] #app #vista :is(.cad-cifra, .cifra, .contador, .tarjeta, .bloque-panel, .mosaico-t, .res-tarjeta, .ficha-seccion){
+  border-radius:var(--d-radio-caja) !important; box-shadow:var(--d-sombra-1) !important; }
+html:root[data-interfaz="v2"][data-tema] #app #vista :is(a.mosaico-t, a.res-tarjeta, button.cad-cifra, a.cifra):hover{ box-shadow:var(--d-sombra-2) !important; }
+html:root[data-interfaz="v2"][data-tema] .lateral h4{ font-weight:600 !important; letter-spacing:0 !important; }
+html:root[data-interfaz="v2"][data-tema] .lateral details.bloque a{ border-radius:8px !important; font-size:13.5px !important; font-weight:500 !important; letter-spacing:0 !important; }
+html:root[data-interfaz="v2"][data-tema] .lateral details.bloque a.activa{ font-weight:600 !important; }
+
+/* ── El título de cada pantalla: flecha para volver y etiquetas debajo (como en Creatio). Igual en todos los temas. ── */
+html:root[data-interfaz="v2"] .tit-bloque{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+html:root[data-interfaz="v2"] .tit-fila{ display:flex; align-items:center; gap:10px; min-width:0; }
+html:root[data-interfaz="v2"] .tit-fila h1{ margin:0; }
+html:root[data-interfaz="v2"] #app .tit-volver{ flex:none; display:grid; place-items:center; width:32px; height:32px; min-height:0; padding:0;
+  border-radius:8px; border:1px solid var(--d-filo-2); background:var(--d-caja); color:var(--d-tinta); box-shadow:var(--d-sombra-1); }
+html:root[data-interfaz="v2"] #app .tit-volver:hover{ background:var(--d-caja-2); color:var(--d-tinta); }
+html:root[data-interfaz="v2"] .tit-volver svg{ width:18px; height:18px; }
+html:root[data-interfaz="v2"] .tit-etiquetas{ display:flex; flex-wrap:wrap; gap:6px; }
+html:root[data-interfaz="v2"] .tit-etiqueta{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px;
+  background:var(--d-caja-2); border:1px solid var(--d-filo); font-size:12.5px; font-weight:500; line-height:1.5; color:var(--d-tinta-2); }
+html:root[data-interfaz="v2"] .tit-ap::before{ content:""; width:8px; height:8px; border-radius:3px; background:var(--ap); }
+
+/* ── La barra de arriba: al pasar el ratón, en Silver (barra gris oscura y texto blanco) el fondo se aclara un poco y el
+   texto sigue blanco; antes salía fondo claro con texto blanco y no se leía (Juan, 25/11/2026). ── */
+html:root[data-interfaz="v2"][data-tema="silver"] .titlebar :is(.tb-salir, .tb-menu, .tb-atajo, .tb-plegar):hover{
+  background:rgba(255,255,255,.16) !important; border-color:transparent !important; color:#FFFFFF !important; }
+
+
+/* ── El menú recogido, con las entradas de todos los apartados, no solo las del abierto (Juan: «no aparecen todos en el
+   menú recogido, como lo hacen otros»). Cada apartado, separado por una línea y con sus iconos en su color. Lo que se
+   tenga abierto o cerrado al desplegarlo no cambia: solo se muestra el contenido de los cerrados mientras está recogido. ── */
+@media (min-width:901px){
+  html:root[data-interfaz="v2"][data-menu="corto"] .lateral details.bloque:not([open]){ display:block; }
+  html:root[data-interfaz="v2"][data-menu="corto"] .lateral details.bloque::details-content{ content-visibility:visible; display:block; }
+  html:root[data-interfaz="v2"][data-menu="corto"] .lateral details.bloque{ margin:0 0 8px; padding-bottom:8px; border-bottom:1px solid var(--d-filo); }
+  html:root[data-interfaz="v2"][data-menu="corto"] .lateral details.bloque:last-child{ border-bottom:0; }
+  html:root[data-interfaz="v2"][data-menu="corto"] .lateral details.bloque a{ justify-content:center; padding:6px 0; }
+  html:root[data-interfaz="v2"][data-menu="corto"] .lateral details.bloque a :is(.ico, .con-ico .ico){ margin:0 !important; }
+}
+
+/* ── Las cajas de cifras (Tacógrafo, Caducidades, Obligaciones y las demás): cifra y texto centrados, una franja arriba
+   con el degradado de su estado, el fondo teñido apenas del mismo tono y, si es enlace, se eleva al pasar el ratón
+   (Juan, 25/11/2026: «números centrados, dale algún efecto profesional»). Sin estado, la paleta del tema. ── */
+html:root[data-interfaz="v2"] :is(.cifra, .cad-cifra){ --cf-a:var(--gr-a); --cf-b:var(--gr-b);
+  position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  text-align:center; padding:18px 14px 14px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--cf-a) 7%, var(--d-caja)) 0%, var(--d-caja) 70%) !important;
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+html:root[data-interfaz="v2"] :is(.cifra, .cad-cifra)::before{ content:""; position:absolute; inset:0 0 auto 0; height:3px;
+  background:linear-gradient(90deg, var(--cf-a), var(--cf-b)); }
+html:root[data-interfaz="v2"] :is(.cifra, .cad-cifra) b{ font-size:2.1rem; font-weight:700; letter-spacing:-.03em; line-height:1.05;
+  font-variant-numeric:tabular-nums; }
+html:root[data-interfaz="v2"] :is(.cifra, .cad-cifra) span{ font-size:12.5px; line-height:1.35; color:var(--d-tinta-2); }
+/* El estado. */
+html:root[data-interfaz="v2"] :is(.cifra.mal, .cad-cifra.caducado, .cad-cifra.obl-pendiente){ --cf-a:var(--gr-mal-a); --cf-b:var(--gr-mal-b); }
+html:root[data-interfaz="v2"] :is(.cifra.aviso, .cad-cifra.proximo, .cad-cifra.obl-revisar){ --cf-a:var(--gr-pronto-a); --cf-b:var(--gr-pronto-b); }
+html:root[data-interfaz="v2"] :is(.cifra.bien, .cad-cifra.vigente, .cad-cifra.obl-cumple){ --cf-a:var(--gr-bien-a); --cf-b:var(--gr-bien-b); }
+html:root[data-interfaz="v2"] :is(.cad-cifra.falta, .cad-cifra.obl-no_aplica, .cad-cifra.obl-en_curso){ --cf-a:var(--d-tinta-3); --cf-b:var(--d-filo-2); }
+/* Las que llevan a otra pantalla o filtran: se elevan un poco. */
+html:root[data-interfaz="v2"] :is(a.cifra, button.cad-cifra):hover{ transform:translateY(-2px); }
+@media (prefers-reduced-motion:reduce){ html:root[data-interfaz="v2"] :is(a.cifra, button.cad-cifra):hover{ transform:none; } }
+@media (max-width:640px){ html:root[data-interfaz="v2"] :is(.cifra, .cad-cifra) b{ font-size:1.5rem; } }
+/* La cifra, en el color de su estado (el rojo ya lo tenía): ámbar y verde oscuros para leerse sobre blanco. */
+html:root[data-interfaz="v2"] .cifra.aviso b{ color:#9A6100; }
+html:root[data-interfaz="v2"] .cifra.bien b{ color:#1E7A4C; }
+html:root[data-interfaz="v2"]:is([data-sf-theme="night"], [data-sf-theme="midnight"]) .cifra.aviso b{ color:#F2B652; }
+html:root[data-interfaz="v2"]:is([data-sf-theme="night"], [data-sf-theme="midnight"]) .cifra.bien b{ color:#6FD69A; }
+
+/* ══ El calendario de vencimientos, como los calendarios profesionales (Google Calendar, Outlook, Apple Calendar; Juan,
+   25/11/2026: «dale aspecto profesional, puedes poner degradados, o en azul en el tema que corresponda»): una rejilla
+   de una pieza (los días comparten filo), hoy en un círculo con el degradado del tema, el fin de semana apenas
+   sombreado, los días de otros meses en gris, cada vencimiento en una píldora del color de su tema y, al lado, la
+   lista de lo pendiente como una agenda. ══ */
+html:root[data-interfaz="v2"] .t-itv{ --tc:#2563EB; } html:root[data-interfaz="v2"] .t-tacografo{ --tc:#7C3AED; }
+html:root[data-interfaz="v2"] .t-rd1215{ --tc:#0D9488; } html:root[data-interfaz="v2"] .t-mtto{ --tc:#A16207; }
+html:root[data-interfaz="v2"] .t-medico{ --tc:#DB2777; } html:root[data-interfaz="v2"] .t-dni{ --tc:#475569; }
+html:root[data-interfaz="v2"] .t-carne{ --tc:#EA580C; } html:root[data-interfaz="v2"] .t-curso{ --tc:#16A34A; }
+html:root[data-interfaz="v2"] .t-acceso{ --tc:#0891B2; } html:root[data-interfaz="v2"] .t-empresa{ --tc:#7C3AED; }
+
+/* El resumen del título y la leyenda, en píldoras. */
+html:root[data-interfaz="v2"] .cal2-res{ display:inline-flex; gap:6px; margin-left:10px; vertical-align:3px; }
+html:root[data-interfaz="v2"] .ev-pild{ display:inline-block; padding:2px 8px; border-radius:6px; font-size:12px; font-weight:600; line-height:1.5; letter-spacing:0; }
+html:root[data-interfaz="v2"] .ev-pild.ev-mal{ background:#FDECEA; color:#B3261E; }
+html:root[data-interfaz="v2"] .ev-pild.ev-pronto{ background:#FFF3DB; color:#8A5A00; }
+html:root[data-interfaz="v2"]:is([data-sf-theme="night"], [data-sf-theme="midnight"]) .ev-pild.ev-mal{ background:rgba(255,122,112,.16); color:#FF8A80; }
+html:root[data-interfaz="v2"]:is([data-sf-theme="night"], [data-sf-theme="midnight"]) .ev-pild.ev-pronto{ background:rgba(242,182,82,.16); color:#F2B652; }
+html:root[data-interfaz="v2"] .leyenda-temas:not(.filtrable){ gap:6px; }
+html:root[data-interfaz="v2"] .leyenda-temas:not(.filtrable) > span{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px;
+  background:var(--d-caja-2); border:1px solid var(--d-filo); font-size:12px; color:var(--d-tinta-2); }
+html:root[data-interfaz="v2"] .leyenda-temas:not(.filtrable) .tema{ width:8px; height:8px; margin:0; border-radius:3px; }
+
+/* La cabecera: el mes grande y ‹ Hoy › juntos. */
+html:root[data-interfaz="v2"] .cal2{ grid-template-columns:minmax(0, 1fr) 340px; gap:20px; }
+html:root[data-interfaz="v2"] .cal2-cab{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; }
+html:root[data-interfaz="v2"] .cal2-tit{ font-size:1.3rem; letter-spacing:-.015em; color:var(--d-tinta); }
+html:root[data-interfaz="v2"] .cal2-tit b{ font-weight:700; } html:root[data-interfaz="v2"] .cal2-tit span{ font-weight:500; color:var(--d-tinta-3); }
+html:root[data-interfaz="v2"] .cal2-nav{ display:inline-flex; border:1px solid var(--d-filo-2); border-radius:8px; overflow:hidden;
+  background:var(--d-caja); box-shadow:var(--d-sombra-1); }
+html:root[data-interfaz="v2"] #app .cal2-nav button{ min-height:32px; height:32px; padding:0 12px; margin:0; border:0; border-radius:0;
+  background:transparent; color:var(--d-tinta); font-size:13px; font-weight:600; box-shadow:none; }
+html:root[data-interfaz="v2"] #app .cal2-nav button + button{ border-left:1px solid var(--d-filo-2); }
+html:root[data-interfaz="v2"] #app .cal2-nav button:hover{ background:var(--d-caja-2); }
+
+/* La rejilla: una pieza, con el filo de 1 px entre días. */
+html:root[data-interfaz="v2"] .cal2-mes{ gap:1px; background:var(--d-filo); border:1px solid var(--d-filo); border-radius:12px; overflow:hidden; }
+html:root[data-interfaz="v2"] .cal2-mes .cab{ padding:8px 0; background:var(--d-caja-2); font-size:12px; font-weight:600; color:var(--d-tinta-2);
+  text-transform:none; letter-spacing:0; }
+html:root[data-interfaz="v2"] #app .cal2-dia{ min-height:104px; padding:6px 6px 8px; gap:3px; margin:0; border:0; border-radius:0;
+  background:var(--d-caja); box-shadow:none; transform:none; transition:background .12s; }
+html:root[data-interfaz="v2"] #app .cal2-dia.finde{ background:color-mix(in srgb, var(--d-caja-2) 75%, var(--d-caja)); }
+html:root[data-interfaz="v2"] #app .cal2-dia.con.caducado{ background:linear-gradient(180deg, color-mix(in srgb, var(--gr-mal-a) 8%, var(--d-caja)) 0%, var(--d-caja) 75%); }
+html:root[data-interfaz="v2"] #app .cal2-dia.con.proximo{ background:linear-gradient(180deg, color-mix(in srgb, var(--gr-pronto-a) 10%, var(--d-caja)) 0%, var(--d-caja) 75%); }
+html:root[data-interfaz="v2"] #app .cal2-dia.con:hover{ background:var(--d-caja-2); }
+html:root[data-interfaz="v2"] .cal2-dia .n{ align-self:flex-start; display:grid; place-items:center; min-width:24px; height:24px; padding:0 6px;
+  border-radius:999px; font-size:12.5px; font-weight:600; color:var(--d-tinta-2); }
+html:root[data-interfaz="v2"] .cal2-dia.otro .n{ color:var(--d-tinta-3); font-weight:400; opacity:.65; }
+html:root[data-interfaz="v2"] .cal2-dia.hoy .n{ background:linear-gradient(135deg, var(--gr-a), var(--gr-b)); color:#FFFFFF; font-weight:700;
+  box-shadow:0 2px 6px -2px color-mix(in srgb, var(--gr-a) 70%, transparent); }
+/* Cada vencimiento, en una píldora teñida de su tema, con su barra a la izquierda. */
+html:root[data-interfaz="v2"] .cal2-ev{ padding:2px 6px 2px 8px; border-radius:5px; font-size:12px; font-weight:500; line-height:1.35;
+  background:color-mix(in srgb, var(--tc, var(--d-tinta-3)) 13%, var(--d-caja)); color:var(--d-tinta);
+  box-shadow:inset 3px 0 0 var(--tc, var(--d-tinta-3)); }
+html:root[data-interfaz="v2"] .cal2-dia .mas{ padding-left:6px; font-size:12px; font-weight:600; color:var(--d-tinta-2); }
+
+/* La lista de lo pendiente, como una agenda. */
+html:root[data-interfaz="v2"] .cal2-lista{ gap:8px; max-height:660px; scrollbar-width:thin; }
+html:root[data-interfaz="v2"] .cal2-lista h3{ display:flex; align-items:center; gap:8px; margin:6px 0 4px; font-size:14px; font-weight:650;
+  text-transform:none; letter-spacing:0; color:var(--d-tinta); }
+html:root[data-interfaz="v2"] .cal2-lista h3 .cuenta{ padding:1px 8px; border-radius:999px; background:var(--d-caja-2); border:1px solid var(--d-filo);
+  font-size:12px; font-weight:600; color:var(--d-tinta-2); }
+html:root[data-interfaz="v2"] .cal2-t{ display:flex; align-items:flex-start; gap:12px; padding:10px 12px; border-radius:10px; background:var(--d-caja);
+  border:1px solid var(--d-filo); border-left:3px solid var(--tc, var(--d-filo-2)); box-shadow:var(--d-sombra-1);
+  transition:box-shadow .15s, border-color .15s; }
+html:root[data-interfaz="v2"] .cal2-t:hover{ box-shadow:var(--d-sombra-2); }
+html:root[data-interfaz="v2"] .cal2-t .fecha{ flex:0 0 50px; display:flex; flex-direction:column; align-items:center; padding:5px 0; border-radius:8px;
+  background:var(--d-caja-2); }
+html:root[data-interfaz="v2"] .cal2-t .fecha b{ font-size:18px; font-weight:700; line-height:1.1; color:var(--d-tinta); font-variant-numeric:tabular-nums; }
+html:root[data-interfaz="v2"] .cal2-t .fecha span{ font-size:12px; color:var(--d-tinta-2); }
+html:root[data-interfaz="v2"] .cal2-t.caducado .fecha{ background:color-mix(in srgb, var(--gr-mal-a) 12%, var(--d-caja)); }
+html:root[data-interfaz="v2"] .cal2-t.caducado .fecha b{ color:var(--estado-mal); }
+html:root[data-interfaz="v2"] .cal2-t.proximo .fecha{ background:color-mix(in srgb, var(--gr-pronto-a) 14%, var(--d-caja)); }
+html:root[data-interfaz="v2"] .cal2-t .cuerpo{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+html:root[data-interfaz="v2"] .cal2-t .tit{ font-size:13px; font-weight:600; color:var(--d-tinta); }
+html:root[data-interfaz="v2"] .cal2-t .det{ font-size:12px; color:var(--d-tinta-2); }
+html:root[data-interfaz="v2"] .cal2-t .cuando{ font-size:12px; font-weight:600; color:var(--d-tinta-3); }
+html:root[data-interfaz="v2"] .cal2-t.caducado .cuando{ color:var(--estado-mal); }
+
+/* El detalle de un día, en su ventana. */
+html:root[data-interfaz="v2"] .cal2-pop{ background:var(--d-caja); border:1px solid var(--d-filo-2); border-radius:12px; box-shadow:var(--d-sombra-2); }
+/* Los días sin nada son botones desactivados: sin la transparencia de los botones desactivados de la aplicación. */
+html:root[data-interfaz="v2"] #app .cal2-dia:disabled{ opacity:1; cursor:default; }
+html:root[data-interfaz="v2"] .cal2-t .fecha{ flex:0 0 60px; white-space:nowrap; }
+html:root[data-interfaz="v2"] .cal2-t .cuando{ flex:none; }
+
+/* Con el menú recogido no hay logo (Juan, 25/11/2026: «yo quitaba el logo de Gestlogix con el menú plegado»), y el
+   nombre de la empresa empieza pasada la curva, no encima de ella. */
+@media (min-width:901px){
+  html:root[data-interfaz="v2"][data-menu="corto"] .tb2-brand{ display:none; }
+  html:root[data-interfaz="v2"][data-menu="corto"]:not([data-tema="silver"]) .tb2-empresa{
+    margin-left:calc(var(--ancho-menu) + var(--d-radio-marco) - 62px); }
+}
+
+/* ── Las tarjetas del resumen de una ficha (vehículo, trabajador, cliente…): más ordenadas (Juan, 25/11/2026: «estos
+   paneles así me resultan anárquicos; dale color al título, conforme a su tema»). Cada fila de la rejilla, de la misma
+   altura; la cabecera en una franja con un tinte leve y el título en el color del tema, en letra normal. ── */
+html:root[data-interfaz="v2"]{ --d-titulo-caja:#0B5B7D; }
+html:root[data-interfaz="v2"][data-sf-theme="night"]:not([data-tema]){ --d-titulo-caja:#F08A4B; }
+html:root[data-interfaz="v2"][data-sf-theme="midnight"]:not([data-tema]){ --d-titulo-caja:#5AA9FF; }
+html:root[data-interfaz="v2"][data-tema="silver"]{ --d-titulo-caja:#9F5A34; }
+html:root[data-interfaz="v2"][data-tema="bm"]{ --d-titulo-caja:#9F5A34; }
+html:root[data-interfaz="v2"] .ficha-resumen{ grid-template-columns:repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap:16px; align-items:stretch; }
+html:root[data-interfaz="v2"] #app .res-tarjeta{ display:flex; flex-direction:column; padding:0 18px 14px; overflow:hidden; }
+html:root[data-interfaz="v2"] .res-tarjeta > header{ margin:0 -18px 8px; padding:12px 18px; border-bottom:1px solid var(--d-filo);
+  background:linear-gradient(90deg, color-mix(in srgb, var(--d-titulo-caja) 9%, var(--d-caja)) 0%, var(--d-caja) 85%); }
+html:root[data-interfaz="v2"] .res-tarjeta h3{ font-size:14px; font-weight:650; text-transform:none; letter-spacing:0; color:var(--d-titulo-caja); }
+html:root[data-interfaz="v2"] #app .res-tarjeta header .enlace{ font-size:13px; font-weight:600; color:var(--d-tinta-2); text-decoration:none; }
+html:root[data-interfaz="v2"] #app .res-tarjeta header .enlace:hover{ color:var(--d-titulo-caja); text-decoration:none; }
+html:root[data-interfaz="v2"] .res-tarjeta > .nota, html:root[data-interfaz="v2"] .res-tarjeta > p.nota{ margin:6px 0 0; color:var(--d-tinta-3); }
+html:root[data-interfaz="v2"] .res-fila{ padding:9px 0; border-bottom:1px solid var(--d-filo); }
+html:root[data-interfaz="v2"] .res-fila > span{ color:var(--d-tinta-2); }
+html:root[data-interfaz="v2"] .res-fila > b{ color:var(--d-tinta); font-variant-numeric:tabular-nums; }
+
+/* ── Los títulos de las cajas de las fichas, en mayúsculas y con la franja de color, también en las secciones de la
+   pestaña Datos (Vehículo, Vencimientos…), que no la tenían (Juan, 25/11/2026). En Silver y Blue Manager, el título en
+   el naranja del modo oscuro, desaturado y oscurecido para leerse sobre blanco (#9F5A34, 5,3:1), en vez del azul. ── */
+html:root[data-interfaz="v2"] :is(.res-tarjeta > header h3, .ficha-seccion > h3.ancho){ font-size:12.5px !important; font-weight:700;
+  text-transform:uppercase; letter-spacing:.06em; color:var(--d-titulo-caja) !important; }
+html:root[data-interfaz="v2"] #app .ficha-seccion{ padding:0 18px 10px; overflow:hidden; }
+html:root[data-interfaz="v2"] .ficha-seccion > h3.ancho{ margin:0 -18px 8px !important; padding:12px 18px !important;
+  border-bottom:1px solid var(--d-filo) !important;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--d-titulo-caja) 9%, var(--d-caja)) 0%, var(--d-caja) 85%); }
+
+/* ── Blue Manager: el menú entero en el azul oscuro de arriba, con un degradado horizontal muy leve que repite el marco
+   de la barra; antes el menú bajaba de un azul más claro y no casaba con la zona del logo (Juan, 25/11/2026). ── */
+html:root[data-interfaz="v2"][data-tema="bm"]{ --d-marco:#10346A; --d-marco-abajo:#10346A;
+  --bm-marco:linear-gradient(90deg, #16437F 0%, #123A75 60%, #10346A 100%); }
+html:root[data-interfaz="v2"][data-tema="bm"] .lateral{ background:var(--bm-marco) !important; }
+@media (min-width:901px){
+  html:root[data-interfaz="v2"][data-tema="bm"] .titlebar{
+    background-image:linear-gradient(90deg, #16437F 0, #123A75 calc(var(--ancho-menu) * .6), #10346A var(--ancho-menu), transparent var(--ancho-menu)),
+      linear-gradient(180deg, rgba(0,0,0,.035), rgba(0,0,0,0)) !important; }
+}
+
+/* ── Los atajos de la barra de arriba, con el icono en el cuadrado de color de su apartado, como en el menú. ── */
+html:root[data-interfaz="v2"] #app .tb-atajo{ width:34px; height:34px; opacity:1; }
+html:root[data-interfaz="v2"] .tb-atajo svg{ width:26px !important; height:26px !important; padding:5px; box-sizing:border-box; border-radius:7px;
+  background:var(--ap, var(--d-tinta-3)); color:#FFFFFF; box-shadow:0 2px 5px -2px rgba(16,24,40,.35); }
+
+/* ══ Colores por tema (Juan, 25/11/2026) ══ */
+/* Dark Blue: los títulos de las cajas, en el naranja de su botón. */
+html:root[data-interfaz="v2"][data-sf-theme="midnight"]:not([data-tema]){ --d-titulo-caja:#E39C5C; }
+/* Silver: el botón principal en el naranja de los temas oscuros (el de Studio Flow), y los títulos en ese naranja, oscurecido
+   para leerse sobre blanco. */
+html:root[data-interfaz="v2"][data-tema="silver"]{ --d-titulo-caja:#A85F37; --d-acento:#BE6E28;
+  --gl-boton:var(--btn-1); --gl-boton-hover:var(--btn-0); --gl-boton-tinta:var(--btn-tinta); --gl-marca:#BE6E28;
+  --gl-boton-fondo:linear-gradient(178deg, var(--btn-0), var(--btn-1) 52%, var(--btn-2));
+  --gl-boton-hover-fondo:linear-gradient(178deg, var(--btn-0), var(--btn-0) 52%, var(--btn-1));
+  --gl-boton-filo:var(--btn-filo); --gl-boton-sombra:0 1px 2px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,238,220,.44); }
+/* Blue Manager: los títulos de las cajas en blanco, sobre una franja con el degradado azul marino de su botón. */
+html:root[data-interfaz="v2"][data-tema="bm"] .res-tarjeta > header,
+html:root[data-interfaz="v2"][data-tema="bm"] .ficha-seccion > h3.ancho{
+  background:radial-gradient(120% 220% at 0% 0%, #2B5596 0%, #1F467F 55%, #173A6C 100%) !important; border-bottom-color:transparent !important; }
+html:root[data-interfaz="v2"][data-tema="bm"] :is(.res-tarjeta > header h3, .ficha-seccion > h3.ancho){ color:#FFFFFF !important; }
+html:root[data-interfaz="v2"][data-tema="bm"] #app .res-tarjeta header .enlace{ color:rgba(255,255,255,.82); }
+html:root[data-interfaz="v2"][data-tema="bm"] #app .res-tarjeta header .enlace:hover{ color:#FFFFFF; }
+/* Blue Manager: los desplegables y el calendario de las fechas, con un degradado azul mínimo de arriba abajo. */
+html:root[data-interfaz="v2"][data-tema="bm"] :is(.menu-flotante, .menu-yo, .cal, .cal2-pop){
+  background:linear-gradient(180deg, #EEF3FB 0%, #FFFFFF 55%) !important; }
+/* Silver: el buscador de la barra (gris oscura, texto blanco), translúcido como antes; al escribir, blanco con tinta oscura.
+   Al igualar los campos de los cinco temas se había quedado blanco sobre blanco. */
+html:root[data-interfaz="v2"][data-tema="silver"] .titlebar .tb-busca input{ background:rgba(255,255,255,.16) !important;
+  border-color:rgba(255,255,255,.22) !important; color:#FFFFFF !important; box-shadow:none !important; }
+html:root[data-interfaz="v2"][data-tema="silver"] .titlebar .tb-busca input:focus{ background:#FFFFFF !important; color:var(--ink) !important; }
+html:root[data-interfaz="v2"][data-tema="silver"] .titlebar .tb-busca input:focus::placeholder{ color:var(--muted); }
+
+/* ── Los atajos de arriba al pasar el ratón: sin fondo; el cuadrito se aviva y sube un poco (Juan: el fondo blanco, «una
+   chapuza»). Su rótulo, con los colores del botón de cada tema, no en negro. ── */
+html:root[data-interfaz="v2"] #app .tb-atajo, html:root[data-interfaz="v2"] #app .tb-atajo:hover{ background:transparent !important; }
+html:root[data-interfaz="v2"] .tb-atajo svg{ transition:transform .12s, filter .12s, box-shadow .12s; }
+html:root[data-interfaz="v2"] .tb-atajo:is(:hover, :focus-visible) svg{ transform:translateY(-1px); filter:brightness(1.12) saturate(1.1);
+  box-shadow:0 4px 10px -3px rgba(16,24,40,.40); }
+html:root[data-interfaz="v2"] .tb-atajo-t{ background:var(--gl-boton-fondo, var(--gl-boton)) !important; color:var(--gl-boton-tinta, #FFFFFF) !important;
+  box-shadow:0 6px 16px -6px rgba(16,24,40,.35); }
+html:root[data-interfaz="v2"][data-tema="bm"] .tb-atajo-t{ background:radial-gradient(120% 220% at 0% 0%, #2B5596 0%, #1F467F 55%, #173A6C 100%) !important;
+  color:#FFFFFF !important; }
+
+/* ── La barra de desplazamiento del menú: fina y discreta en todos los temas, por si falla la rueda del ratón (Juan). ── */
+@media (min-width:901px){
+  html:root[data-interfaz="v2"] .lateral{ scrollbar-width:thin; scrollbar-color:color-mix(in srgb, var(--d-tinta-3) 45%, transparent) transparent; }
+  html:root[data-interfaz="v2"][data-tema="bm"] .lateral{ scrollbar-color:rgba(255,255,255,.28) transparent; }
+  html:root[data-interfaz="v2"] .lateral::-webkit-scrollbar{ display:block; width:6px; }
+  html:root[data-interfaz="v2"] .lateral::-webkit-scrollbar-track{ background:transparent; }
+  html:root[data-interfaz="v2"] .lateral::-webkit-scrollbar-thumb{ border-radius:3px; background:color-mix(in srgb, var(--d-tinta-3) 45%, transparent); }
+  html:root[data-interfaz="v2"][data-tema="bm"] .lateral::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.28); }
+}

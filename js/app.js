@@ -144,6 +144,8 @@ function pintar() {
 }
 
 // Menú lateral como el de Gestlogix: apartados con su título y una entrada con icono por página.
+// Color de cada apartado del menú con el diseño v2 de Gestlogix (su degradado por apartado: data-bloque).
+const BLOQUE_COLOR = { Cuadrante: 'inicio', 'Configuración': 'personal', Encuestas: 'informes', Cuenta: 'cuenta' };
 const MENU = [
   ['Cuadrante', [['cuadrante', 'Cuadrante', 'calendario'], ['mi', 'Mi horario', 'usuario'], ['vacaciones', 'Vacaciones', 'sol'], ['informes', 'Informes', 'informes'], ['equidad', 'Equidad', 'barras'], ['comparativa', 'Comparar', 'balanza'], ['escenarios', 'Escenarios y versiones', 'capas']]],
   ['Configuración', [['nuevo', 'Nuevo horario', 'nuevo'], ['parametros', 'Parámetros', 'ajustes'], ['plantilla', 'Plantilla', 'usuarios'], ['normativa', 'Normativa', 'libro']]],
@@ -157,7 +159,7 @@ function pintarMenu() {
   // Con el menú corto no hay títulos de bloque para volver a abrirlos: se enseñan todos los iconos.
   const corto = document.documentElement.dataset.menu === 'corto';
   const cerrados = corto ? new Set() : plegados();
-  $('#menu').innerHTML = MENU.map(([titulo, entradas]) => `<details class="bloque" data-bloque="${esc(titulo)}" ${cerrados.has(titulo) ? '' : 'open'}><summary><h4>${titulo}</h4></summary>${entradas.map(([v, t, i]) =>
+  $('#menu').innerHTML = MENU.map(([titulo, entradas]) => `<details class="bloque" data-bloque="${esc(BLOQUE_COLOR[titulo] || titulo)}" ${cerrados.has(titulo) ? '' : 'open'}><summary><h4>${titulo}</h4></summary>${entradas.map(([v, t, i]) =>
     `<a href="#${v}" data-vista="${v}" title="${esc(t)}" class="${v === estado.vista ? 'activa' : ''}" ${v === estado.vista ? 'aria-current="page"' : ''}><span class="con-ico">${icono(i)}${t}</span></a>`).join('')}</details>`).join('');
 }
 function cerrarMenu() { document.body.classList.remove('menu-abierto'); $('#abrir-menu').setAttribute('aria-expanded', 'false'); }
