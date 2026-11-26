@@ -1,6 +1,6 @@
 {
- "guardado": "2026-11-26T12:19:49.368Z",
- "nota": "Sevilla: «3RM+2RT repartido» y «8 h repartido» en 3 + 1 estricto",
+ "guardado": "2026-11-26T12:25:58.255Z",
+ "nota": "Sevilla: 3RM+2RT y 8 h en 3 + 1 (3 de mañana y 1 de tarde), 50 sin noches, 168 puestos; fuera los «repartido»",
  "config": {
   "version": 2,
   "tema": "day",
@@ -305,52 +305,52 @@
       "personas": 308,
       "patron": [
        "L",
+       "L",
        "RM1",
        "RM1",
        "RM1",
-       "RM1",
        "L",
+       "L",
+       "RM3",
        "L",
        "RM3",
        "RM3",
        "RM3",
-       "RM3",
-       "RM3",
        "L",
        "L",
-       "L",
-       "L",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "L",
-       "RM2",
        "RM2",
        "RM2",
        "RM2",
        "L",
        "L",
-       "RT1",
+       "RM2",
+       "RM2",
+       "L",
        "RT1",
        "RT1",
        "RT1",
        "RT1",
        "L",
-       "L",
-       "L",
-       "L",
-       "RM3",
-       "RM3",
-       "RM3",
-       "RM3",
-       "RM3",
        "L",
        "RM1",
        "RM1",
        "RM1",
        "RM1",
+       "L",
+       "L",
+       "L",
+       "RM3",
+       "RM3",
+       "L",
+       "L",
+       "RM3",
+       "RM3",
+       "RM3",
+       "RM2",
+       "RM2",
+       "L",
+       "RM2",
+       "RM2",
        "L",
        "L",
        "N",
@@ -360,13 +360,13 @@
        "L",
        "L",
        "L",
+       "RT1",
        "L",
+       "RT1",
        "L",
-       "RM2",
-       "RM2",
-       "RM2",
-       "RM2",
-       "RM2",
+       "RT1",
+       "RT1",
+       "RT1",
        "L",
        "RM1",
        "RM1",
@@ -374,38 +374,38 @@
        "RM1",
        "L",
        "L",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "L",
-       "L",
-       "L",
-       "L",
-       "RM2",
-       "RM2",
-       "RM2",
-       "RM2",
-       "RM2",
-       "L",
+       "RM3",
        "RM3",
        "RM3",
        "RM3",
        "RM3",
        "L",
        "L",
+       "L",
+       "L",
+       "RM2",
+       "RM2",
+       "RM2",
+       "RM2",
+       "RM2",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
        "RM1",
        "RM1",
        "RM1",
        "RM1",
-       "RM1",
        "L",
        "L",
        "L",
        "L",
        "L",
-       "L",
+       "RT1",
+       "RT1",
        "N",
        "N",
        "N",
@@ -413,84 +413,84 @@
        "L",
        "L",
        "L",
-       "L",
-       "L",
-       "L",
-       "RM3",
-       "RM3",
-       "RM3",
-       "RM3",
        "RM3",
        "L",
        "L",
+       "RM2",
+       "RM2",
+       "RM2",
+       "RM2",
+       "RM2",
        "L",
+       "L",
+       "RM1",
+       "RM1",
+       "L",
+       "RM1",
+       "L",
+       "RM1",
+       "RM1",
+       "RT2",
+       "RT2",
        "L",
        "RT2",
        "RT2",
-       "RT2",
-       "RT2",
-       "RT2",
+       "L",
+       "L",
+       "RM3",
+       "RM3",
+       "RM3",
+       "RM3",
+       "RM3",
+       "L",
+       "L",
+       "RM2",
+       "RM2",
+       "L",
        "L",
        "RM2",
        "RM2",
        "RM2",
-       "RM2",
-       "L",
-       "L",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "RT1",
-       "L",
-       "L",
-       "L",
-       "L",
-       "RM3",
-       "RM3",
-       "RM3",
-       "RM3",
-       "RM3",
+       "RM1",
        "L",
        "RM1",
-       "RM1",
-       "RM1",
+       "L",
        "RM1",
        "L",
        "L",
-       "L",
-       "L",
+       "RT1",
+       "RT1",
        "N",
        "N",
        "L",
        "L",
        "L",
-       "L",
-       "L",
-       "RM2",
-       "RM2",
-       "RM2",
-       "RM2",
-       "RM2",
-       "L",
-       "RM1",
-       "RM1",
-       "RM1",
-       "RM1",
-       "L",
-       "L",
-       "RM3",
-       "RM3",
-       "RM3",
-       "RM3",
-       "RM3",
-       "L",
-       "L",
+       "RT1",
        "L",
        "L",
        "RT1",
        "RT1",
        "RT1",
+       "RT1",
+       "L",
+       "RM3",
+       "RM3",
+       "RM3",
+       "L",
+       "L",
+       "L",
+       "RM2",
+       "RM2",
+       "RM2",
+       "RM2",
+       "RM2",
+       "L",
+       "L",
+       "RT1",
+       "RT1",
+       "RT1",
+       "L",
+       "L",
        "RT1",
        "RT1"
       ],
@@ -1085,7 +1085,308 @@
      "continuo": true,
      "inicio": "2026-12-28"
     },
-    "especiales": {},
+    "especiales": {
+     "TA 004": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 010": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 016": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 022": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 028": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 034": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 041": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 047": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 053": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 059": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 065": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 071": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 078": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 084": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 090": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 096": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 102": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 108": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 114": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 121": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 127": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 133": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 139": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 145": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 151": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 158": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 164": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 170": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 176": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 182": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 188": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 195": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 201": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 207": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 213": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 219": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 225": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 232": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 238": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 244": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 250": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 256": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 262": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 268": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 275": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 281": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 287": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 293": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 299": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     },
+     "TA 305": {
+      "franjas": [
+       "manana",
+       "tarde"
+      ]
+     }
+    },
     "minimosHora": {
      "activo": true,
      "TA": [
@@ -1517,148 +1818,7 @@
      "noche": 0,
      "cuenta": "margen"
     },
-    "mejora": {
-     "intercambios": [
-      {
-       "a": "SUP 04",
-       "b": "SUP 25",
-       "d": 80,
-       "n": 14
-      },
-      {
-       "a": "SUP 09",
-       "b": "SUP 27",
-       "d": 66,
-       "n": 7
-      },
-      {
-       "a": "SUP 01",
-       "b": "SUP 28",
-       "d": 325,
-       "n": 14
-      },
-      {
-       "a": "SUP 09",
-       "b": "SUP 21",
-       "d": 262,
-       "n": 14
-      },
-      {
-       "a": "SUP 04",
-       "b": "SUP 07",
-       "d": 122,
-       "n": 14
-      },
-      {
-       "a": "SUP 05",
-       "b": "SUP 20",
-       "d": 346,
-       "n": 14
-      },
-      {
-       "a": "TA 241",
-       "b": "TA 172",
-       "d": 353,
-       "n": 7
-      },
-      {
-       "a": "TA 241",
-       "b": "TA 250",
-       "d": 353,
-       "n": 7
-      },
-      {
-       "a": "TA 253",
-       "b": "TA 067",
-       "d": 353,
-       "n": 7
-      },
-      {
-       "a": "TA 002",
-       "b": "TA 296",
-       "d": 325,
-       "n": 7
-      },
-      {
-       "a": "TA 223",
-       "b": "TA 025",
-       "d": 353,
-       "n": 7
-      },
-      {
-       "a": "TA 214",
-       "b": "TA 145",
-       "d": 346,
-       "n": 7
-      },
-      {
-       "a": "TA 173",
-       "b": "TA 215",
-       "d": 339,
-       "n": 7
-      },
-      {
-       "a": "TA 305",
-       "b": "TA 263",
-       "d": 87,
-       "n": 7
-      },
-      {
-       "a": "TA 160",
-       "b": "TA 199",
-       "d": 353,
-       "n": 7
-      },
-      {
-       "a": "TA 290",
-       "b": "TA 089",
-       "d": 87,
-       "n": 7
-      },
-      {
-       "a": "TA 203",
-       "b": "TA 045",
-       "d": 353,
-       "n": 7
-      },
-      {
-       "a": "TA 197",
-       "b": "TA 128",
-       "d": 80,
-       "n": 14
-      },
-      {
-       "a": "TA 155",
-       "b": "TA 116",
-       "d": 87,
-       "n": 7
-      },
-      {
-       "a": "TA 257",
-       "b": "TA 126",
-       "d": 353,
-       "n": 7
-      },
-      {
-       "a": "TA 099",
-       "b": "TA 242",
-       "d": 353,
-       "n": 7
-      },
-      {
-       "a": "TA 290",
-       "b": "TA 209",
-       "d": 80,
-       "n": 14
-      }
-     ],
-     "semilla": 8,
-     "coste0": 1351.4986280417759,
-     "coste": 608.4865651589806,
-     "fecha": "2026-11-26",
-     "base": "1xjl47i89l",
-     "auto": true
-    }
+    "puestos": 168
    },
    {
     "id": "malaga",
@@ -7905,8 +8065,8 @@
     "id": "esc-3rot-llamadas",
     "sede": "sevilla",
     "nombre": "3RM+2RT",
-    "fecha": "2026-11-26T12:01:53.540Z",
-    "nota": "308 teleasistentes en un solo rotatorio (R1, R2, R3, T1, T2 y noches), 3 + 1, fines 2 + 1, noches 2-2-3; 24 fijos discontinuos; año del 15-ene; mínimos del Anexo 2 por horas, noche 10 de 22 a 8; absentismo 15 % como margen.",
+    "fecha": "2026-11-26T12:25:58.255Z",
+    "nota": "308 teleasistentes en un solo rotatorio en 3 + 1: 3 semanas de mañana (R1, R2, R3) y 1 de tarde (T2 una de cada 6), noches 2-2-3 (se trabaja antes de las noches; 3 días libres después), fines 2 + 1, 2 libres por semana, gente repartida de lunes a viernes. 50 sin noches. 24 fijos discontinuos. Mínimos del Anexo 2 por horas; absentismo 15 % como margen; 168 puestos.",
     "cfg": {
      "id": "sevilla",
      "nombre": "Sevilla",
@@ -8051,52 +8211,52 @@
        "personas": 308,
        "patron": [
         "L",
+        "L",
         "RM1",
         "RM1",
         "RM1",
-        "RM1",
         "L",
+        "L",
+        "RM3",
         "L",
         "RM3",
         "RM3",
         "RM3",
-        "RM3",
-        "RM3",
         "L",
         "L",
-        "L",
-        "L",
-        "RT1",
-        "RT1",
-        "RT1",
-        "RT1",
-        "RT1",
-        "L",
-        "RM2",
         "RM2",
         "RM2",
         "RM2",
         "L",
         "L",
-        "RT1",
+        "RM2",
+        "RM2",
+        "L",
         "RT1",
         "RT1",
         "RT1",
         "RT1",
         "L",
-        "L",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
         "L",
         "RM1",
         "RM1",
         "RM1",
         "RM1",
+        "L",
+        "L",
+        "L",
+        "RM3",
+        "RM3",
+        "L",
+        "L",
+        "RM3",
+        "RM3",
+        "RM3",
+        "RM2",
+        "RM2",
+        "L",
+        "RM2",
+        "RM2",
         "L",
         "L",
         "N",
@@ -8106,13 +8266,13 @@
         "L",
         "L",
         "L",
+        "RT1",
         "L",
+        "RT1",
         "L",
-        "RM2",
-        "RM2",
-        "RM2",
-        "RM2",
-        "RM2",
+        "RT1",
+        "RT1",
+        "RT1",
         "L",
         "RM1",
         "RM1",
@@ -8120,38 +8280,38 @@
         "RM1",
         "L",
         "L",
-        "RT1",
-        "RT1",
-        "RT1",
-        "RT1",
-        "RT1",
-        "L",
-        "L",
-        "L",
-        "L",
-        "RM2",
-        "RM2",
-        "RM2",
-        "RM2",
-        "RM2",
-        "L",
+        "RM3",
         "RM3",
         "RM3",
         "RM3",
         "RM3",
         "L",
         "L",
+        "L",
+        "L",
+        "RM2",
+        "RM2",
+        "RM2",
+        "RM2",
+        "RM2",
+        "L",
+        "RT1",
+        "RT1",
+        "RT1",
+        "RT1",
+        "L",
+        "L",
         "RM1",
         "RM1",
         "RM1",
         "RM1",
-        "RM1",
         "L",
         "L",
         "L",
         "L",
         "L",
-        "L",
+        "RT1",
+        "RT1",
         "N",
         "N",
         "N",
@@ -8159,84 +8319,84 @@
         "L",
         "L",
         "L",
-        "L",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
         "RM3",
         "L",
         "L",
+        "RM2",
+        "RM2",
+        "RM2",
+        "RM2",
+        "RM2",
         "L",
+        "L",
+        "RM1",
+        "RM1",
+        "L",
+        "RM1",
+        "L",
+        "RM1",
+        "RM1",
+        "RT2",
+        "RT2",
         "L",
         "RT2",
         "RT2",
-        "RT2",
-        "RT2",
-        "RT2",
+        "L",
+        "L",
+        "RM3",
+        "RM3",
+        "RM3",
+        "RM3",
+        "RM3",
+        "L",
+        "L",
+        "RM2",
+        "RM2",
+        "L",
         "L",
         "RM2",
         "RM2",
         "RM2",
-        "RM2",
-        "L",
-        "L",
-        "RT1",
-        "RT1",
-        "RT1",
-        "RT1",
-        "RT1",
-        "L",
-        "L",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
+        "RM1",
         "L",
         "RM1",
-        "RM1",
-        "RM1",
+        "L",
         "RM1",
         "L",
         "L",
-        "L",
-        "L",
+        "RT1",
+        "RT1",
         "N",
         "N",
         "L",
         "L",
         "L",
-        "L",
-        "L",
-        "RM2",
-        "RM2",
-        "RM2",
-        "RM2",
-        "RM2",
-        "L",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "L",
-        "L",
+        "RT1",
         "L",
         "L",
         "RT1",
         "RT1",
         "RT1",
+        "RT1",
+        "L",
+        "RM3",
+        "RM3",
+        "RM3",
+        "L",
+        "L",
+        "L",
+        "RM2",
+        "RM2",
+        "RM2",
+        "RM2",
+        "RM2",
+        "L",
+        "L",
+        "RT1",
+        "RT1",
+        "RT1",
+        "L",
+        "L",
         "RT1",
         "RT1"
        ],
@@ -8864,7 +9024,308 @@
       "continuo": true,
       "inicio": "2026-12-28"
      },
-     "especiales": {},
+     "especiales": {
+      "TA 004": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 010": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 016": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 022": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 028": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 034": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 041": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 047": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 053": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 059": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 065": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 071": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 078": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 084": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 090": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 096": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 102": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 108": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 114": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 121": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 127": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 133": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 139": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 145": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 151": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 158": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 164": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 170": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 176": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 182": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 188": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 195": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 201": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 207": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 213": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 219": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 225": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 232": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 238": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 244": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 250": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 256": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 262": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 268": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 275": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 281": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 287": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 293": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 299": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 305": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      }
+     },
      "minimosHora": {
       "activo": true,
       "TA": [
@@ -9295,144 +9756,15 @@
       "noche": 0,
       "cuenta": "margen"
      },
-     "mejora": {
-      "intercambios": [
-       {
-        "a": "SUP 04",
-        "b": "SUP 25",
-        "d": 80,
-        "n": 14
-       },
-       {
-        "a": "SUP 09",
-        "b": "SUP 27",
-        "d": 66,
-        "n": 7
-       },
-       {
-        "a": "SUP 01",
-        "b": "SUP 28",
-        "d": 325,
-        "n": 14
-       },
-       {
-        "a": "SUP 09",
-        "b": "SUP 21",
-        "d": 262,
-        "n": 14
-       },
-       {
-        "a": "SUP 04",
-        "b": "SUP 07",
-        "d": 122,
-        "n": 14
-       },
-       {
-        "a": "SUP 05",
-        "b": "SUP 20",
-        "d": 346,
-        "n": 14
-       },
-       {
-        "a": "TA 241",
-        "b": "TA 172",
-        "d": 353,
-        "n": 7
-       },
-       {
-        "a": "TA 241",
-        "b": "TA 250",
-        "d": 353,
-        "n": 7
-       },
-       {
-        "a": "TA 253",
-        "b": "TA 067",
-        "d": 353,
-        "n": 7
-       },
-       {
-        "a": "TA 002",
-        "b": "TA 296",
-        "d": 325,
-        "n": 7
-       },
-       {
-        "a": "TA 223",
-        "b": "TA 025",
-        "d": 353,
-        "n": 7
-       },
-       {
-        "a": "TA 214",
-        "b": "TA 145",
-        "d": 346,
-        "n": 7
-       },
-       {
-        "a": "TA 173",
-        "b": "TA 215",
-        "d": 339,
-        "n": 7
-       },
-       {
-        "a": "TA 305",
-        "b": "TA 263",
-        "d": 87,
-        "n": 7
-       },
-       {
-        "a": "TA 160",
-        "b": "TA 199",
-        "d": 353,
-        "n": 7
-       },
-       {
-        "a": "TA 290",
-        "b": "TA 089",
-        "d": 87,
-        "n": 7
-       },
-       {
-        "a": "TA 203",
-        "b": "TA 045",
-        "d": 353,
-        "n": 7
-       },
-       {
-        "a": "TA 197",
-        "b": "TA 128",
-        "d": 80,
-        "n": 14
-       },
-       {
-        "a": "TA 155",
-        "b": "TA 116",
-        "d": 87,
-        "n": 7
-       },
-       {
-        "a": "TA 257",
-        "b": "TA 126",
-        "d": 353,
-        "n": 7
-       }
-      ],
-      "semilla": 7,
-      "coste0": 1351.4986280417759,
-      "coste": 614.4865651589809,
-      "fecha": "2026-11-26",
-      "base": "xwt2ez8jc",
-      "auto": true
-     }
+     "puestos": 168
     }
    },
    {
     "id": "esc-8h-sevilla",
     "sede": "sevilla",
     "nombre": "Turnos de 8 h (M 7:30-15:30, T 15-23, N 22-8)",
-    "fecha": "2026-11-26T11:51:26.759Z",
-    "nota": "Copia del 3RM+2RT con turnos de 8 h: mañana 7:30-15:30, tarde 15:00-23:00 y noche 22:00-8:00 (10 h). Mismo ciclo de 27 semanas; las semanas de mañana de lunes a viernes pasan a lunes a jueves. Regla de 2 días libres cada semana. Mismos mínimos, vacaciones, fijos discontinuos y reglas.",
+    "fecha": "2026-11-26T12:25:58.255Z",
+    "nota": "Turnos de 8 h (mañana 7:30-15:30, tarde 15-23, noche 22-8 de 10 h) en 3 + 1, noches 2-2-3, fines 2 + 1, 2 libres por semana, gente repartida de lunes a viernes. 50 sin noches. Resto como 3RM+2RT.",
     "cfg": {
      "id": "sevilla",
      "nombre": "Sevilla",
@@ -9563,35 +9895,14 @@
         "M",
         "M",
         "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "T",
-        "T",
-        "T",
-        "T",
-        "T",
-        "L",
-        "M",
-        "M",
-        "M",
         "M",
         "L",
         "L",
         "M",
         "M",
-        "M",
-        "M",
         "L",
         "L",
         "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
         "M",
         "M",
         "L",
@@ -9601,24 +9912,14 @@
         "T",
         "L",
         "L",
-        "N",
-        "N",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
         "L",
         "L",
         "M",
         "M",
         "M",
-        "M",
-        "M",
         "L",
-        "M",
-        "M",
-        "M",
+        "L",
+        "L",
         "M",
         "L",
         "L",
@@ -9627,84 +9928,8 @@
         "M",
         "M",
         "L",
-        "L",
-        "L",
-        "L",
-        "L",
         "M",
         "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "T",
-        "T",
-        "T",
-        "T",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "N",
-        "N",
-        "N",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "T",
-        "T",
-        "T",
-        "T",
-        "T",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "T",
-        "T",
-        "T",
-        "T",
-        "L",
         "L",
         "L",
         "L",
@@ -9715,11 +9940,19 @@
         "L",
         "L",
         "L",
+        "T",
+        "T",
+        "L",
+        "T",
+        "L",
+        "T",
+        "T",
+        "L",
+        "L",
         "M",
         "M",
         "M",
-        "M",
-        "M",
+        "L",
         "L",
         "M",
         "M",
@@ -9727,10 +9960,89 @@
         "M",
         "L",
         "L",
+        "L",
+        "M",
+        "L",
+        "L",
+        "L",
+        "M",
+        "M",
+        "M",
+        "L",
+        "T",
+        "T",
+        "T",
+        "T",
+        "L",
+        "L",
         "M",
         "M",
         "M",
         "M",
+        "M",
+        "L",
+        "L",
+        "L",
+        "L",
+        "T",
+        "T",
+        "N",
+        "N",
+        "N",
+        "L",
+        "L",
+        "L",
+        "L",
+        "L",
+        "L",
+        "L",
+        "M",
+        "M",
+        "L",
+        "L",
+        "M",
+        "L",
+        "L",
+        "M",
+        "M",
+        "L",
+        "M",
+        "L",
+        "M",
+        "M",
+        "T",
+        "T",
+        "T",
+        "L",
+        "L",
+        "L",
+        "L",
+        "L",
+        "L",
+        "M",
+        "M",
+        "M",
+        "L",
+        "L",
+        "M",
+        "M",
+        "L",
+        "M",
+        "L",
+        "M",
+        "M",
+        "M",
+        "M",
+        "M",
+        "L",
+        "M",
+        "L",
+        "L",
+        "T",
+        "T",
+        "N",
+        "N",
+        "L",
         "L",
         "L",
         "L",
@@ -9738,6 +10050,26 @@
         "L",
         "T",
         "T",
+        "T",
+        "T",
+        "L",
+        "L",
+        "M",
+        "M",
+        "M",
+        "L",
+        "L",
+        "M",
+        "M",
+        "M",
+        "L",
+        "L",
+        "L",
+        "L",
+        "T",
+        "L",
+        "T",
+        "L",
         "T",
         "T",
         "T"
@@ -10365,7 +10697,308 @@
       "continuo": true,
       "inicio": "2026-12-28"
      },
-     "especiales": {},
+     "especiales": {
+      "TA 004": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 010": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 016": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 022": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 028": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 034": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 041": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 047": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 053": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 059": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 065": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 071": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 078": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 084": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 090": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 096": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 102": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 108": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 114": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 121": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 127": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 133": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 139": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 145": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 151": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 158": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 164": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 170": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 176": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 182": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 188": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 195": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 201": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 207": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 213": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 219": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 225": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 232": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 238": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 244": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 250": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 256": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 262": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 268": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 275": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 281": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 287": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 293": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 299": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      },
+      "TA 305": {
+       "franjas": [
+        "manana",
+        "tarde"
+       ]
+      }
+     },
      "minimosHora": {
       "activo": true,
       "TA": [
@@ -10795,2742 +11428,8 @@
       "dia": 15,
       "noche": 0,
       "cuenta": "margen"
-     }
-    }
-   },
-   {
-    "id": "esc-3rot-repartido",
-    "sede": "sevilla",
-    "nombre": "3RM+2RT repartido",
-    "fecha": "2026-11-26T12:19:50.368Z",
-    "nota": "Como 3RM+2RT, con un ciclo de 27 semanas en 3 + 1 estricto (3 semanas de mañana R1, R2, R3 y 1 de tarde; T2 una de cada 6), noches 2-2-3 entre medias, fines 2 + 1, 2 libres por semana y la gente repartida entre los días de la semana. 107 días de turno por ciclo (las mismas horas); algunas semanas tienen un libre en medio.",
-    "cfg": {
-     "id": "sevilla",
-     "nombre": "Sevilla",
-     "titulo": "SAT Sevilla · propuesta de cuadrante Prueba 01",
-     "anio": 2027,
-     "turnos": [
-      {
-       "codigo": "RM3",
-       "nombre": "Rotatorio M2",
-       "inicio": "08:15",
-       "fin": "15:15",
-       "franja": "manana",
-       "color": "#afff7a"
-      },
-      {
-       "codigo": "RM1",
-       "nombre": "Rotatorio M1",
-       "inicio": "07:45",
-       "fin": "14:45",
-       "franja": "manana",
-       "color": "#f76050"
-      },
-      {
-       "codigo": "RT1",
-       "nombre": "Rotatorio T1",
-       "inicio": "15:00",
-       "fin": "22:00",
-       "franja": "tarde",
-       "color": "#824baf"
-      },
-      {
-       "codigo": "RT2",
-       "nombre": "Rotatorio T2",
-       "inicio": "16:00",
-       "fin": "23:00",
-       "franja": "tarde",
-       "color": "#6d85e9"
-      },
-      {
-       "codigo": "N",
-       "nombre": "Noche",
-       "inicio": "22:00",
-       "fin": "08:00",
-       "franja": "noche",
-       "color": "#000000"
-      },
-      {
-       "codigo": "RM2",
-       "nombre": "Rotatorio M3",
-       "inicio": "08:00",
-       "fin": "15:00",
-       "franja": "manana",
-       "color": "#dbad6b"
-      },
-      {
-       "codigo": "L",
-       "nombre": "Libre",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#FFFFFF",
-       "disponible": true,
-       "fijo": true
-      },
-      {
-       "codigo": "V",
-       "nombre": "Vacaciones",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#d4ff00",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "D",
-       "nombre": "Descanso por exceso de jornada",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#f7f8f8",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "SN",
-       "nombre": "Saliente de noche",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#e6e6e6",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "B",
-       "nombre": "Baja o ausencia",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#E8C9C9",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "BO",
-       "nombre": "Día de bolsa de horas",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#D9E7C6",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "AP",
-       "nombre": "Asunto propio",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#E6D8F0",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "VS",
-       "nombre": "Día suelto de vacaciones",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#B9DDB6",
-       "disponible": false,
-       "fijo": true
-      }
-     ],
-     "grupos": [
-      {
-       "id": "ta",
-       "colectivo": "TA",
-       "nombre": "ROTATORIO (R1, R2, R3, T1, T2 y noches)",
-       "prefijo": "TA",
-       "personas": 308,
-       "patron": [
-        "L",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "L",
-        "L",
-        "RM2",
-        "RM2",
-        "L",
-        "RM2",
-        "L",
-        "RM2",
-        "RM2",
-        "RT1",
-        "RT1",
-        "RT1",
-        "L",
-        "RT1",
-        "L",
-        "L",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "L",
-        "L",
-        "RM3",
-        "L",
-        "RM3",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM2",
-        "RM2",
-        "L",
-        "RM2",
-        "RM2",
-        "L",
-        "L",
-        "N",
-        "N",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "RT1",
-        "L",
-        "RT1",
-        "L",
-        "RT1",
-        "RT1",
-        "RT1",
-        "L",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "L",
-        "L",
-        "RM2",
-        "RM2",
-        "RM2",
-        "L",
-        "L",
-        "RM2",
-        "RM2",
-        "L",
-        "RT1",
-        "RT1",
-        "RT1",
-        "RT1",
-        "L",
-        "L",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "N",
-        "N",
-        "N",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "L",
-        "L",
-        "RM2",
-        "RM2",
-        "RM2",
-        "L",
-        "L",
-        "RM2",
-        "RM2",
-        "L",
-        "RT2",
-        "RT2",
-        "RT2",
-        "RT2",
-        "L",
-        "L",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "L",
-        "L",
-        "RM3",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM2",
-        "L",
-        "RM2",
-        "RM2",
-        "RM2",
-        "L",
-        "L",
-        "L",
-        "L",
-        "N",
-        "N",
-        "L",
-        "L",
-        "L",
-        "RT1",
-        "RT1",
-        "L",
-        "RT1",
-        "L",
-        "RT1",
-        "RT1",
-        "L",
-        "RM1",
-        "RM1",
-        "RM1",
-        "RM1",
-        "L",
-        "L",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "RM3",
-        "L",
-        "L",
-        "RT1",
-        "RT1",
-        "L",
-        "RT1",
-        "L",
-        "RT1",
-        "RT1"
-       ],
-       "patronDe": "",
-       "flexible": true,
-       "horasObjetivo": 1480.5,
-       "franjasAjuste": [
-        "manana",
-        "tarde",
-        "noche"
-       ],
-       "vacaciones": {
-        "activo": true,
-        "dias": 30,
-        "desde": "06-01",
-        "hasta": "09-30"
-       },
-       "soloLaborables": false,
-       "desde": "",
-       "hasta": "",
-       "condiciones": {}
-      },
-      {
-       "id": "sup",
-       "colectivo": "SUP",
-       "nombre": "Supervisión",
-       "prefijo": "SUP",
-       "personas": 29,
-       "patron": [],
-       "patronDe": "ta",
-       "flexible": true,
-       "horasObjetivo": 1480.5,
-       "franjasAjuste": [
-        "manana",
-        "tarde",
-        "noche"
-       ],
-       "vacaciones": {
-        "activo": true,
-        "dias": 30,
-        "desde": "06-01",
-        "hasta": "09-30"
-       }
-      },
-      {
-       "id": "fd",
-       "colectivo": "TA",
-       "nombre": "Fijos discontinuos",
-       "prefijo": "FD",
-       "personas": 24,
-       "patron": [
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L"
-       ],
-       "patronDe": "",
-       "flexible": true,
-       "horasObjetivo": 1480.5,
-       "franjasAjuste": [
-        "manana",
-        "tarde",
-        "noche"
-       ],
-       "vacaciones": {
-        "activo": false,
-        "dias": 0,
-        "desde": "06-01",
-        "hasta": "09-30"
-       },
-       "periodos": [
-        {
-         "nombre": "Navidad",
-         "regla": "fijo",
-         "desde": "12-01",
-         "hasta": "01-15"
-        },
-        {
-         "nombre": "Semana Santa",
-         "regla": "pascua",
-         "desde": -9,
-         "hasta": 0
-        },
-        {
-         "nombre": "Feria de abril",
-         "regla": "pascua",
-         "desde": 12,
-         "hasta": 21
-        },
-        {
-         "nombre": "Verano",
-         "regla": "fijo",
-         "desde": "06-01",
-         "hasta": "09-30"
-        }
-       ],
-       "horarioLibre": true,
-       "condiciones": {
-        "libreFines": true,
-        "sinVacaciones": true
-       }
-      }
-     ],
-     "solapes": [],
-     "minimos": [
-      {
-       "colectivo": "TA",
-       "franja": "manana",
-       "laborable": 47,
-       "sabado": 39,
-       "domingo": 29,
-       "dias": [
-        47,
-        47,
-        47,
-        47,
-        47,
-        39,
-        29
-       ],
-       "festivo": 29
-      },
-      {
-       "colectivo": "TA",
-       "franja": "tarde",
-       "laborable": 37,
-       "sabado": 29,
-       "domingo": 28,
-       "dias": [
-        37,
-        37,
-        37,
-        37,
-        37,
-        29,
-        28
-       ],
-       "festivo": 28
-      },
-      {
-       "colectivo": "TA",
-       "franja": "noche",
-       "laborable": 10,
-       "sabado": 10,
-       "domingo": 10,
-       "dias": [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10
-       ],
-       "festivo": 10
-      },
-      {
-       "colectivo": "SUP",
-       "franja": "manana",
-       "laborable": 2,
-       "sabado": 2,
-       "domingo": 2,
-       "dias": [
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2
-       ],
-       "festivo": 2
-      },
-      {
-       "colectivo": "SUP",
-       "franja": "tarde",
-       "laborable": 2,
-       "sabado": 2,
-       "domingo": 2,
-       "dias": [
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2
-       ],
-       "festivo": 2
-      },
-      {
-       "colectivo": "SUP",
-       "franja": "noche",
-       "laborable": 1,
-       "sabado": 1,
-       "domingo": 1,
-       "dias": [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1
-       ],
-       "festivo": 1
-      }
-     ],
-     "reglas": {
-      "maxNoches": {
-       "activo": true,
-       "valor": 14
-      },
-      "bloquesNoche": {
-       "activo": true,
-       "valor": "2-2-3"
-      },
-      "maxNochesSeguidas": {
-       "activo": true,
-       "valor": 3
-      },
-      "descansoTrasNoche": {
-       "activo": true,
-       "valor": 3
-      },
-      "finesCoherentes": {
-       "activo": true,
-       "valor": true
-      },
-      "maxFines": {
-       "activo": true,
-       "valor": 17
-      },
-      "minFinesLibresEntre": {
-       "activo": true,
-       "valor": 2,
-       "nivel": "avisa"
-      },
-      "maxFinesSeguidos": {
-       "activo": true,
-       "valor": 1
-      },
-      "minFinesLibresMes": {
-       "activo": false,
-       "valor": 1
-      },
-      "descanso": {
-       "activo": true,
-       "valor": 12
-      },
-      "maxSeguidos": {
-       "activo": true,
-       "valor": 5
-      },
-      "tope": {
-       "activo": true,
-       "valor": 0
-      },
-      "ratio": {
-       "activo": true,
-       "valor": 16
-      },
-      "ajuste": {
-       "activo": true
-      },
-      "tardeCada": {
-       "activo": true,
-       "valor": 4,
-       "nivel": "informe"
-      },
-      "finCompleto": {
-       "activo": true,
-       "valor": true,
-       "nivel": "avisa"
-      },
-      "maxEntradas": {
-       "activo": true,
-       "valor": 6,
-       "nivel": "avisa"
-      },
-      "minLibresSemana": {
-       "activo": true,
-       "valor": 2
-      }
      },
-     "vacaciones": {
-      "modo": "periodos",
-      "diasHabiles": 17,
-      "diasSueltos": 5,
-      "horasDia": 7,
-      "semilla": "estival-2027",
-      "periodos": [
-       {
-        "n": 1,
-        "inicio": "2027-06-21",
-        "fin": "2027-07-13",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 2,
-        "inicio": "2027-06-28",
-        "fin": "2027-07-20",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 3,
-        "inicio": "2027-07-05",
-        "fin": "2027-07-27",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 4,
-        "inicio": "2027-07-12",
-        "fin": "2027-08-03",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 5,
-        "inicio": "2027-07-19",
-        "fin": "2027-08-10",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 6,
-        "inicio": "2027-07-26",
-        "fin": "2027-08-18",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 7,
-        "inicio": "2027-08-02",
-        "fin": "2027-08-25",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 8,
-        "inicio": "2027-08-09",
-        "fin": "2027-09-01",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 9,
-        "inicio": "2027-08-16",
-        "fin": "2027-09-08",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 10,
-        "inicio": "2027-08-23",
-        "fin": "2027-09-14",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 11,
-        "inicio": "2027-08-30",
-        "fin": "2027-09-21",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       }
-      ],
-      "solicitudes": {},
-      "sueltosEnJornada": false,
-      "sueltosOctDic": 1,
-      "cuenta": "cuadrante",
-      "nota": "Periodos y plazas del correo de Procesos horarios de Sevilla (2027). Supervisión: 3 plazas, orientativo."
-     },
-     "festivos": {
-      "fuente": {
-       "tipo": "nager",
-       "region": "ES-AN",
-       "url": "",
-       "trasladarDomingos": true
-      },
-      "locales": [
-       {
-        "nombre": "Miércoles de Feria (local)",
-        "regla": "pascua",
-        "dias": 17
-       },
-       {
-        "nombre": "Corpus Christi (local)",
-        "regla": "pascua",
-        "dias": 60
-       }
-      ],
-      "extra": [],
-      "quitar": [],
-      "enlaces": [
-       {
-        "texto": "Junta de Andalucía: calendario laboral (todos los años)",
-        "url": "https://www.juntadeandalucia.es/temas/trabajar/relaciones/calendario.html"
-       },
-       {
-        "texto": "BOE 13-10-2026: fiestas laborales de 2027 (nacionales y por comunidad)",
-        "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-21254"
-       },
-       {
-        "texto": "BOJA 5-5-2026: Decreto 84/2026, fiestas de Andalucía para 2027",
-        "url": "https://www.juntadeandalucia.es/eboja/2026/84/BOJA26-084-00002-5812-01_00337048.pdf"
-       },
-       {
-        "texto": "BOJA 29-10-2026: fiestas locales de 2027 de todos los municipios",
-        "url": "https://www.juntadeandalucia.es/eboja/2026/210/BOJA26-210-00021-14189-01_00345419.pdf"
-       }
-      ],
-      "cache": {
-       "clave": "nager|ES-AN|",
-       "anio": 2027,
-       "fecha": "2026-11-20",
-       "lista": [
-        {
-         "fecha": "2027-01-01",
-         "nombre": "Año Nuevo"
-        },
-        {
-         "fecha": "2027-01-06",
-         "nombre": "Día de Reyes / Epifanía del Señor"
-        },
-        {
-         "fecha": "2027-02-28",
-         "nombre": "Día de Andalucía"
-        },
-        {
-         "fecha": "2027-03-25",
-         "nombre": "Jueves Santo"
-        },
-        {
-         "fecha": "2027-03-26",
-         "nombre": "Viernes Santo"
-        },
-        {
-         "fecha": "2027-05-01",
-         "nombre": "Fiesta del trabajo"
-        },
-        {
-         "fecha": "2027-08-15",
-         "nombre": "Asunción"
-        },
-        {
-         "fecha": "2027-10-12",
-         "nombre": "Fiesta Nacional de España"
-        },
-        {
-         "fecha": "2027-11-01",
-         "nombre": "Día de todos los Santos"
-        },
-        {
-         "fecha": "2027-12-06",
-         "nombre": "Día de la Constitución"
-        },
-        {
-         "fecha": "2027-12-08",
-         "nombre": "Inmaculada Concepción"
-        },
-        {
-         "fecha": "2027-12-25",
-         "nombre": "Navidad"
-        }
-       ]
-      }
-     },
-     "manuales": {},
-     "contratos": [
-      {
-       "id": "completa",
-       "nombre": "Jornada completa",
-       "horasSemana": 35,
-       "sinNoches": false,
-       "turnos": {
-        "manana": "",
-        "tarde": "",
-        "noche": ""
-       }
-      }
-     ],
-     "cobertura": {
-      "cesion": {
-       "modo": "todos",
-       "tope": 16
-      },
-      "bolsa": {
-       "modo": "ambas",
-       "tope": 35,
-       "inicial": {},
-       "consumida": {}
-      },
-      "margen": {
-       "noche": 0,
-       "dia": 0,
-       "tipo": "personas"
-      },
-      "ausencias": [],
-      "aguante": {
-       "avisar": true
-      }
-     },
-     "aj": {
-      "activo": true,
-      "modo": "reparto",
-      "fechas": [
-       "12-24",
-       "12-31"
-      ],
-      "desde": "12-20",
-      "hasta": "12-31",
-      "enJornada": true,
-      "elegidos": {}
-     },
-     "minimosFecha": [
-      {
-       "activo": true,
-       "colectivo": "TA",
-       "franja": "noche",
-       "fecha": "12-24",
-       "modo": "suma",
-       "valor": 0,
-       "nota": "Nochebuena"
-      },
-      {
-       "activo": true,
-       "colectivo": "TA",
-       "franja": "noche",
-       "fecha": "12-31",
-       "modo": "suma",
-       "valor": 0,
-       "nota": "Nochevieja"
-      },
-      {
-       "activo": true,
-       "colectivo": "TA",
-       "franja": "manana",
-       "fecha": "01-06",
-       "modo": "suma",
-       "valor": 5,
-       "nota": "Reyes"
-      }
-     ],
-     "repartoFestivos": {
-      "noche": "salida",
-      "especiales": [
-       "12-24",
-       "12-25",
-       "12-31",
-       "01-01",
-       "01-06"
-      ],
-      "historial": {},
-      "anioHistorial": null,
-      "fechasRotan": [
-       "12-24",
-       "12-31",
-       "01-06"
-      ],
-      "rotan": {}
-     },
-     "ciclo": {
-      "continuo": true,
-      "inicio": "2026-12-28"
-     },
-     "especiales": {},
-     "minimosHora": {
-      "activo": true,
-      "TA": [
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        21,
-        39,
-        39,
-        39,
-        39,
-        39,
-        39,
-        22,
-        29,
-        29,
-        29,
-        29,
-        26,
-        26,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        19,
-        29,
-        29,
-        29,
-        29,
-        29,
-        29,
-        20,
-        28,
-        28,
-        28,
-        28,
-        21,
-        21,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        19,
-        29,
-        29,
-        29,
-        29,
-        29,
-        29,
-        20,
-        28,
-        28,
-        28,
-        28,
-        21,
-        21,
-        10,
-        10
-       ]
-      ],
-      "SUP": [
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ]
-      ],
-      "nota": "Anexo 2, Mínimos SAT 2013 (protocolo v09) de 8 a 22 h (cada hora, el tramo más alto); noche de 22 a 8 h con 10 teleasistentes (decisión de la sección)"
-     },
-     "inicioCuadrante": "01-15",
-     "absentismo": {
-      "dia": 15,
-      "noche": 0,
-      "cuenta": "margen"
-     }
-    }
-   },
-   {
-    "id": "esc-8h-repartido",
-    "sede": "sevilla",
-    "nombre": "8 h repartido",
-    "fecha": "2026-11-26T12:19:51.368Z",
-    "nota": "Como «Turnos de 8 h», con un ciclo de 27 semanas en 3 + 1 estricto (3 de mañana y 1 de tarde), noches 2-2-3 entre medias, fines 2 + 1, 2 libres por semana y la gente repartida entre los días de la semana. 94 días de turno por ciclo, que ya cuadran con la jornada.",
-    "cfg": {
-     "id": "sevilla",
-     "nombre": "Sevilla",
-     "titulo": "SAT Sevilla · propuesta de cuadrante Prueba 01",
-     "anio": 2027,
-     "turnos": [
-      {
-       "codigo": "M",
-       "nombre": "Mañana 8 h",
-       "inicio": "07:30",
-       "fin": "15:30",
-       "franja": "manana",
-       "color": "#F7BF4F"
-      },
-      {
-       "codigo": "T",
-       "nombre": "Tarde 8 h",
-       "inicio": "15:00",
-       "fin": "23:00",
-       "franja": "tarde",
-       "color": "#F39A5E"
-      },
-      {
-       "codigo": "N",
-       "nombre": "Noche",
-       "inicio": "22:00",
-       "fin": "08:00",
-       "franja": "noche",
-       "color": "#2E4A86"
-      },
-      {
-       "codigo": "L",
-       "nombre": "Libre",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#FFFFFF",
-       "disponible": true,
-       "fijo": true
-      },
-      {
-       "codigo": "V",
-       "nombre": "Vacaciones",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#7FC07C",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "D",
-       "nombre": "Descanso por exceso de jornada",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#DCE8EE",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "SN",
-       "nombre": "Saliente de noche",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#C9D3E8",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "B",
-       "nombre": "Baja o ausencia",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#E8C9C9",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "BO",
-       "nombre": "Día de bolsa de horas",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#D9E7C6",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "AP",
-       "nombre": "Asunto propio",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#E6D8F0",
-       "disponible": false,
-       "fijo": true
-      },
-      {
-       "codigo": "VS",
-       "nombre": "Día suelto de vacaciones",
-       "inicio": "",
-       "fin": "",
-       "franja": "libre",
-       "color": "#B9DDB6",
-       "disponible": false,
-       "fijo": true
-      }
-     ],
-     "grupos": [
-      {
-       "id": "ta",
-       "colectivo": "TA",
-       "nombre": "ROTATORIO 8 h (M, T y noches)",
-       "prefijo": "TA",
-       "personas": 308,
-       "patron": [
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "T",
-        "L",
-        "T",
-        "T",
-        "T",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "M",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "M",
-        "M",
-        "L",
-        "L",
-        "N",
-        "N",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "T",
-        "L",
-        "T",
-        "L",
-        "T",
-        "T",
-        "T",
-        "L",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "M",
-        "M",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "T",
-        "T",
-        "L",
-        "T",
-        "T",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "N",
-        "N",
-        "N",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "T",
-        "T",
-        "L",
-        "T",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "N",
-        "N",
-        "L",
-        "L",
-        "L",
-        "L",
-        "T",
-        "T",
-        "T",
-        "L",
-        "T",
-        "T",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "M",
-        "M",
-        "M",
-        "M",
-        "L",
-        "L",
-        "L",
-        "L",
-        "T",
-        "T",
-        "L",
-        "T",
-        "T",
-        "T"
-       ],
-       "patronDe": "",
-       "flexible": true,
-       "horasObjetivo": 1480.5,
-       "franjasAjuste": [
-        "manana",
-        "tarde",
-        "noche"
-       ],
-       "vacaciones": {
-        "activo": true,
-        "dias": 30,
-        "desde": "06-01",
-        "hasta": "09-30"
-       },
-       "soloLaborables": false,
-       "desde": "",
-       "hasta": "",
-       "condiciones": {}
-      },
-      {
-       "id": "sup",
-       "colectivo": "SUP",
-       "nombre": "Supervisión",
-       "prefijo": "SUP",
-       "personas": 29,
-       "patron": [],
-       "patronDe": "ta",
-       "flexible": true,
-       "horasObjetivo": 1480.5,
-       "franjasAjuste": [
-        "manana",
-        "tarde",
-        "noche"
-       ],
-       "vacaciones": {
-        "activo": true,
-        "dias": 30,
-        "desde": "06-01",
-        "hasta": "09-30"
-       }
-      },
-      {
-       "id": "fd",
-       "colectivo": "TA",
-       "nombre": "Fijos discontinuos",
-       "prefijo": "FD",
-       "personas": 24,
-       "patron": [
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L",
-        "L"
-       ],
-       "patronDe": "",
-       "flexible": true,
-       "horasObjetivo": 1480.5,
-       "franjasAjuste": [
-        "manana",
-        "tarde",
-        "noche"
-       ],
-       "vacaciones": {
-        "activo": false,
-        "dias": 0,
-        "desde": "06-01",
-        "hasta": "09-30"
-       },
-       "periodos": [
-        {
-         "nombre": "Navidad",
-         "regla": "fijo",
-         "desde": "12-01",
-         "hasta": "01-15"
-        },
-        {
-         "nombre": "Semana Santa",
-         "regla": "pascua",
-         "desde": -9,
-         "hasta": 0
-        },
-        {
-         "nombre": "Feria de abril",
-         "regla": "pascua",
-         "desde": 12,
-         "hasta": 21
-        },
-        {
-         "nombre": "Verano",
-         "regla": "fijo",
-         "desde": "06-01",
-         "hasta": "09-30"
-        }
-       ],
-       "horarioLibre": true,
-       "condiciones": {
-        "libreFines": true,
-        "sinVacaciones": true
-       }
-      }
-     ],
-     "solapes": [],
-     "minimos": [
-      {
-       "colectivo": "TA",
-       "franja": "manana",
-       "laborable": 47,
-       "sabado": 39,
-       "domingo": 29,
-       "dias": [
-        47,
-        47,
-        47,
-        47,
-        47,
-        39,
-        29
-       ],
-       "festivo": 29
-      },
-      {
-       "colectivo": "TA",
-       "franja": "tarde",
-       "laborable": 37,
-       "sabado": 29,
-       "domingo": 28,
-       "dias": [
-        37,
-        37,
-        37,
-        37,
-        37,
-        29,
-        28
-       ],
-       "festivo": 28
-      },
-      {
-       "colectivo": "TA",
-       "franja": "noche",
-       "laborable": 10,
-       "sabado": 10,
-       "domingo": 10,
-       "dias": [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10
-       ],
-       "festivo": 10
-      },
-      {
-       "colectivo": "SUP",
-       "franja": "manana",
-       "laborable": 2,
-       "sabado": 2,
-       "domingo": 2,
-       "dias": [
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2
-       ],
-       "festivo": 2
-      },
-      {
-       "colectivo": "SUP",
-       "franja": "tarde",
-       "laborable": 2,
-       "sabado": 2,
-       "domingo": 2,
-       "dias": [
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2
-       ],
-       "festivo": 2
-      },
-      {
-       "colectivo": "SUP",
-       "franja": "noche",
-       "laborable": 1,
-       "sabado": 1,
-       "domingo": 1,
-       "dias": [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1
-       ],
-       "festivo": 1
-      }
-     ],
-     "reglas": {
-      "maxNoches": {
-       "activo": true,
-       "valor": 14
-      },
-      "bloquesNoche": {
-       "activo": true,
-       "valor": "2-2-3"
-      },
-      "maxNochesSeguidas": {
-       "activo": true,
-       "valor": 3
-      },
-      "descansoTrasNoche": {
-       "activo": true,
-       "valor": 3
-      },
-      "finesCoherentes": {
-       "activo": true,
-       "valor": true
-      },
-      "maxFines": {
-       "activo": true,
-       "valor": 17
-      },
-      "minFinesLibresEntre": {
-       "activo": true,
-       "valor": 2,
-       "nivel": "avisa"
-      },
-      "maxFinesSeguidos": {
-       "activo": true,
-       "valor": 1
-      },
-      "minFinesLibresMes": {
-       "activo": false,
-       "valor": 1
-      },
-      "descanso": {
-       "activo": true,
-       "valor": 12
-      },
-      "maxSeguidos": {
-       "activo": true,
-       "valor": 5
-      },
-      "tope": {
-       "activo": true,
-       "valor": 0
-      },
-      "ratio": {
-       "activo": true,
-       "valor": 16
-      },
-      "ajuste": {
-       "activo": true
-      },
-      "tardeCada": {
-       "activo": true,
-       "valor": 4,
-       "nivel": "informe"
-      },
-      "finCompleto": {
-       "activo": true,
-       "valor": true,
-       "nivel": "avisa"
-      },
-      "maxEntradas": {
-       "activo": true,
-       "valor": 6,
-       "nivel": "avisa"
-      },
-      "minLibresSemana": {
-       "activo": true,
-       "valor": 2
-      }
-     },
-     "vacaciones": {
-      "modo": "periodos",
-      "diasHabiles": 17,
-      "diasSueltos": 5,
-      "horasDia": 7,
-      "semilla": "estival-2027",
-      "periodos": [
-       {
-        "n": 1,
-        "inicio": "2027-06-21",
-        "fin": "2027-07-13",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 2,
-        "inicio": "2027-06-28",
-        "fin": "2027-07-20",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 3,
-        "inicio": "2027-07-05",
-        "fin": "2027-07-27",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 4,
-        "inicio": "2027-07-12",
-        "fin": "2027-08-03",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 5,
-        "inicio": "2027-07-19",
-        "fin": "2027-08-10",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 6,
-        "inicio": "2027-07-26",
-        "fin": "2027-08-18",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 7,
-        "inicio": "2027-08-02",
-        "fin": "2027-08-25",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 8,
-        "inicio": "2027-08-09",
-        "fin": "2027-09-01",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 9,
-        "inicio": "2027-08-16",
-        "fin": "2027-09-08",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 10,
-        "inicio": "2027-08-23",
-        "fin": "2027-09-14",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       },
-       {
-        "n": 11,
-        "inicio": "2027-08-30",
-        "fin": "2027-09-21",
-        "plazas": {
-         "TA": 28,
-         "SUP": 3
-        }
-       }
-      ],
-      "solicitudes": {},
-      "sueltosEnJornada": false,
-      "sueltosOctDic": 1,
-      "cuenta": "cuadrante",
-      "nota": "Periodos y plazas del correo de Procesos horarios de Sevilla (2027). Supervisión: 3 plazas, orientativo."
-     },
-     "festivos": {
-      "fuente": {
-       "tipo": "nager",
-       "region": "ES-AN",
-       "url": "",
-       "trasladarDomingos": true
-      },
-      "locales": [
-       {
-        "nombre": "Miércoles de Feria (local)",
-        "regla": "pascua",
-        "dias": 17
-       },
-       {
-        "nombre": "Corpus Christi (local)",
-        "regla": "pascua",
-        "dias": 60
-       }
-      ],
-      "extra": [],
-      "quitar": [],
-      "enlaces": [
-       {
-        "texto": "Junta de Andalucía: calendario laboral (todos los años)",
-        "url": "https://www.juntadeandalucia.es/temas/trabajar/relaciones/calendario.html"
-       },
-       {
-        "texto": "BOE 13-10-2026: fiestas laborales de 2027 (nacionales y por comunidad)",
-        "url": "https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-21254"
-       },
-       {
-        "texto": "BOJA 5-5-2026: Decreto 84/2026, fiestas de Andalucía para 2027",
-        "url": "https://www.juntadeandalucia.es/eboja/2026/84/BOJA26-084-00002-5812-01_00337048.pdf"
-       },
-       {
-        "texto": "BOJA 29-10-2026: fiestas locales de 2027 de todos los municipios",
-        "url": "https://www.juntadeandalucia.es/eboja/2026/210/BOJA26-210-00021-14189-01_00345419.pdf"
-       }
-      ],
-      "cache": {
-       "clave": "nager|ES-AN|",
-       "anio": 2027,
-       "fecha": "2026-11-20",
-       "lista": [
-        {
-         "fecha": "2027-01-01",
-         "nombre": "Año Nuevo"
-        },
-        {
-         "fecha": "2027-01-06",
-         "nombre": "Día de Reyes / Epifanía del Señor"
-        },
-        {
-         "fecha": "2027-02-28",
-         "nombre": "Día de Andalucía"
-        },
-        {
-         "fecha": "2027-03-25",
-         "nombre": "Jueves Santo"
-        },
-        {
-         "fecha": "2027-03-26",
-         "nombre": "Viernes Santo"
-        },
-        {
-         "fecha": "2027-05-01",
-         "nombre": "Fiesta del trabajo"
-        },
-        {
-         "fecha": "2027-08-15",
-         "nombre": "Asunción"
-        },
-        {
-         "fecha": "2027-10-12",
-         "nombre": "Fiesta Nacional de España"
-        },
-        {
-         "fecha": "2027-11-01",
-         "nombre": "Día de todos los Santos"
-        },
-        {
-         "fecha": "2027-12-06",
-         "nombre": "Día de la Constitución"
-        },
-        {
-         "fecha": "2027-12-08",
-         "nombre": "Inmaculada Concepción"
-        },
-        {
-         "fecha": "2027-12-25",
-         "nombre": "Navidad"
-        }
-       ]
-      }
-     },
-     "manuales": {},
-     "contratos": [
-      {
-       "id": "completa",
-       "nombre": "Jornada completa",
-       "horasSemana": 35,
-       "sinNoches": false,
-       "turnos": {
-        "manana": "",
-        "tarde": "",
-        "noche": ""
-       }
-      },
-      {
-       "id": "r30",
-       "nombre": "Reducida 30 h",
-       "horasSemana": 30,
-       "sinNoches": true,
-       "turnos": {
-        "manana": "",
-        "tarde": "",
-        "noche": ""
-       }
-      },
-      {
-       "id": "r25",
-       "nombre": "Reducida 25 h",
-       "horasSemana": 25,
-       "sinNoches": true,
-       "turnos": {
-        "manana": "",
-        "tarde": "",
-        "noche": ""
-       }
-      },
-      {
-       "id": "r20",
-       "nombre": "Reducida 20 h",
-       "horasSemana": 20,
-       "sinNoches": true,
-       "turnos": {
-        "manana": "",
-        "tarde": "",
-        "noche": ""
-       }
-      }
-     ],
-     "cobertura": {
-      "cesion": {
-       "modo": "todos",
-       "tope": 16
-      },
-      "bolsa": {
-       "modo": "ambas",
-       "tope": 35,
-       "inicial": {},
-       "consumida": {}
-      },
-      "margen": {
-       "noche": 0,
-       "dia": 0,
-       "tipo": "personas"
-      },
-      "ausencias": [],
-      "aguante": {
-       "avisar": true
-      }
-     },
-     "aj": {
-      "activo": true,
-      "modo": "reparto",
-      "fechas": [
-       "12-24",
-       "12-31"
-      ],
-      "desde": "12-20",
-      "hasta": "12-31",
-      "enJornada": true,
-      "elegidos": {}
-     },
-     "minimosFecha": [
-      {
-       "activo": true,
-       "colectivo": "TA",
-       "franja": "noche",
-       "fecha": "12-24",
-       "modo": "suma",
-       "valor": 0,
-       "nota": "Nochebuena"
-      },
-      {
-       "activo": true,
-       "colectivo": "TA",
-       "franja": "noche",
-       "fecha": "12-31",
-       "modo": "suma",
-       "valor": 0,
-       "nota": "Nochevieja"
-      },
-      {
-       "activo": true,
-       "colectivo": "TA",
-       "franja": "manana",
-       "fecha": "01-06",
-       "modo": "suma",
-       "valor": 5,
-       "nota": "Reyes"
-      }
-     ],
-     "repartoFestivos": {
-      "noche": "salida",
-      "especiales": [
-       "12-24",
-       "12-25",
-       "12-31",
-       "01-01",
-       "01-06"
-      ],
-      "historial": {},
-      "anioHistorial": null,
-      "fechasRotan": [
-       "12-24",
-       "12-31",
-       "01-06"
-      ],
-      "rotan": {}
-     },
-     "ciclo": {
-      "continuo": true,
-      "inicio": "2026-12-28"
-     },
-     "especiales": {},
-     "minimosHora": {
-      "activo": true,
-      "TA": [
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        23,
-        47,
-        47,
-        47,
-        47,
-        47,
-        47,
-        24,
-        37,
-        37,
-        37,
-        37,
-        31,
-        31,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        21,
-        39,
-        39,
-        39,
-        39,
-        39,
-        39,
-        22,
-        29,
-        29,
-        29,
-        29,
-        26,
-        26,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        19,
-        29,
-        29,
-        29,
-        29,
-        29,
-        29,
-        20,
-        28,
-        28,
-        28,
-        28,
-        21,
-        21,
-        10,
-        10
-       ],
-       [
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        10,
-        19,
-        29,
-        29,
-        29,
-        29,
-        29,
-        29,
-        20,
-        28,
-        28,
-        28,
-        28,
-        21,
-        21,
-        10,
-        10
-       ]
-      ],
-      "SUP": [
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ],
-       [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        1,
-        1
-       ]
-      ],
-      "nota": "Anexo 2, Mínimos SAT 2013 (protocolo v09) de 8 a 22 h (cada hora, el tramo más alto); noche de 22 a 8 h con 10 teleasistentes (decisión de la sección)"
-     },
-     "inicioCuadrante": "01-15",
-     "absentismo": {
-      "dia": 15,
-      "noche": 0,
-      "cuenta": "margen"
-     }
+     "puestos": 168
     }
    }
   ],
